@@ -23,29 +23,26 @@ export default function WrapperPage() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 h-full flex items-center justify-center p-4">
-        <div className="max-w-4xl w-full text-center space-y-8 animate-fade-in">
-          {/* Main Heading */}
-          <div className="space-y-6">
-            <h1 className="text-7xl md:text-9xl font-bold text-white tracking-tight">
-              pgUncle
-            </h1>
-            <p className="text-2xl md:text-4xl text-blue-100 font-light">
-              Your Trusted Uncle for a Comfortable PG Stay
-            </p>
-            <p className="text-xl md:text-2xl text-cyan-300 font-semibold">
-              The Future of PG is Here
-            </p>
-          </div>
+      <div className="relative z-10 h-full flex flex-col">
+        {/* Top Section with Heading and Taglines */}
+        <div className="pt-12 md:pt-16 text-center px-4 animate-fade-in">
+          <h2 className="text-4xl md:text-5xl font-semibold text-white mb-6">
+            pgUncle
+          </h2>
+          <p className="text-2xl md:text-3xl text-blue-100 font-light mb-12">
+            Your Trusted Uncle for a Comfortable PG Stay
+          </p>
+          <p className="text-xl md:text-2xl text-cyan-300 font-semibold">
+            The Future of PG is Here
+          </p>
+        </div>
 
-          {/* Coming Soon Badge */}
-          <div className="inline-block pt-8">
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-10 py-5 shadow-xl">
-              <p className="text-3xl md:text-4xl font-bold text-white flex items-center gap-3">
-                <span className="animate-pulse">🚀</span>
-                Coming Soon
-              </p>
-            </div>
+        {/* Center Coming Soon */}
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="text-center animate-fade-in pb-[100px]">
+            <h1 className="text-7xl md:text-9xl lg:text-[12rem] font-bold text-white tracking-tight leading-none">
+              Coming Soon
+            </h1>
           </div>
         </div>
       </div>
