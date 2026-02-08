@@ -24,11 +24,18 @@ export default function WrapperPage() {
 
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col">
-        {/* Top Section with Heading and Taglines */}
+        {/* Top Section with Logo and Taglines */}
         <div className="pt-12 md:pt-16 text-center px-4 animate-fade-in">
-          <h2 className="text-4xl md:text-5xl font-semibold text-white mb-6">
-            pgUncle
-          </h2>
+          <div className="flex justify-center mb-6">
+            <Image
+              src="/logo.png"
+              alt="pgUncle"
+              width={240}
+              height={70}
+              className="h-[70px] w-[240px] drop-shadow-2xl"
+              priority
+            />
+          </div>
           <p className="text-2xl md:text-3xl text-blue-100 font-light mb-12">
             Your Trusted Uncle for a Comfortable PG Stay
           </p>
