@@ -3,9 +3,10 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useProperties } from '@/hooks/useProperties';
 
-interface Property {
-  id: number;
+interface PropertyDisplay {
+  id: string;
   name: string;
   city: string;
   location: string;
@@ -21,96 +22,61 @@ interface Property {
 export const Properties: React.FC = () => {
   const [selectedCity, setSelectedCity] = useState<string>('All');
   const [selectedType, setSelectedType] = useState<string>('All');
+  const { properties, loading, error } = useProperties();
 
   const cities = ['All', 'Chandigarh', 'Mohali', 'Panchkula', 'Zirakpur'];
   const types = ['All', 'Single', 'Double', 'Triple'];
 
-  const properties: Property[] = [
-    {
-      id: 1,
-      name: 'Sunshine PG',
-      city: 'Chandigarh',
-      location: 'Sector 22',
-      price: 8000,
-      type: 'Single',
-      image: 'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-      rating: 4.8,
-      reviews: 124,
-      amenities: ['Wi-Fi', 'AC', 'Meals', 'Laundry'],
-      available: true,
-    },
-    {
-      id: 2,
-      name: 'Green Valley PG',
-      city: 'Mohali',
-      location: 'Phase 7',
-      price: 6500,
-      type: 'Double',
-      image: 'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-      rating: 4.6,
-      reviews: 89,
-      amenities: ['Wi-Fi', 'Meals', 'Parking'],
-      available: true,
-    },
-    {
-      id: 3,
-      name: 'Royal Residency',
-      city: 'Chandigarh',
-      location: 'Sector 35',
-      price: 12000,
-      type: 'Single',
-      image: 'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-      rating: 4.9,
-      reviews: 156,
-      amenities: ['Wi-Fi', 'AC', 'Gym', 'Meals', 'Laundry'],
-      available: true,
-    },
-    {
-      id: 4,
-      name: 'Student Hub PG',
-      city: 'Panchkula',
-      location: 'Sector 20',
-      price: 5500,
-      type: 'Triple',
-      image: 'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-      rating: 4.4,
-      reviews: 67,
-      amenities: ['Wi-Fi', 'Meals', 'Study Room'],
-      available: true,
-    },
-    {
-      id: 5,
-      name: 'Comfort Stay',
-      city: 'Zirakpur',
-      location: 'VIP Road',
-      price: 7000,
-      type: 'Double',
-      image: 'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-      rating: 4.7,
-      reviews: 98,
-      amenities: ['Wi-Fi', 'AC', 'Meals'],
-      available: false,
-    },
-    {
-      id: 6,
-      name: 'Elite PG',
-      city: 'Chandigarh',
-      location: 'Sector 17',
-      price: 10000,
-      type: 'Single',
-      image: 'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-      rating: 4.8,
-      reviews: 142,
-      amenities: ['Wi-Fi', 'AC', 'Gym', 'Meals', 'Laundry', 'Parking'],
-      available: true,
-    },
-  ];
+  // Transform Supabase data to match component interface
+  const transformedProperties: PropertyDisplay[] = properties.map((prop) => ({
+    id: prop.id,
+    name: prop.name,
+    city: prop.city,
+    location: prop.address,
+    price: prop.price,
+    type: prop.roomTypes?.[0]?.type || 'Single',
+    image: prop.images?.[0] || prop.image || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80',
+    rating: prop.rating || 4.5,
+    reviews: prop.reviews || 0,
+    amenities: prop.amenities?.filter(a => a.available).map(a => a.name) || [],
+    available: prop.isActive,
+  }));
 
-  const filteredProperties = properties.filter((property) => {
+  const filteredProperties = transformedProperties.filter((property) => {
     const cityMatch = selectedCity === 'All' || property.city === selectedCity;
     const typeMatch = selectedType === 'All' || property.type === selectedType;
     return cityMatch && typeMatch;
   });
+
+  // Show loading state
+  if (loading) {
+    return (
+      <section id="properties" className="py-16 lg:py-32 bg-gradient-to-b from-white to-gray-50">
+        <div className="container mx-auto px-5 md:px-6">
+          <div className="text-center py-16">
+            <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+            <p className="mt-4 text-xl text-gray-600">Loading properties from Supabase...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <section id="properties" className="py-16 lg:py-32 bg-gradient-to-b from-white to-gray-50">
+        <div className="container mx-auto px-5 md:px-6">
+          <div className="text-center py-16 bg-red-50 rounded-2xl px-8">
+            <div className="text-6xl mb-4">⚠️</div>
+            <h3 className="text-2xl font-bold text-red-900 mb-2">Database Connection Error</h3>
+            <p className="text-red-600 mb-4">{error}</p>
+            <p className="text-sm text-gray-600">Please check your Supabase configuration in .env.local</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="properties" className="py-16 lg:py-32 bg-gradient-to-b from-white to-gray-50">
@@ -122,10 +88,15 @@ export const Properties: React.FC = () => {
           <h2 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
             Find Your <span className="text-blue-600">Perfect PG</span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-4">
             Finding the right PG is more than just four walls and a bed.
-            It’s about feeling safe, comfortable, and stress-free—especially when you’re away from home.
+            It's about feeling safe, comfortable, and stress-free—especially when you're away from home.
           </p>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-full">
+            <span className="text-green-600 text-sm font-semibold">
+              ✓ Live Data: {transformedProperties.length} properties from Supabase
+            </span>
+          </div>
         </div>
 
         {/* Filters */}

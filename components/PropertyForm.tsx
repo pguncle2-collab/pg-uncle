@@ -72,6 +72,8 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('PropertyForm handleSubmit called');
+    console.log('Form data being submitted:', formData);
     onSubmit(formData);
   };
 
@@ -95,6 +97,14 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
   const updateRoomType = (index: number, field: keyof RoomType, value: any) => {
     const newRoomTypes = [...formData.roomTypes];
     newRoomTypes[index] = { ...newRoomTypes[index], [field]: value };
+    setFormData({ ...formData, roomTypes: newRoomTypes });
+  };
+
+  const updateRoomTypeMultiple = (index: number, updates: Partial<RoomType>) => {
+    console.log(`Updating room type ${index} with:`, updates);
+    const newRoomTypes = [...formData.roomTypes];
+    newRoomTypes[index] = { ...newRoomTypes[index], ...updates };
+    console.log('New room types array:', newRoomTypes);
     setFormData({ ...formData, roomTypes: newRoomTypes });
   };
 
@@ -261,14 +271,29 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
       {/* Room Types */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h4 className="text-lg font-bold text-gray-900">Room Types</h4>
+          <div>
+            <h4 className="text-lg font-bold text-gray-900">Room Types & Inventory</h4>
+            <p className="text-sm text-gray-600 mt-1">
+              Add different room categories (Single, Double, Triple) and specify how many rooms of each type you have
+            </p>
+          </div>
           <button
             type="button"
             onClick={addRoomType}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm"
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm font-semibold"
           >
             + Add Room Type
           </button>
+        </div>
+
+        {/* Example Helper */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-blue-900 font-semibold mb-2">💡 Example:</p>
+          <ul className="text-sm text-blue-800 space-y-1">
+            <li>• <strong>Single Occupancy:</strong> 10 total rooms, 7 occupied = 3 available</li>
+            <li>• <strong>Double Occupancy:</strong> 15 total rooms, 12 occupied = 3 available</li>
+            <li>• <strong>Triple Occupancy:</strong> 8 total rooms, 6 occupied = 2 available</li>
+          </ul>
         </div>
 
         {formData.roomTypes.map((room, index) => (
@@ -286,91 +311,122 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Room Type *
+                </label>
                 <select
                   value={room.type}
                   onChange={(e) => updateRoomType(index, 'type', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-base"
                   required
                 >
-                  <option value="">Select</option>
-                  <option value="Single">Single</option>
-                  <option value="Double">Double</option>
-                  <option value="Triple">Triple</option>
+                  <option value="">Select Type</option>
+                  <option value="Single">Single Occupancy</option>
+                  <option value="Double">Double Occupancy</option>
+                  <option value="Triple">Triple Occupancy</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹/month)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Price per Month (₹) *
+                </label>
                 <input
                   type="number"
                   value={room.price}
-                  onChange={(e) => updateRoomType(index, 'price', parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    updateRoomType(index, 'price', value === '' ? 0 : parseInt(value));
+                  }}
+                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-base"
+                  placeholder="e.g., 8000"
+                  min="0"
                   required
                 />
               </div>
-
-              <div className="flex items-center">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={room.available}
-                    onChange={(e) => updateRoomType(index, 'available', e.target.checked)}
-                    className="w-4 h-4 text-blue-500 border-gray-300 rounded"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Available</span>
-                </label>
-              </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Total Slots</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Total Rooms Available *
+                  <span className="block text-xs text-gray-500 font-normal mt-1">
+                    How many {room.type || 'rooms'} do you have?
+                  </span>
+                </label>
                 <input
                   type="number"
                   value={room.totalSlots}
                   onChange={(e) => {
-                    const total = parseInt(e.target.value) || 0;
-                    updateRoomType(index, 'totalSlots', total);
-                    const available = Math.max(0, total - room.occupiedSlots);
-                    updateRoomType(index, 'availableSlots', available);
+                    const value = e.target.value;
+                    const total = value === '' ? 0 : parseInt(value);
+                    const available = Math.max(0, total - (room.occupiedSlots || 0));
+                    updateRoomTypeMultiple(index, {
+                      totalSlots: total,
+                      availableSlots: available
+                    });
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-base"
+                  placeholder="e.g., 10"
                   min="0"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Occupied</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Currently Occupied *
+                  <span className="block text-xs text-gray-500 font-normal mt-1">
+                    How many are booked?
+                  </span>
+                </label>
                 <input
                   type="number"
                   value={room.occupiedSlots}
                   onChange={(e) => {
-                    const occupied = parseInt(e.target.value) || 0;
-                    updateRoomType(index, 'occupiedSlots', Math.min(occupied, room.totalSlots));
-                    const available = Math.max(0, room.totalSlots - occupied);
-                    updateRoomType(index, 'availableSlots', available);
+                    const value = e.target.value;
+                    const occupied = value === '' ? 0 : parseInt(value);
+                    const maxOccupied = Math.min(occupied, room.totalSlots || 0);
+                    const available = Math.max(0, (room.totalSlots || 0) - maxOccupied);
+                    updateRoomTypeMultiple(index, {
+                      occupiedSlots: maxOccupied,
+                      availableSlots: available
+                    });
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-base"
+                  placeholder="e.g., 7"
                   min="0"
-                  max={room.totalSlots}
+                  max={room.totalSlots || 0}
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Available</label>
-                <input
-                  type="number"
-                  value={room.availableSlots}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
-                  disabled
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Available Now
+                  <span className="block text-xs text-gray-500 font-normal mt-1">
+                    Auto-calculated
+                  </span>
+                </label>
+                <div className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-gray-50 text-base font-semibold text-gray-900 flex items-center justify-center">
+                  {room.availableSlots || 0}
+                </div>
               </div>
+            </div>
+
+            <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <input
+                type="checkbox"
+                id={`available-${index}`}
+                checked={room.available}
+                onChange={(e) => updateRoomType(index, 'available', e.target.checked)}
+                className="w-5 h-5 text-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor={`available-${index}`} className="text-sm font-medium text-gray-900 cursor-pointer">
+                This room type is currently available for booking
+              </label>
             </div>
 
             {room.availableSlots <= 3 && room.availableSlots > 0 && (

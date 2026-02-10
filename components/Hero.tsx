@@ -12,7 +12,7 @@ export const Hero: React.FC<HeroProps> = ({ onAuthClick }) => {
     <section className="relative min-h-screen flex items-center overflow-hidden">
       <div className="absolute inset-0 z-0">
         <Image
-          src="https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg"
+          src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1920&q=80"
           alt="PG Accommodation"
           fill
           className="object-cover scale-105 hover:scale-100 transition-transform duration-[3000ms]"

@@ -1,5 +1,30 @@
 import { supabase, Property, User } from './supabase';
 
+// Helper function to convert database row to Property object
+function mapDbToProperty(dbRow: any): Property {
+  return {
+    id: dbRow.id,
+    name: dbRow.name,
+    address: dbRow.address,
+    city: dbRow.city,
+    rating: dbRow.rating,
+    reviews: dbRow.reviews,
+    type: dbRow.type,
+    availability: dbRow.availability,
+    image: dbRow.image,
+    images: dbRow.images || [],
+    price: dbRow.price,
+    amenities: dbRow.amenities || [],
+    houseRules: dbRow.house_rules || [],
+    nearbyPlaces: dbRow.nearby_places || [],
+    coordinates: dbRow.coordinates || { lat: 30.7333, lng: 76.7794 },
+    roomTypes: dbRow.room_types || [],
+    isActive: dbRow.is_active ?? true,
+    createdAt: dbRow.created_at,
+    updatedAt: dbRow.updated_at,
+  };
+}
+
 // Properties Operations
 export const propertyOperations = {
   // Get all properties
@@ -10,7 +35,7 @@ export const propertyOperations = {
       .order('created_at', { ascending: false });
     
     if (error) throw error;
-    return data as Property[];
+    return (data || []).map(mapDbToProperty);
   },
 
   // Get properties by city
@@ -22,7 +47,7 @@ export const propertyOperations = {
       .eq('is_active', true);
     
     if (error) throw error;
-    return data as Property[];
+    return (data || []).map(mapDbToProperty);
   },
 
   // Get property by ID
@@ -34,7 +59,7 @@ export const propertyOperations = {
       .single();
     
     if (error) throw error;
-    return data as Property;
+    return mapDbToProperty(data);
   },
 
   // Add new property
@@ -63,7 +88,7 @@ export const propertyOperations = {
       .single();
     
     if (error) throw error;
-    return data as Property;
+    return mapDbToProperty(data);
   },
 
   // Update property
@@ -95,7 +120,7 @@ export const propertyOperations = {
       .single();
     
     if (error) throw error;
-    return data as Property;
+    return mapDbToProperty(data);
   },
 
   // Delete property
@@ -111,6 +136,7 @@ export const propertyOperations = {
 
   // Toggle active status
   async toggleActive(id: string, isActive: boolean) {
+    console.log('toggleActive called with:', { id, isActive });
     const { data, error } = await supabase
       .from('properties')
       .update({ is_active: isActive })
@@ -118,8 +144,14 @@ export const propertyOperations = {
       .select()
       .single();
     
-    if (error) throw error;
-    return data as Property;
+    if (error) {
+      console.error('toggleActive error:', error);
+      throw error;
+    }
+    console.log('toggleActive success, raw data:', data);
+    const mappedData = mapDbToProperty(data);
+    console.log('toggleActive success, mapped data:', mappedData);
+    return mappedData;
   },
 
   // Search properties
@@ -131,7 +163,7 @@ export const propertyOperations = {
       .eq('is_active', true);
     
     if (error) throw error;
-    return data as Property[];
+    return (data || []).map(mapDbToProperty);
   }
 };
 

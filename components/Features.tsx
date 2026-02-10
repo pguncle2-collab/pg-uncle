@@ -14,7 +14,7 @@ export const Features: React.FC = () => {
     {
       title: 'Homely Environment',
       description: 'We believe a PG should feel like home, not just a place to sleep.',
-      image: 'https://media.gettyimages.com/id/1311934969/photo/hands-typing-on-laptop-with-virtual-real-estate-icons-showing-approved-houses-and-checklist.jpg',
+      image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80',
       color: 'blue',
       icon: (
         <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -25,7 +25,7 @@ export const Features: React.FC = () => {
     {
       title: 'Clean & Hygienic Rooms',
       description: 'Regular cleaning and proper maintenance—no compromises.',
-      image: 'https://media.gettyimages.com/id/1311934969/photo/hands-typing-on-laptop-with-virtual-real-estate-icons-showing-approved-houses-and-checklist.jpg',
+      image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80',
       color: 'green',
       icon: (
         <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -36,7 +36,7 @@ export const Features: React.FC = () => {
     {
       title: 'No Broker, No Drama',
       description: 'Deal directly with us. What you see is what you get.',
-      image: 'https://media.gettyimages.com/id/1311934969/photo/hands-typing-on-laptop-with-virtual-real-estate-icons-showing-approved-houses-and-checklist.jpg',
+      image: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800&q=80',
       color: 'purple',
       icon: (
         <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -47,7 +47,7 @@ export const Features: React.FC = () => {
     {
       title: 'Uncle-Level Care 😉',
       description: 'From safety to support, pgUncle looks out for you like family.',
-      image: 'https://media.gettyimages.com/id/1311934969/photo/hands-typing-on-laptop-with-virtual-real-estate-icons-showing-approved-houses-and-checklist.jpg',
+      image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80',
       color: 'orange',
       icon: (
         <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
