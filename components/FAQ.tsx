@@ -13,18 +13,18 @@ export const FAQ: React.FC = () => {
 
   const faqs: FAQItem[] = [
     {
-      question: 'What types of PG accommodations does pgUncle offer?',
-      answer: 'pgUncle offers a variety of PG options, including single, double, and triple sharing rooms with detailed amenities to suit different needs.',
+      question: 'What types of PG accommodations does PGUNCLE offer?',
+      answer: 'PGUNCLE offers a variety of PG options, including single, double, triple, and quad sharing rooms with detailed amenities to suit different needs.',
       icon: '🏠',
     },
     {
-      question: 'How can I book a PG through pgUncle?',
+      question: 'How can I book a PG through PGUNCLE?',
       answer: 'You can book a PG through our website by browsing available options, selecting your preferences, and completing the booking process online.',
       icon: '📱',
     },
     {
-      question: "What amenities are provided in pgUncle's PG accommodations?",
-      answer: 'pgUncle offers amenities such as Wi-Fi, furnished rooms, laundry services, and 24/7 security to ensure a comfortable stay.',
+      question: "What amenities are provided in PGUNCLE's PG accommodations?",
+      answer: 'PGUNCLE offers amenities such as Wi-Fi, furnished rooms, AC, meals and 24/7 security to ensure a comfortable stay.',
       icon: '✨',
     },
     {

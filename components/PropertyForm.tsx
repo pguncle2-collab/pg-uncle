@@ -58,7 +58,6 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
         { name: 'Meals', icon: '🍽️', available: true },
         { name: 'Laundry', icon: '🧺', available: true },
         { name: 'Parking', icon: '🚗', available: true },
-        { name: 'Gym', icon: '💪', available: false },
         { name: 'Security', icon: '🔒', available: true },
         { name: 'Housekeeping', icon: '🧹', available: true },
       ],
@@ -274,7 +273,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
           <div>
             <h4 className="text-lg font-bold text-gray-900">Room Types & Inventory</h4>
             <p className="text-sm text-gray-600 mt-1">
-              Add different room categories (Single, Double, Triple) and specify how many rooms of each type you have
+              Add different room categories (Single, Double, Triple, Quad) and specify how many rooms of each type you have
             </p>
           </div>
           <button

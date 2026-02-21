@@ -10,12 +10,12 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({ isCollapsed, onTog
     <div className="flex h-16 shrink-0 items-center justify-between border-b border-gray-200 px-4">
       {!isCollapsed && (
         <button className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-1.5 text-left hover:bg-gray-50">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold text-sm">
-            D
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-semibold text-sm">
+            PG
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold text-gray-900">Durable</div>
-            <div className="truncate text-xs text-gray-500">durable.co</div>
+            <div className="truncate text-sm font-semibold text-gray-900">PGUNCLE</div>
+            <div className="truncate text-xs text-gray-500">Admin Panel</div>
           </div>
           <svg className="h-5 w-5 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />

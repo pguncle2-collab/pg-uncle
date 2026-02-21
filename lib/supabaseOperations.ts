@@ -239,6 +239,7 @@ export const bookingOperations = {
     roomType: string;
     checkInDate: string;
     totalAmount: number;
+    duration?: number;
   }) {
     const { data, error } = await supabase
       .from('bookings')
@@ -248,6 +249,7 @@ export const bookingOperations = {
         room_type: booking.roomType,
         check_in_date: booking.checkInDate,
         total_amount: booking.totalAmount,
+        duration: booking.duration || 1,
         status: 'pending'
       }])
       .select()
@@ -314,3 +316,113 @@ export function convertToCamelCase(obj: any): any {
   }
   return obj;
 }
+
+// Payment Operations
+export const paymentOperations = {
+  // Create payment record
+  async create(payment: {
+    bookingId?: string;
+    userId?: string;
+    propertyId: string;
+    razorpayOrderId: string;
+    amount: number;
+    currency?: string;
+    notes?: any;
+  }) {
+    const { data, error } = await supabase
+      .from('payments')
+      .insert([{
+        booking_id: payment.bookingId,
+        user_id: payment.userId,
+        property_id: payment.propertyId,
+        razorpay_order_id: payment.razorpayOrderId,
+        amount: payment.amount,
+        currency: payment.currency || 'INR',
+        status: 'pending',
+        notes: payment.notes,
+      }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Update payment after successful payment
+  async updateSuccess(orderId: string, paymentDetails: {
+    razorpayPaymentId: string;
+    razorpaySignature: string;
+    paymentMethod?: string;
+  }) {
+    const { data, error } = await supabase
+      .from('payments')
+      .update({
+        razorpay_payment_id: paymentDetails.razorpayPaymentId,
+        razorpay_signature: paymentDetails.razorpaySignature,
+        payment_method: paymentDetails.paymentMethod,
+        status: 'success',
+      })
+      .eq('razorpay_order_id', orderId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Mark payment as failed
+  async updateFailed(orderId: string) {
+    const { data, error } = await supabase
+      .from('payments')
+      .update({ status: 'failed' })
+      .eq('razorpay_order_id', orderId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Get payment by order ID
+  async getByOrderId(orderId: string) {
+    const { data, error } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('razorpay_order_id', orderId)
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Get all payments for a user
+  async getByUserId(userId: string) {
+    const { data, error } = await supabase
+      .from('payments')
+      .select(`
+        *,
+        properties (name, address, city),
+        bookings (check_in_date, room_type)
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Get all payments (admin)
+  async getAll() {
+    const { data, error } = await supabase
+      .from('payments')
+      .select(`
+        *,
+        properties (name, address, city),
+        bookings (check_in_date, room_type)
+      `)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data;
+  },
+};

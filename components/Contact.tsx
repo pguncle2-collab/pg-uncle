@@ -17,8 +17,8 @@ export const Contact: React.FC = () => {
 
   const contactInfo = [
     { icon: '📧', label: 'Email', value: 'info@pguncle.com' },
-    { icon: '📞', label: 'Phone', value: '+91 98765 43210' },
-    { icon: '📍', label: 'Location', value: 'Chandigarh, India' },
+    // { icon: '📞', label: 'Phone', value: '+91 98765 43210' },
+    { icon: '📍', label: 'Location', value: 'IT City, Mohali, India' },
   ];
 
   return (
@@ -37,7 +37,7 @@ export const Contact: React.FC = () => {
             Contact Us for <span className="text-blue-600">PG Details</span>
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Reach out to pgUncle in Chandigarh for booking inquiries and amenities information
+            Reach out to PGUNCLE for booking inquiries and amenities information
           </p>
         </div>
         
@@ -46,7 +46,7 @@ export const Contact: React.FC = () => {
             <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-8 rounded-2xl text-white shadow-xl">
               <h3 className="text-2xl font-bold mb-4">Let's Connect</h3>
               <p className="text-blue-50 mb-6">
-                Have questions? We're here to help you Your Trusted Uncle for a Comfortable PG Stayaccommodation.
+                Have questions? We're here to help you.
               </p>
               
               <div className="space-y-4">

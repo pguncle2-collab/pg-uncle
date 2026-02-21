@@ -14,7 +14,7 @@ export const Features: React.FC = () => {
     {
       title: 'Homely Environment',
       description: 'We believe a PG should feel like home, not just a place to sleep.',
-      image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80',
+      image: '/Gemini_Generated_Image_2ljwvi2ljwvi2ljw.png',
       color: 'blue',
       icon: (
         <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -25,7 +25,7 @@ export const Features: React.FC = () => {
     {
       title: 'Clean & Hygienic Rooms',
       description: 'Regular cleaning and proper maintenance—no compromises.',
-      image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80',
+      image: '/Gemini_Generated_Image_i38nbni38nbni38n.png',
       color: 'green',
       icon: (
         <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -36,7 +36,7 @@ export const Features: React.FC = () => {
     {
       title: 'No Broker, No Drama',
       description: 'Deal directly with us. What you see is what you get.',
-      image: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800&q=80',
+      image: '/Gemini_Generated_Image_udk1wkudk1wkudk1.png',
       color: 'purple',
       icon: (
         <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -46,8 +46,8 @@ export const Features: React.FC = () => {
     },
     {
       title: 'Uncle-Level Care 😉',
-      description: 'From safety to support, pgUncle looks out for you like family.',
-      image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80',
+      description: 'From safety to support, PGUNCLE looks out for you like family.',
+      image: '/Gemini_Generated_Image_xgs7sixgs7sixgs7.png',
       color: 'orange',
       icon: (
         <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -72,7 +72,7 @@ export const Features: React.FC = () => {
             <span className="text-blue-600 text-sm font-semibold">WHY CHOOSE US</span>
           </div>
           <h2 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
-            Why Choose <span className="text-blue-600">pgUncle?</span>
+            Why Choose <span className="text-blue-600">PGUNCLE?</span>
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             We make finding your perfect PG accommodation simple and stress-free

@@ -30,7 +30,7 @@ export const Hero: React.FC<HeroProps> = ({ onAuthClick }) => {
             Your Trusted Uncle for a Comfortable <span className="text-blue-400">PG Stay</span> in <span className="text-blue-400">Tricity Chandigarh</span>
           </h1>
           <p className="text-xl lg:text-2xl text-gray-200 mb-8 leading-relaxed">
-            Whether you're a student chasing dreams or professional building a career, <span className="text-blue-400 font-semibold">pgUncle</span> gives you a safe, clean and homely PG - without stress, brokers, or surprises.
+            Whether you're a student chasing dreams or professional building a career, <span className="text-blue-400 font-semibold">PGUNCLE</span> gives you a safe, clean and homely PG - without stress, brokers, or surprises.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <a href="#properties" className="group bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-blue-500/50 hover:scale-105 flex items-center justify-center gap-2">

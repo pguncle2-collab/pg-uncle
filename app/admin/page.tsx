@@ -15,7 +15,7 @@ export default function AdminDashboard() {
   const [filterCity, setFilterCity] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   
-  // Use Supabase hook
+  // Use properties hook
   const { properties, loading, error, addProperty, updateProperty, deleteProperty, togglePropertyActive } = useProperties();
 
   const handleLogin = (e: React.FormEvent) => {
@@ -124,7 +124,7 @@ export default function AdminDashboard() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-4"></div>
-          <p className="text-xl text-gray-600">Loading properties from Supabase...</p>
+          <p className="text-xl text-gray-600">Loading properties...</p>
         </div>
       </div>
     );
@@ -153,13 +153,13 @@ export default function AdminDashboard() {
                 🏠
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">pgUncle Admin</h1>
+                <h1 className="text-2xl font-bold text-gray-900">PGUNCLE Admin</h1>
                 <p className="text-sm text-gray-600">Property Management Dashboard</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <div className="text-sm text-green-600 font-semibold">
-                ✓ Connected to Supabase
+                ✓ System Connected
               </div>
               <Link
                 href="/"

@@ -16,14 +16,14 @@ export const Testimonials: React.FC = () => {
     {
       name: 'Ananya Sharma',
       role: 'Software Engineer',
-      text: 'pgUncle made finding a PG in Chandigarh effortless. The detailed amenities listed helped me choose the perfect home. Highly recommended!',
+      text: 'PGUNCLE made finding a PG in Chandigarh effortless. The detailed amenities listed helped me choose the perfect home. Highly recommended!',
       avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
       rating: 5,
     },
     {
       name: 'Rohan Verma',
       role: 'Marketing Manager',
-      text: 'pgUncle transformed my PG hunt in Chandigarh. The detailed amenities helped me make an informed choice quickly. A fantastic service!',
+      text: 'PGUNCLE transformed my PG hunt in Chandigarh. The detailed amenities helped me make an informed choice quickly. A fantastic service!',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
       rating: 5,
     },

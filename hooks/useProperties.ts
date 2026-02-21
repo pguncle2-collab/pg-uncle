@@ -13,11 +13,20 @@ export function useProperties() {
     try {
       setLoading(true);
       setError(null);
+      console.log('Fetching properties from Supabase...');
       const data = await propertyOperations.getAll();
+      console.log('Properties fetched successfully:', data.length);
       setProperties(data);
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch properties');
+      const errorMessage = err.message || 'Failed to fetch properties';
       console.error('Error fetching properties:', err);
+      console.error('Error details:', {
+        message: err.message,
+        code: err.code,
+        details: err.details,
+        hint: err.hint,
+      });
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
