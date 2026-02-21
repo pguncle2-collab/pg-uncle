@@ -13,11 +13,20 @@ export function useProperties() {
     try {
       setLoading(true);
       setError(null);
+      console.log('Fetching properties from Supabase...');
       const data = await propertyOperations.getAll();
+      console.log('Properties fetched successfully:', data.length);
       setProperties(data);
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch properties');
+      const errorMessage = err.message || 'Failed to fetch properties';
       console.error('Error fetching properties:', err);
+      console.error('Error details:', {
+        message: err.message,
+        code: err.code,
+        details: err.details,
+        hint: err.hint,
+      });
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -60,11 +69,17 @@ export function useProperties() {
   };
 
   const togglePropertyActive = async (id: string, isActive: boolean) => {
+    console.log('Hook togglePropertyActive called:', { id, isActive });
+    console.log('Current properties:', properties);
     try {
       const updatedProperty = await propertyOperations.toggleActive(id, isActive);
-      setProperties(properties.map(p => p.id === id ? updatedProperty : p));
+      console.log('Updated property from DB:', updatedProperty);
+      const newProperties = properties.map(p => p.id === id ? updatedProperty : p);
+      console.log('New properties array:', newProperties);
+      setProperties(newProperties);
       return updatedProperty;
     } catch (err: any) {
+      console.error('Hook togglePropertyActive error:', err);
       setError(err.message || 'Failed to toggle property status');
       throw err;
     }

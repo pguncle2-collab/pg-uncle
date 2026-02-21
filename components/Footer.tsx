@@ -1,11 +1,11 @@
 import React from 'react';
+import Image from 'next/image';
 
 export const Footer: React.FC = () => {
   const footerLinks = [
-    { title: 'About', href: '#' },
-    { title: 'Services', href: '#' },
-    { title: 'Contact', href: '#' },
-    { title: 'Privacy', href: '#' },
+    { title: 'About', href: '/about' },
+    { title: 'Services', href: '/services' },
+    { title: 'Contact', href: '/contact' },
   ];
 
   const socialLinks = [
@@ -25,14 +25,17 @@ export const Footer: React.FC = () => {
       <div className="container mx-auto px-5 md:px-6 relative z-10">
         <div className="flex flex-col lg:flex-row items-start lg:justify-between gap-12 mb-12">
           <div className="flex flex-col gap-6 items-start max-w-md">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-2xl">
-                🏠
-              </div>
-              <h2 className="text-3xl font-bold text-white">pgUncle</h2>
+            <div className="relative w-32 h-20 transition-transform hover:scale-110">
+              <Image
+                src="/logo.png"
+                alt="PGUncle Logo"
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
             <p className="text-gray-400 leading-relaxed">
-              Your trusted partner in finding the perfect PG accommodation in Chandigarh. 
+              Your trusted partner in finding the perfect PG accommodation in Tricity, Chandigarh. 
               Comfortable living, verified properties, and hassle-free booking.
             </p>
             <div className="flex gap-3">
@@ -49,57 +52,27 @@ export const Footer: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
-            <div>
-              <h3 className="text-white font-bold mb-4">Quick Links</h3>
-              <ul className="space-y-3">
-                {footerLinks.map((link, index) => (
-                  <li key={index}>
-                    <a
-                      href={link.href}
-                      className="text-gray-400 hover:text-white transition-colors duration-300 flex items-center gap-2 group"
-                    >
-                      <span className="w-0 group-hover:w-2 h-0.5 bg-blue-400 transition-all duration-300" />
-                      {link.title}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="text-white font-bold mb-4">Newsletter</h3>
-              <p className="text-gray-400 mb-4 max-w-xs">
-                Subscribe to get updates on new PG listings and special offers.
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="Your email"
-                  className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors"
-                />
-                <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-gray-900 rounded-lg font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all duration-300">
-                  →
-                </button>
-              </div>
-            </div>
+          <div>
+            <h3 className="text-white font-bold mb-4">Quick Links</h3>
+            <ul className="space-y-3">
+              {footerLinks.map((link, index) => (
+                <li key={index}>
+                  <a
+                    href={link.href}
+                    className="text-gray-400 hover:text-white transition-colors duration-300 flex items-center gap-2 group"
+                  >
+                    <span className="w-0 group-hover:w-2 h-0.5 bg-blue-400 transition-all duration-300" />
+                    {link.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
         
-        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="pt-8 border-t border-white/10 text-center">
           <p className="text-gray-400 text-sm">
-            © 2024 pgUncle. All rights reserved.
-          </p>
-          <p className="text-gray-400 text-sm">
-            <span>Made with </span>
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-400 hover:text-blue-300 transition-colors"
-              href="https://durable.co"
-            >
-              Durable
-            </a>
+            © 2026 PGUNCLE. All rights reserved.
           </p>
         </div>
       </div>

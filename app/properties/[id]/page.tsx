@@ -5,13 +5,32 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useAuthModal } from '@/contexts/AuthModalContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Footer } from '@/components/Footer';
+import { BookVisitModal } from '@/components/BookVisitModal';
+import { RoomImageModal } from '@/components/RoomImageModal';
+import { BookingModal } from '@/components/BookingModal';
+import { DiscountPopup } from '@/components/DiscountPopup';
 
 export default function PropertyDetailPage() {
   const params = useParams();
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedRoomType, setSelectedRoomType] = useState(0);
+  const [selectedRoomImages, setSelectedRoomImages] = useState<{[key: number]: number}>({ 0: 0, 1: 0, 2: 0 });
+  const [showVisitModal, setShowVisitModal] = useState(false);
+  const [showRoomImageModal, setShowRoomImageModal] = useState(false);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [roomImageModalIndex, setRoomImageModalIndex] = useState(0);
   const { openAuthModal } = useAuthModal();
+  const { isAuthenticated } = useAuth();
+
+  const handleBookNow = () => {
+    if (!isAuthenticated) {
+      openAuthModal();
+    } else {
+      setShowBookingModal(true);
+    }
+  };
 
   // Mock property data - in real app, fetch based on params.id
   const property = {
@@ -30,58 +49,116 @@ export default function PropertyDetailPage() {
         price: 12000,
         available: true,
         description: 'Private room with attached bathroom',
-        features: ['1 Person', 'Attached Bathroom', 'AC', 'Study Table', 'Wardrobe'],
+        features: ['1 Person', 'Attached Bathroom', 'AC', 'Wardrobe', 'Mattress', 'Geyser'],
         totalSlots: 10,
         occupiedSlots: 8,
         availableSlots: 2,
+        images: [
+          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
+          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
+          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
+        ],
       },
       {
         type: 'Double',
         price: 8000,
         available: true,
         description: 'Shared room for 2 people',
-        features: ['2 People', 'Shared Bathroom', 'AC', 'Study Table', 'Wardrobe'],
+        features: ['2 People', 'Attached Bathroom', 'AC', 'Wardrobe', 'Mattress', 'Geyser'],
         totalSlots: 15,
         occupiedSlots: 10,
         availableSlots: 5,
+        images: [
+          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
+          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
+          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
+        ],
       },
       {
         type: 'Triple',
         price: 6000,
         available: false,
         description: 'Shared room for 3 people',
-        features: ['3 People', 'Shared Bathroom', 'Fan', 'Study Table', 'Wardrobe'],
+        features: ['3 People', 'Attached Bathroom', 'Fan', 'Wardrobe', 'Mattress', 'Geyser'],
         totalSlots: 8,
         occupiedSlots: 8,
         availableSlots: 0,
+        images: [
+          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
+          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
+          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
+        ],
       },
     ],
     rating: 4.8,
     reviews: 124,
     description: 'Welcome to Sunshine PG, a premium paying guest accommodation in the heart of Chandigarh. Our facility offers comfortable living spaces with modern amenities, perfect for students and working professionals. Located in Sector 22, you\'ll have easy access to markets, restaurants, and public transport.',
     amenities: [
-      { name: 'Wi-Fi', icon: '�', available: true },
-      { name: 'AC', icon: '❄️', available: true },
-      { name: 'Meals', icon: '🍽️', available: true },
-      { name: 'Laundry', icon: '�', available: true },
+      { name: 'Fully Furnished', icon: '🛌', available: true },
+      { name: 'Wifi', icon: '📶', available: true },
+      { name: 'Power Backup', icon: '🔋', available: true },
+      { name: 'Room Cleaning Service', icon: '🧹', available: true },
       { name: 'Parking', icon: '🚗', available: true },
-      { name: 'Gym', icon: '💪', available: false },
-      { name: 'Security', icon: '🔒', available: true },
-      { name: 'Housekeeping', icon: '🧹', available: true },
+      { name: 'Meals', icon: '🍱', available: true },
+      { name: 'Fridge', icon: '🧊', available: true },
+      { name: 'Geyser', icon: '♨️', available: true },
+      { name: 'RO', icon: '💦', available: true },
     ],
+    foodAndKitchen: {
+      single: {
+        foodAvailable: true,
+        mealsProvided: ['Breakfast', 'Lunch (On Request Only)', 'Dinner'],
+        mealType: 'Veg Only',
+        foodCharges: 'Included in Rent',
+        hasFridge: true,
+      },
+      double: {
+        foodAvailable: true,
+        mealsProvided: ['Breakfast', 'Lunch (On Request Only)', 'Dinner'],
+        mealType: 'Veg Only',
+        foodCharges: 'Included in Rent',
+        hasFridge: true,
+      },
+      triple: {
+        foodAvailable: true,
+        mealsProvided: ['Breakfast', 'Lunch (On Request Only)', 'Dinner'],
+        mealType: 'Veg Only',
+        foodCharges: 'Included in Rent',
+        hasFridge: true,
+      },
+    },
+    otherCharges: {
+      single: {
+        depositAmount: 12000,
+        noticePeriod: '1 Month',
+        gateClosingTime: '10:00 PM',
+      },
+      double: {
+        depositAmount: 8000,
+        noticePeriod: '1 Month',
+        gateClosingTime: '10:00 PM',
+      },
+      triple: {
+        depositAmount: 6000,
+        noticePeriod: '1 Month',
+        gateClosingTime: '10:00 PM',
+      },
+    },
     images: [
       'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
       'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
       'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
       'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
     ],
-    rules: [
-      'No smoking inside the premises',
-      'Visitors allowed till 9 PM',
-      'Maintain cleanliness',
-      'No loud music after 10 PM',
-      'Respect other residents',
-    ],
+    rules: {
+      visitorEntry: true,
+      nonVegFood: false,
+      oppositeGender: false,
+      smoking: false,
+      drinking: false,
+      loudMusic: false,
+      party: false,
+    },
     nearbyPlaces: [
       { name: 'Sector 17 Market', distance: '2.5 km', type: 'Shopping' },
       { name: 'PGI Hospital', distance: '3.0 km', type: 'Healthcare' },
@@ -136,7 +213,7 @@ export default function PropertyDetailPage() {
             </div>
 
             {/* Property Info */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="bg-white rounded-2xl shadow-lg p-6 property-price-container">
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">{property.name}</h1>
@@ -172,21 +249,6 @@ export default function PropertyDetailPage() {
             {/* Room Types & Pricing */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Room Types & Pricing</h3>
-              
-              {/* Low Inventory Alert */}
-              {property.roomTypes.some(rt => rt.availableSlots > 0 && rt.availableSlots <= 3) && (
-                <div className="mb-6 p-4 bg-orange-50 border-2 border-orange-200 rounded-xl">
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl">⚠️</span>
-                    <div>
-                      <h4 className="font-bold text-orange-900 mb-1">Limited Availability!</h4>
-                      <p className="text-sm text-orange-700">
-                        Some room types are filling up fast. Book now to secure your spot!
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 {property.roomTypes.map((room, index) => {
@@ -221,6 +283,49 @@ export default function PropertyDetailPage() {
                         </div>
                       )}
 
+                      {/* Room Images */}
+                      <div className="mb-4">
+                        <div 
+                          className="relative h-48 rounded-lg overflow-hidden mb-2 cursor-pointer group"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRoomImageModalIndex(selectedRoomImages[index] || 0);
+                            setShowRoomImageModal(true);
+                            setSelectedRoomType(index);
+                          }}
+                        >
+                          <Image
+                            src={room.images[selectedRoomImages[index] || 0]}
+                            alt={`${room.type} room`}
+                            fill
+                            className="object-cover transition-transform group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-full p-3">
+                              <svg className="w-6 h-6 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {room.images.map((image, imgIndex) => (
+                            <button
+                              key={imgIndex}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedRoomImages(prev => ({ ...prev, [index]: imgIndex }));
+                              }}
+                              className={`relative h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                                (selectedRoomImages[index] || 0) === imgIndex ? 'border-blue-500' : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <Image src={image} alt={`View ${imgIndex + 1}`} fill className="object-cover" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       <div className="mb-4">
                         <h4 className="text-xl font-bold text-gray-900 mb-1">{room.type} Sharing</h4>
                         <p className="text-sm text-gray-600">{room.description}</p>
@@ -232,28 +337,6 @@ export default function PropertyDetailPage() {
                           <span className="text-gray-600">/month</span>
                         </div>
                       </div>
-
-                      {/* Availability Indicator */}
-                      {room.available && (
-                        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-medium text-gray-600">Availability</span>
-                            <span className={`text-xs font-bold ${
-                              isCritical ? 'text-red-600' : isLowInventory ? 'text-orange-600' : 'text-green-600'
-                            }`}>
-                              {room.availableSlots} of {room.totalSlots} slots
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full transition-all ${
-                                isCritical ? 'bg-red-500' : isLowInventory ? 'bg-orange-500' : 'bg-green-500'
-                              }`}
-                              style={{ width: `${(room.availableSlots / room.totalSlots) * 100}%` }}
-                            />
-                          </div>
-                        </div>
-                      )}
                       
                       <div className="space-y-2">
                         {room.features.map((feature, idx) => (
@@ -279,44 +362,158 @@ export default function PropertyDetailPage() {
               </div>
             </div>
 
-            {/* Amenities */}
+            {/* Common Area and Amenities */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Amenities</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold text-gray-900">Common Area and Amenities</h3>
+                <span className="text-sm font-semibold text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                  {property.amenities.filter(a => a.available).length} Available
+                </span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {property.amenities.map((amenity, index) => (
                   <div
                     key={index}
-                    className={`flex items-center gap-3 p-4 rounded-xl border-2 ${
-                      amenity.available
-                        ? 'border-green-200 bg-green-50'
-                        : 'border-gray-200 bg-gray-50 opacity-50'
-                    }`}
+                    className="flex items-center gap-3 p-4 rounded-xl border-2 border-green-200 bg-green-50"
                   >
                     <span className="text-2xl">{amenity.icon}</span>
-                    <span className="font-medium text-gray-900">{amenity.name}</span>
-                    {amenity.available && (
-                      <svg className="w-5 h-5 text-green-500 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
+                    <span className="font-medium text-gray-900 text-sm">{amenity.name}</span>
                   </div>
                 ))}
               </div>
+
             </div>
 
-            {/* Rules */}
+            {/* Food and Kitchen */}
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Food and Kitchen</h3>
+              
+              <div className="space-y-4">
+                {/* Food Available */}
+                <div className="flex items-start gap-4 p-4 bg-green-50 rounded-xl border-2 border-green-200">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-2xl">🍽️</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-900 mb-1">Food Available</p>
+                    <p className="text-sm text-gray-600 mb-2">
+                      {property.foodAndKitchen[property.roomTypes[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple'].mealsProvided.join(', ')}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {property.foodAndKitchen[property.roomTypes[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple'].mealsProvided.map((meal, index) => (
+                        <span key={index} className="px-3 py-1 bg-white border border-green-300 rounded-full text-xs font-medium text-gray-700">
+                          {meal}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Meal Type */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🥗</span>
+                    <span className="font-medium text-gray-900">Meals provided</span>
+                  </div>
+                  <span className="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold">
+                    {property.foodAndKitchen[property.roomTypes[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple'].mealType}
+                  </span>
+                </div>
+
+                {/* Fridge */}
+                {property.foodAndKitchen[property.roomTypes[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple'].hasFridge && (
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🧊</span>
+                      <span className="font-medium text-gray-900">Fridge</span>
+                    </div>
+                    <svg className="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
+
+                {/* Food Charges */}
+                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">💰</span>
+                    <span className="font-medium text-gray-900">Food Charges</span>
+                  </div>
+                  <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
+                    {property.foodAndKitchen[property.roomTypes[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple'].foodCharges}
+                  </span>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Other Charges */}
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Other Charges</h3>
+              
+              <div className="space-y-4">
+                {/* Deposit Amount */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">💵</span>
+                    <span className="font-medium text-gray-900">Deposit Amount</span>
+                  </div>
+                  <span className="text-xl font-bold text-gray-900">
+                    ₹{property.otherCharges[property.roomTypes[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple'].depositAmount.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* House Rules */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">House Rules</h3>
-              <ul className="space-y-3">
-                {property.rules.map((rule, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <svg className="w-6 h-6 text-blue-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-gray-700">{rule}</span>
-                  </li>
-                ))}
-              </ul>
+              
+              <div className="space-y-4">
+                {/* Notice Period */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">📅</span>
+                    <span className="font-medium text-gray-900">Notice Period</span>
+                  </div>
+                  <span className="text-lg font-semibold text-gray-900">
+                    {property.otherCharges[property.roomTypes[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple'].noticePeriod}
+                  </span>
+                </div>
+
+                {/* Rules Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6">
+                  <div className={`p-4 rounded-xl border-2 ${property.rules.visitorEntry ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xl">{property.rules.visitorEntry ? '✅' : '❌'}</span>
+                      <span className="font-medium text-gray-900 text-sm">Visitor Entry</span>
+                    </div>
+                    <p className="text-xs text-gray-600">
+                      {property.rules.visitorEntry ? 'Allowed' : 'Not Allowed'}
+                    </p>
+                  </div>
+
+                  <div className={`p-4 rounded-xl border-2 ${property.rules.loudMusic ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xl">{property.rules.loudMusic ? '✅' : '❌'}</span>
+                      <span className="font-medium text-gray-900 text-sm">Loud Music</span>
+                    </div>
+                    <p className="text-xs text-gray-600">
+                      {property.rules.loudMusic ? 'Allowed' : 'Not Allowed'}
+                    </p>
+                  </div>
+
+                  <div className={`p-4 rounded-xl border-2 ${property.rules.party ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xl">{property.rules.party ? '✅' : '❌'}</span>
+                      <span className="font-medium text-gray-900 text-sm">Party</span>
+                    </div>
+                    <p className="text-xs text-gray-600">
+                      {property.rules.party ? 'Allowed' : 'Not Allowed'}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Nearby Places */}
@@ -388,69 +585,7 @@ export default function PropertyDetailPage() {
                   <p className="text-lg font-bold text-gray-900">
                     {property.roomTypes[selectedRoomType].type} Sharing
                   </p>
-                  
-                  {/* Availability Status */}
-                  {property.roomTypes[selectedRoomType].available && (
-                    <div className="mt-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-gray-600">Availability</span>
-                        <span className={`text-xs font-bold ${
-                          property.roomTypes[selectedRoomType].availableSlots <= 1 ? 'text-red-600' :
-                          property.roomTypes[selectedRoomType].availableSlots <= 3 ? 'text-orange-600' :
-                          'text-green-600'
-                        }`}>
-                          {property.roomTypes[selectedRoomType].availableSlots} slots left
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-1.5">
-                        <div
-                          className={`h-1.5 rounded-full ${
-                            property.roomTypes[selectedRoomType].availableSlots <= 1 ? 'bg-red-500' :
-                            property.roomTypes[selectedRoomType].availableSlots <= 3 ? 'bg-orange-500' :
-                            'bg-green-500'
-                          }`}
-                          style={{ 
-                            width: `${(property.roomTypes[selectedRoomType].availableSlots / property.roomTypes[selectedRoomType].totalSlots) * 100}%` 
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
                 </div>
-                
-                {/* Low Inventory Alert in Sidebar */}
-                {property.roomTypes[selectedRoomType].available && 
-                 property.roomTypes[selectedRoomType].availableSlots <= 3 && (
-                  <div className={`mb-4 p-3 rounded-lg ${
-                    property.roomTypes[selectedRoomType].availableSlots <= 1 
-                      ? 'bg-red-50 border border-red-200' 
-                      : 'bg-orange-50 border border-orange-200'
-                  }`}>
-                    <div className="flex items-start gap-2">
-                      <span className="text-lg">
-                        {property.roomTypes[selectedRoomType].availableSlots <= 1 ? '🔥' : '⚡'}
-                      </span>
-                      <div>
-                        <p className={`text-sm font-bold ${
-                          property.roomTypes[selectedRoomType].availableSlots <= 1 
-                            ? 'text-red-900' 
-                            : 'text-orange-900'
-                        }`}>
-                          {property.roomTypes[selectedRoomType].availableSlots <= 1 
-                            ? 'Last Spot Available!' 
-                            : 'Filling Fast!'}
-                        </p>
-                        <p className={`text-xs ${
-                          property.roomTypes[selectedRoomType].availableSlots <= 1 
-                            ? 'text-red-700' 
-                            : 'text-orange-700'
-                        }`}>
-                          Only {property.roomTypes[selectedRoomType].availableSlots} slot{property.roomTypes[selectedRoomType].availableSlots !== 1 ? 's' : ''} remaining. Book now!
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
                 
                 <div className="mb-6">
                   <div className="flex items-baseline gap-2 mb-2">
@@ -463,7 +598,7 @@ export default function PropertyDetailPage() {
                 </div>
 
                 <button
-                  onClick={openAuthModal}
+                  onClick={handleBookNow}
                   disabled={!property.roomTypes[selectedRoomType].available}
                   className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 mb-4 ${
                     property.roomTypes[selectedRoomType].available
@@ -472,6 +607,16 @@ export default function PropertyDetailPage() {
                   }`}
                 >
                   {property.roomTypes[selectedRoomType].available ? 'Book Now' : 'Not Available'}
+                </button>
+
+                <button
+                  onClick={() => setShowVisitModal(true)}
+                  className="w-full py-4 rounded-xl font-bold text-lg bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 mb-3"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Schedule a Visit
                 </button>
 
                 <a
@@ -502,6 +647,37 @@ export default function PropertyDetailPage() {
       </div>
 
       <Footer />
+      
+      {/* Book Visit Modal */}
+      <BookVisitModal
+        isOpen={showVisitModal}
+        onClose={() => setShowVisitModal(false)}
+        propertyId={property.id as string}
+        propertyName={property.name}
+      />
+
+      {/* Room Image Modal */}
+      <RoomImageModal
+        isOpen={showRoomImageModal}
+        onClose={() => setShowRoomImageModal(false)}
+        images={property.roomTypes[selectedRoomType].images}
+        roomType={property.roomTypes[selectedRoomType].type}
+        initialImageIndex={roomImageModalIndex}
+      />
+
+      {/* Booking Modal */}
+      <BookingModal
+        isOpen={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+        propertyId={property.id as string}
+        propertyName={property.name}
+        roomType={property.roomTypes[selectedRoomType].type}
+        price={property.roomTypes[selectedRoomType].price}
+        depositAmount={property.otherCharges[property.roomTypes[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple'].depositAmount}
+      />
+
+      {/* Discount Popup */}
+      <DiscountPopup />
     </div>
   );
 }

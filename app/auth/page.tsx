@@ -43,7 +43,7 @@ export default function AuthPage() {
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-2xl">
                 🏠
               </div>
-              <span className="text-2xl font-bold text-gray-900">pgUncle</span>
+              <span className="text-2xl font-bold text-gray-900">PGUNCLE</span>
             </Link>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
               {activeTab === 'login' ? 'Welcome Back' : 'Create Account'}
@@ -221,9 +221,6 @@ export default function AuthPage() {
                     Terms of Service
                   </Link>{' '}
                   and{' '}
-                  <Link href="/privacy" className="text-blue-600 hover:text-blue-700 font-medium">
-                    Privacy Policy
-                  </Link>
                 </label>
               </div>
 
@@ -285,7 +282,7 @@ export default function AuthPage() {
             </h2>
             <p className="text-xl text-white/90 mb-8">
               {activeTab === 'login'
-                ? 'Join thousands of happy guests who found their ideal accommodation through pgUncle.'
+                ? 'Join thousands of happy guests who found their ideal accommodation through PGUNCLE.'
                 : 'Create an account and discover the best PG accommodations in Chandigarh.'}
             </p>
             

@@ -1,5 +1,30 @@
 import { supabase, Property, User } from './supabase';
 
+// Helper function to convert database row to Property object
+function mapDbToProperty(dbRow: any): Property {
+  return {
+    id: dbRow.id,
+    name: dbRow.name,
+    address: dbRow.address,
+    city: dbRow.city,
+    rating: dbRow.rating,
+    reviews: dbRow.reviews,
+    type: dbRow.type,
+    availability: dbRow.availability,
+    image: dbRow.image,
+    images: dbRow.images || [],
+    price: dbRow.price,
+    amenities: dbRow.amenities || [],
+    houseRules: dbRow.house_rules || [],
+    nearbyPlaces: dbRow.nearby_places || [],
+    coordinates: dbRow.coordinates || { lat: 30.7333, lng: 76.7794 },
+    roomTypes: dbRow.room_types || [],
+    isActive: dbRow.is_active ?? true,
+    createdAt: dbRow.created_at,
+    updatedAt: dbRow.updated_at,
+  };
+}
+
 // Properties Operations
 export const propertyOperations = {
   // Get all properties
@@ -10,7 +35,7 @@ export const propertyOperations = {
       .order('created_at', { ascending: false });
     
     if (error) throw error;
-    return data as Property[];
+    return (data || []).map(mapDbToProperty);
   },
 
   // Get properties by city
@@ -22,7 +47,7 @@ export const propertyOperations = {
       .eq('is_active', true);
     
     if (error) throw error;
-    return data as Property[];
+    return (data || []).map(mapDbToProperty);
   },
 
   // Get property by ID
@@ -34,7 +59,7 @@ export const propertyOperations = {
       .single();
     
     if (error) throw error;
-    return data as Property;
+    return mapDbToProperty(data);
   },
 
   // Add new property
@@ -63,7 +88,7 @@ export const propertyOperations = {
       .single();
     
     if (error) throw error;
-    return data as Property;
+    return mapDbToProperty(data);
   },
 
   // Update property
@@ -95,7 +120,7 @@ export const propertyOperations = {
       .single();
     
     if (error) throw error;
-    return data as Property;
+    return mapDbToProperty(data);
   },
 
   // Delete property
@@ -111,6 +136,7 @@ export const propertyOperations = {
 
   // Toggle active status
   async toggleActive(id: string, isActive: boolean) {
+    console.log('toggleActive called with:', { id, isActive });
     const { data, error } = await supabase
       .from('properties')
       .update({ is_active: isActive })
@@ -118,8 +144,14 @@ export const propertyOperations = {
       .select()
       .single();
     
-    if (error) throw error;
-    return data as Property;
+    if (error) {
+      console.error('toggleActive error:', error);
+      throw error;
+    }
+    console.log('toggleActive success, raw data:', data);
+    const mappedData = mapDbToProperty(data);
+    console.log('toggleActive success, mapped data:', mappedData);
+    return mappedData;
   },
 
   // Search properties
@@ -131,7 +163,7 @@ export const propertyOperations = {
       .eq('is_active', true);
     
     if (error) throw error;
-    return data as Property[];
+    return (data || []).map(mapDbToProperty);
   }
 };
 
@@ -207,6 +239,7 @@ export const bookingOperations = {
     roomType: string;
     checkInDate: string;
     totalAmount: number;
+    duration?: number;
   }) {
     const { data, error } = await supabase
       .from('bookings')
@@ -216,6 +249,7 @@ export const bookingOperations = {
         room_type: booking.roomType,
         check_in_date: booking.checkInDate,
         total_amount: booking.totalAmount,
+        duration: booking.duration || 1,
         status: 'pending'
       }])
       .select()
@@ -282,3 +316,113 @@ export function convertToCamelCase(obj: any): any {
   }
   return obj;
 }
+
+// Payment Operations
+export const paymentOperations = {
+  // Create payment record
+  async create(payment: {
+    bookingId?: string;
+    userId?: string;
+    propertyId: string;
+    razorpayOrderId: string;
+    amount: number;
+    currency?: string;
+    notes?: any;
+  }) {
+    const { data, error } = await supabase
+      .from('payments')
+      .insert([{
+        booking_id: payment.bookingId,
+        user_id: payment.userId,
+        property_id: payment.propertyId,
+        razorpay_order_id: payment.razorpayOrderId,
+        amount: payment.amount,
+        currency: payment.currency || 'INR',
+        status: 'pending',
+        notes: payment.notes,
+      }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Update payment after successful payment
+  async updateSuccess(orderId: string, paymentDetails: {
+    razorpayPaymentId: string;
+    razorpaySignature: string;
+    paymentMethod?: string;
+  }) {
+    const { data, error } = await supabase
+      .from('payments')
+      .update({
+        razorpay_payment_id: paymentDetails.razorpayPaymentId,
+        razorpay_signature: paymentDetails.razorpaySignature,
+        payment_method: paymentDetails.paymentMethod,
+        status: 'success',
+      })
+      .eq('razorpay_order_id', orderId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Mark payment as failed
+  async updateFailed(orderId: string) {
+    const { data, error } = await supabase
+      .from('payments')
+      .update({ status: 'failed' })
+      .eq('razorpay_order_id', orderId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Get payment by order ID
+  async getByOrderId(orderId: string) {
+    const { data, error } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('razorpay_order_id', orderId)
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Get all payments for a user
+  async getByUserId(userId: string) {
+    const { data, error } = await supabase
+      .from('payments')
+      .select(`
+        *,
+        properties (name, address, city),
+        bookings (check_in_date, room_type)
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Get all payments (admin)
+  async getAll() {
+    const { data, error } = await supabase
+      .from('payments')
+      .select(`
+        *,
+        properties (name, address, city),
+        bookings (check_in_date, room_type)
+      `)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data;
+  },
+};

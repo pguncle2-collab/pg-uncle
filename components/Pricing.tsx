@@ -32,7 +32,7 @@ export const Pricing: React.FC = () => {
       name: 'Premium Living',
       price: '₹12,000',
       description: 'Includes all features from previous tiers with luxury add-ons.',
-      features: ['AC room', 'Gym access', 'Housekeeping', 'CCTV surveillance', 'Personalized meals'],
+      features: ['AC room', 'Housekeeping', 'CCTV surveillance', 'Personalized meals'],
       icon: '👑',
     },
   ];

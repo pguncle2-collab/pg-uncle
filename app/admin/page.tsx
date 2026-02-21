@@ -3,129 +3,23 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { PropertyForm } from '@/components/PropertyForm';
-
-interface Property {
-  id: string;
-  name: string;
-  city: string;
-  location: string;
-  address: string;
-  roomTypes: {
-    type: string;
-    price: number;
-    available: boolean;
-    totalSlots: number;
-    occupiedSlots: number;
-    availableSlots: number;
-  }[];
-  rating: number;
-  reviews: number;
-  status: 'active' | 'inactive';
-}
+import { useProperties } from '@/hooks/useProperties';
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCity, setFilterCity] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   
-  // Mock properties data
-  const [properties, setProperties] = useState<Property[]>([
-    {
-      id: '1',
-      name: 'Sunshine PG',
-      city: 'Chandigarh',
-      location: 'Sector 22',
-      address: 'House No. 123, Sector 22-C, Chandigarh, 160022',
-      roomTypes: [
-        { type: 'Single', price: 12000, available: true, totalSlots: 10, occupiedSlots: 8, availableSlots: 2 },
-        { type: 'Double', price: 8000, available: true, totalSlots: 15, occupiedSlots: 10, availableSlots: 5 },
-        { type: 'Triple', price: 6000, available: false, totalSlots: 8, occupiedSlots: 8, availableSlots: 0 },
-      ],
-      rating: 4.8,
-      reviews: 124,
-      status: 'active',
-    },
-    {
-      id: '2',
-      name: 'Green Valley PG',
-      city: 'Mohali',
-      location: 'Phase 7',
-      address: 'Plot No. 456, Phase 7, Mohali, 160062',
-      roomTypes: [
-        { type: 'Single', price: 10000, available: true, totalSlots: 8, occupiedSlots: 7, availableSlots: 1 },
-        { type: 'Double', price: 7000, available: true, totalSlots: 12, occupiedSlots: 5, availableSlots: 7 },
-      ],
-      rating: 4.5,
-      reviews: 89,
-      status: 'active',
-    },
-    {
-      id: '3',
-      name: 'Royal Residency',
-      city: 'Panchkula',
-      location: 'Sector 15',
-      address: 'House No. 789, Sector 15, Panchkula, 134109',
-      roomTypes: [
-        { type: 'Single', price: 11000, available: false, totalSlots: 6, occupiedSlots: 6, availableSlots: 0 },
-        { type: 'Double', price: 7500, available: true, totalSlots: 10, occupiedSlots: 3, availableSlots: 7 },
-        { type: 'Triple', price: 5500, available: true, totalSlots: 12, occupiedSlots: 8, availableSlots: 4 },
-      ],
-      rating: 4.6,
-      reviews: 156,
-      status: 'inactive',
-    },
-    {
-      id: '4',
-      name: 'City Center PG',
-      city: 'Chandigarh',
-      location: 'Sector 17',
-      address: 'Building A, Sector 17, Chandigarh, 160017',
-      roomTypes: [
-        { type: 'Single', price: 15000, available: true, totalSlots: 5, occupiedSlots: 3, availableSlots: 2 },
-        { type: 'Double', price: 10000, available: true, totalSlots: 8, occupiedSlots: 2, availableSlots: 6 },
-      ],
-      rating: 4.9,
-      reviews: 203,
-      status: 'active',
-    },
-    {
-      id: '5',
-      name: 'Student Hub PG',
-      city: 'Zirakpur',
-      location: 'VIP Road',
-      address: 'Near Chandigarh University, VIP Road, Zirakpur, 140603',
-      roomTypes: [
-        { type: 'Double', price: 6500, available: true, totalSlots: 20, occupiedSlots: 12, availableSlots: 8 },
-        { type: 'Triple', price: 5000, available: true, totalSlots: 15, occupiedSlots: 14, availableSlots: 1 },
-      ],
-      rating: 4.3,
-      reviews: 67,
-      status: 'active',
-    },
-    {
-      id: '6',
-      name: 'Comfort Stay PG',
-      city: 'Mohali',
-      location: 'Phase 11',
-      address: 'SCO 234, Phase 11, Mohali, 160062',
-      roomTypes: [
-        { type: 'Single', price: 9500, available: true, totalSlots: 7, occupiedSlots: 4, availableSlots: 3 },
-        { type: 'Double', price: 6500, available: false, totalSlots: 10, occupiedSlots: 10, availableSlots: 0 },
-      ],
-      rating: 4.4,
-      reviews: 92,
-      status: 'active',
-    },
-  ]);
+  // Use properties hook
+  const { properties, loading, error, addProperty, updateProperty, deleteProperty, togglePropertyActive } = useProperties();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simple password check (in production, use proper authentication)
     if (password === 'admin123') {
       setIsAuthenticated(true);
     } else {
@@ -133,38 +27,52 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteProperty = (id: string) => {
+  const handleDeleteProperty = async (id: string) => {
     if (confirm('Are you sure you want to delete this property?')) {
-      setProperties(properties.filter(p => p.id !== id));
+      await deleteProperty(id);
     }
   };
 
-  const handleToggleStatus = (id: string) => {
-    setProperties(properties.map(p => 
-      p.id === id ? { ...p, status: p.status === 'active' ? 'inactive' : 'active' } : p
-    ));
+  const handleToggleStatus = async (id: string) => {
+    const property = properties.find(p => p.id === id);
+    console.log('Toggle status clicked for property:', id);
+    console.log('Current property:', property);
+    console.log('Current isActive:', property?.isActive);
+    console.log('Will toggle to:', !property?.isActive);
+    
+    if (property) {
+      try {
+        const result = await togglePropertyActive(id, !property.isActive);
+        console.log('Toggle result:', result);
+        alert(`Property status changed to: ${!property.isActive ? 'Active' : 'Inactive'}`);
+      } catch (error) {
+        console.error('Error toggling status:', error);
+        alert(`Failed to toggle status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
   };
 
   // Filter properties based on search and filters
   const filteredProperties = properties.filter(property => {
     const matchesSearch = property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         property.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          property.address.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCity = filterCity === 'all' || property.city === filterCity;
-    const matchesStatus = filterStatus === 'all' || property.status === filterStatus;
+    const matchesStatus = filterStatus === 'all' || 
+                         (filterStatus === 'active' && property.isActive) ||
+                         (filterStatus === 'inactive' && !property.isActive);
     
     return matchesSearch && matchesCity && matchesStatus;
   });
 
   // Calculate low inventory alerts (3 or fewer slots available)
   const lowInventoryCount = properties.reduce((count, property) => {
-    const hasLowInventory = property.roomTypes.some(rt => rt.availableSlots > 0 && rt.availableSlots <= 3);
+    const hasLowInventory = property.roomTypes?.some(rt => rt.availableSlots > 0 && rt.availableSlots <= 3);
     return count + (hasLowInventory ? 1 : 0);
   }, 0);
 
   // Get properties with critical inventory (1 or fewer slots)
   const criticalInventoryProperties = properties.filter(property => 
-    property.roomTypes.some(rt => rt.availableSlots > 0 && rt.availableSlots <= 1)
+    property.roomTypes?.some(rt => rt.availableSlots > 0 && rt.availableSlots <= 1)
   );
 
   if (!isAuthenticated) {
@@ -211,6 +119,29 @@ export default function AdminDashboard() {
     );
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-4"></div>
+          <p className="text-xl text-gray-600">Loading properties...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 max-w-md">
+          <div className="text-6xl mb-4 text-center">⚠️</div>
+          <h3 className="text-2xl font-bold text-red-900 mb-2 text-center">Database Error</h3>
+          <p className="text-red-600 text-center">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -222,11 +153,14 @@ export default function AdminDashboard() {
                 🏠
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">pgUncle Admin</h1>
+                <h1 className="text-2xl font-bold text-gray-900">PGUNCLE Admin</h1>
                 <p className="text-sm text-gray-600">Property Management Dashboard</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <div className="text-sm text-green-600 font-semibold">
+                ✓ System Connected
+              </div>
               <Link
                 href="/"
                 className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium"
@@ -262,7 +196,7 @@ export default function AdminDashboard() {
               <span className="text-2xl">✅</span>
             </div>
             <div className="text-3xl font-bold text-green-600">
-              {properties.filter(p => p.status === 'active').length}
+              {properties.filter(p => p.isActive).length}
             </div>
           </div>
           
@@ -284,7 +218,7 @@ export default function AdminDashboard() {
             </div>
             <div className="text-3xl font-bold text-blue-600">
               {properties.length > 0 
-                ? (properties.reduce((acc, p) => acc + p.rating, 0) / properties.length).toFixed(1)
+                ? (properties.reduce((acc, p) => acc + (p.rating || 0), 0) / properties.length).toFixed(1)
                 : '0.0'
               }
             </div>
@@ -309,7 +243,7 @@ export default function AdminDashboard() {
                           <p className="font-semibold text-gray-900">{property.name}</p>
                           <div className="flex gap-3 mt-1">
                             {property.roomTypes
-                              .filter(rt => rt.availableSlots > 0 && rt.availableSlots <= 1)
+                              ?.filter(rt => rt.availableSlots > 0 && rt.availableSlots <= 1)
                               .map((rt, idx) => (
                                 <span key={idx} className="text-sm text-red-600 font-medium">
                                   {rt.type}: {rt.availableSlots} slot{rt.availableSlots !== 1 ? 's' : ''} left
@@ -317,15 +251,6 @@ export default function AdminDashboard() {
                               ))}
                           </div>
                         </div>
-                        <button
-                          onClick={() => {
-                            setSelectedProperty(property);
-                            setShowEditModal(true);
-                          }}
-                          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-semibold"
-                        >
-                          Update
-                        </button>
                       </div>
                     </div>
                   ))}
@@ -359,7 +284,7 @@ export default function AdminDashboard() {
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search by name, location, or address..."
+                  placeholder="Search by name or address..."
                   className="w-full px-4 py-3 pl-10 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors"
                 />
                 <svg
@@ -423,7 +348,7 @@ export default function AdminDashboard() {
                 <tr>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Property</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Location</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Inventory</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Price</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Rating</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Actions</th>
@@ -454,68 +379,30 @@ export default function AdminDashboard() {
                     <td className="px-6 py-4">
                       <div className="text-sm">
                         <div className="font-medium text-gray-900">{property.city}</div>
-                        <div className="text-gray-600">{property.location}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="space-y-2">
-                        {property.roomTypes.map((room, idx) => {
-                          const occupancyRate = (room.occupiedSlots / room.totalSlots) * 100;
-                          const isLowInventory = room.availableSlots > 0 && room.availableSlots <= 3;
-                          const isCritical = room.availableSlots > 0 && room.availableSlots <= 1;
-                          
-                          return (
-                            <div key={idx} className="text-sm">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="font-medium text-gray-900">{room.type}</span>
-                                <span className={`text-xs font-semibold ${
-                                  isCritical ? 'text-red-600' : isLowInventory ? 'text-orange-600' : 'text-green-600'
-                                }`}>
-                                  {room.availableSlots}/{room.totalSlots} available
-                                </span>
-                              </div>
-                              <div className="w-full bg-gray-200 rounded-full h-2 mb-1">
-                                <div
-                                  className={`h-2 rounded-full transition-all ${
-                                    occupancyRate >= 90 ? 'bg-red-500' :
-                                    occupancyRate >= 70 ? 'bg-orange-500' :
-                                    'bg-green-500'
-                                  }`}
-                                  style={{ width: `${occupancyRate}%` }}
-                                />
-                              </div>
-                              <div className="flex items-center justify-between text-xs text-gray-600">
-                                <span>₹{room.price}/mo</span>
-                                <span>{occupancyRate.toFixed(0)}% occupied</span>
-                              </div>
-                              {isCritical && (
-                                <div className="mt-1 flex items-center gap-1 text-xs text-red-600 font-semibold">
-                                  <span>⚠️</span>
-                                  <span>Critical - Only {room.availableSlots} left!</span>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
+                      <div className="text-sm font-semibold text-gray-900">
+                        ₹{property.price}/mo
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1">
                         <span className="text-blue-500">⭐</span>
-                        <span className="font-semibold text-gray-900">{property.rating}</span>
-                        <span className="text-sm text-gray-600">({property.reviews})</span>
+                        <span className="font-semibold text-gray-900">{property.rating || 0}</span>
+                        <span className="text-sm text-gray-600">({property.reviews || 0})</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <button
                         onClick={() => handleToggleStatus(property.id)}
                         className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                          property.status === 'active'
+                          property.isActive
                             ? 'bg-green-100 text-green-700'
                             : 'bg-gray-100 text-gray-700'
                         }`}
                       >
-                        {property.status === 'active' ? 'Active' : 'Inactive'}
+                        {property.isActive ? 'Active' : 'Inactive'}
                       </button>
                     </td>
                     <td className="px-6 py-4">
@@ -573,83 +460,76 @@ export default function AdminDashboard() {
                 </svg>
               </button>
             </div>
-            <div className="p-6 overflow-y-auto flex-1 scrollbar-hide">
+            <div className="p-6 overflow-y-auto flex-1">
               <PropertyForm
                 initialData={selectedProperty ? {
                   name: selectedProperty.name,
                   city: selectedProperty.city,
-                  location: selectedProperty.location,
+                  location: selectedProperty.address,
                   address: selectedProperty.address,
-                  coordinates: { lat: 30.7333, lng: 76.7794 },
+                  coordinates: selectedProperty.coordinates || { lat: 30.7333, lng: 76.7794 },
                   description: 'Property description',
-                  roomTypes: selectedProperty.roomTypes.map(rt => ({
+                  roomTypes: selectedProperty.roomTypes?.map((rt: any) => ({
                     ...rt,
                     description: '',
                     features: [],
-                  })),
-                  amenities: [
-                    { name: 'Wi-Fi', icon: '📶', available: true },
-                    { name: 'AC', icon: '❄️', available: true },
-                    { name: 'Meals', icon: '🍽️', available: true },
-                    { name: 'Laundry', icon: '🧺', available: true },
-                    { name: 'Parking', icon: '🚗', available: true },
-                    { name: 'Gym', icon: '💪', available: false },
-                    { name: 'Security', icon: '🔒', available: true },
-                    { name: 'Housekeeping', icon: '🧹', available: true },
-                  ],
-                  rules: ['No smoking', 'Visitors allowed till 9 PM'],
-                  images: ['https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg'],
+                  })) || [],
+                  amenities: selectedProperty.amenities || [],
+                  rules: selectedProperty.houseRules || [],
+                  images: selectedProperty.images || [selectedProperty.image],
                   contactPhone: '+91 98765 43210',
                 } : undefined}
-                onSubmit={(data) => {
-                  if (showEditModal && selectedProperty) {
-                    // Update existing property
-                    setProperties(properties.map(p => 
-                      p.id === selectedProperty.id 
-                        ? {
-                            ...p,
-                            name: data.name,
-                            city: data.city,
-                            location: data.location,
-                            address: data.address,
-                            roomTypes: data.roomTypes.map(rt => ({
-                              type: rt.type,
-                              price: rt.price,
-                              available: rt.available,
-                              totalSlots: rt.totalSlots,
-                              occupiedSlots: rt.occupiedSlots,
-                              availableSlots: rt.availableSlots,
-                            })),
-                          }
-                        : p
-                    ));
-                    alert('Property updated successfully!');
-                  } else {
-                    // Add new property
-                    const newProperty: Property = {
-                      id: (properties.length + 1).toString(),
-                      name: data.name,
-                      city: data.city,
-                      location: data.location,
-                      address: data.address,
-                      roomTypes: data.roomTypes.map(rt => ({
-                        type: rt.type,
-                        price: rt.price,
-                        available: rt.available,
-                        totalSlots: rt.totalSlots,
-                        occupiedSlots: rt.occupiedSlots,
-                        availableSlots: rt.availableSlots,
-                      })),
-                      rating: 0,
-                      reviews: 0,
-                      status: 'active',
-                    };
-                    setProperties([...properties, newProperty]);
-                    alert('Property added successfully!');
+                onSubmit={async (data) => {
+                  console.log('Form submitted with data:', data);
+                  try {
+                    if (showEditModal && selectedProperty) {
+                      // Update existing property
+                      console.log('Updating property:', selectedProperty.id);
+                      const updateData = {
+                        name: data.name,
+                        city: data.city,
+                        address: data.address,
+                        coordinates: data.coordinates,
+                        roomTypes: data.roomTypes,
+                        amenities: data.amenities,
+                        houseRules: data.rules,
+                        images: data.images,
+                      };
+                      console.log('Update data:', updateData);
+                      await updateProperty(selectedProperty.id, updateData);
+                      alert('Property updated successfully!');
+                    } else {
+                      // Add new property
+                      console.log('Adding new property');
+                      const newPropertyData = {
+                        name: data.name,
+                        city: data.city,
+                        address: data.address,
+                        rating: 0,
+                        reviews: 0,
+                        type: data.roomTypes.map(rt => rt.type).join(', '),
+                        availability: 'Available',
+                        image: data.images[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80',
+                        images: data.images,
+                        price: data.roomTypes[0]?.price || 0,
+                        amenities: data.amenities,
+                        houseRules: data.rules,
+                        nearbyPlaces: [],
+                        coordinates: data.coordinates,
+                        roomTypes: data.roomTypes,
+                        isActive: true,
+                      };
+                      console.log('New property data:', newPropertyData);
+                      await addProperty(newPropertyData);
+                      alert('Property added successfully!');
+                    }
+                    setShowAddModal(false);
+                    setShowEditModal(false);
+                    setSelectedProperty(null);
+                  } catch (error) {
+                    console.error('Error saving property:', error);
+                    alert(`Failed to save property: ${error instanceof Error ? error.message : 'Unknown error'}`);
                   }
-                  setShowAddModal(false);
-                  setShowEditModal(false);
-                  setSelectedProperty(null);
                 }}
                 onCancel={() => {
                   setShowAddModal(false);
