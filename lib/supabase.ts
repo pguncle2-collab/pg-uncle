@@ -28,6 +28,7 @@ export interface Property {
   images?: string[];
   price: number;
   gender?: string;
+  description?: string;
   amenities: Amenity[];
   houseRules: string[];
   nearbyPlaces: NearbyPlace[];
@@ -47,10 +48,16 @@ export interface RoomType {
   totalSlots: number;
   occupiedSlots: number;
   availableSlots: number;
+  available?: boolean;
+  description?: string;
+  features?: string[];
+  images?: string[];
+  beds?: number;
 }
 
 export interface Amenity {
   name: string;
+  icon?: string;
   available: boolean;
 }
 

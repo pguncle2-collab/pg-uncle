@@ -12,6 +12,7 @@ interface RoomType {
   totalSlots: number;
   occupiedSlots: number;
   availableSlots: number;
+  beds: number;
 }
 
 interface PropertyFormData {
@@ -70,7 +71,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
       description: '',
       gender: 'Boys',
       roomTypes: [
-        { type: 'Single', price: 0, available: true, description: '', features: [], totalSlots: 0, occupiedSlots: 0, availableSlots: 0 },
+        { type: 'Single', price: 0, available: true, description: '', features: [], totalSlots: 0, occupiedSlots: 0, availableSlots: 0, beds: 1 },
       ],
       amenities: defaultAmenities,
       rules: [''],
@@ -124,7 +125,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
       ...formData,
       roomTypes: [
         ...formData.roomTypes,
-        { type: '', price: 0, available: true, description: '', features: [], totalSlots: 0, occupiedSlots: 0, availableSlots: 0 },
+        { type: '', price: 0, available: true, description: '', features: [], totalSlots: 0, occupiedSlots: 0, availableSlots: 0, beds: 1 },
       ],
     });
   };
@@ -420,6 +421,25 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
                   <option value="Double">Double Occupancy</option>
                   <option value="Triple">Triple Occupancy</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Number of Beds per Room *
+                </label>
+                <input
+                  type="number"
+                  value={room.beds}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    updateRoomType(index, 'beds', value === '' ? 1 : parseInt(value));
+                  }}
+                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-base"
+                  placeholder="e.g., 1, 2, or 3"
+                  min="1"
+                  max="10"
+                  required
+                />
               </div>
 
               <div>
