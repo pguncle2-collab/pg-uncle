@@ -88,8 +88,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else if (fetchError) {
         console.error('Error checking user existence:', fetchError);
       }
-    } catch (error) {
-      console.error('Error in ensureUserRecord:', error);
+    } catch (error: any) {
+      // Handle abort errors gracefully
+      if (error.name === 'AbortError') {
+        console.warn('Request aborted while ensuring user record. This is usually temporary.');
+      } else {
+        console.error('Error in ensureUserRecord:', error);
+      }
     }
   };
 
