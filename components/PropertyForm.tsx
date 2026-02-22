@@ -23,6 +23,7 @@ interface PropertyFormData {
     lng: number;
   };
   description: string;
+  gender: string;
   roomTypes: RoomType[];
   amenities: {
     name: string;
@@ -49,6 +50,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
       address: '',
       coordinates: { lat: 30.7333, lng: 76.7794 },
       description: '',
+      gender: 'Boys',
       roomTypes: [
         { type: 'Single', price: 0, available: true, description: '', features: [], totalSlots: 0, occupiedSlots: 0, availableSlots: 0 },
       ],
@@ -174,6 +176,21 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
               {cities.map((city) => (
                 <option key={city} value={city}>{city}</option>
               ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              PG For *
+            </label>
+            <select
+              value={formData.gender}
+              onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+              className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
+              required
+            >
+              <option value="Boys">🧔 Boys</option>
+              <option value="Girls">👩 Girls</option>
             </select>
           </div>
 
