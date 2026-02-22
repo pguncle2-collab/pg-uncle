@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { uploadMultipleImages } from '@/lib/imageUpload';
 
 interface RoomType {
   type: string;
@@ -69,13 +70,44 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
     }
   );
 
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>(initialData?.images || []);
+  const [isUploading, setIsUploading] = useState(false);
+
   const cities = ['Chandigarh', 'Mohali', 'Panchkula', 'Zirakpur'];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('PropertyForm handleSubmit called');
-    console.log('Form data being submitted:', formData);
-    onSubmit(formData);
+    
+    setIsUploading(true);
+    
+    try {
+      // Upload new images if any
+      let uploadedImageUrls: string[] = [];
+      if (imageFiles.length > 0) {
+        console.log('Uploading images...', imageFiles.length);
+        uploadedImageUrls = await uploadMultipleImages(imageFiles, 'properties');
+        console.log('Images uploaded:', uploadedImageUrls);
+      }
+
+      // Combine existing images with newly uploaded ones
+      const allImages = [...imagePreviewUrls.filter(url => url && !url.startsWith('blob:')), ...uploadedImageUrls];
+      
+      // Update form data with uploaded image URLs
+      const dataToSubmit = {
+        ...formData,
+        images: allImages.length > 0 ? allImages : ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80'],
+      };
+      
+      console.log('Form data being submitted:', dataToSubmit);
+      onSubmit(dataToSubmit);
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      alert('Failed to upload images. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const addRoomType = () => {
@@ -123,24 +155,60 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
     setFormData({ ...formData, rules: newRules });
   };
 
-  const addImage = () => {
-    setFormData({ ...formData, images: [...formData.images, ''] });
-  };
-
-  const removeImage = (index: number) => {
-    setFormData({ ...formData, images: formData.images.filter((_, i) => i !== index) });
-  };
-
-  const updateImage = (index: number, value: string) => {
-    const newImages = [...formData.images];
-    newImages[index] = value;
-    setFormData({ ...formData, images: newImages });
-  };
-
   const toggleAmenity = (index: number) => {
     const newAmenities = [...formData.amenities];
     newAmenities[index].available = !newAmenities[index].available;
     setFormData({ ...formData, amenities: newAmenities });
+  };
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newFiles = Array.from(files);
+    
+    // Validate file types and sizes
+    const validFiles = newFiles.filter(file => {
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      
+      if (!validTypes.includes(file.type)) {
+        alert(`${file.name} is not a valid image type. Only JPEG, PNG, and WebP are allowed.`);
+        return false;
+      }
+      
+      if (file.size > maxSize) {
+        alert(`${file.name} is too large. Maximum size is 5MB.`);
+        return false;
+      }
+      
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    // Add to image files
+    setImageFiles(prev => [...prev, ...validFiles]);
+
+    // Create preview URLs
+    const newPreviewUrls = validFiles.map(file => URL.createObjectURL(file));
+    setImagePreviewUrls(prev => [...prev, ...newPreviewUrls]);
+  };
+
+  const removeImage = (index: number) => {
+    // Remove from preview URLs
+    const urlToRemove = imagePreviewUrls[index];
+    if (urlToRemove && urlToRemove.startsWith('blob:')) {
+      URL.revokeObjectURL(urlToRemove);
+    }
+    
+    setImagePreviewUrls(prev => prev.filter((_, i) => i !== index));
+    
+    // Remove from files if it's a new upload
+    const fileIndex = imageFiles.findIndex((_, i) => i === index - (imagePreviewUrls.length - imageFiles.length));
+    if (fileIndex >= 0) {
+      setImageFiles(prev => prev.filter((_, i) => i !== fileIndex));
+    }
   };
 
   return (
@@ -529,50 +597,86 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
       {/* Images */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h4 className="text-lg font-bold text-gray-900">Property Images (URLs)</h4>
-          <button
-            type="button"
-            onClick={addImage}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm"
-          >
-            + Add Image
-          </button>
+          <div>
+            <h4 className="text-lg font-bold text-gray-900">Property Images</h4>
+            <p className="text-sm text-gray-600 mt-1">Upload high-quality images (JPEG, PNG, WebP - Max 5MB each)</p>
+          </div>
+          <label className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm cursor-pointer font-semibold">
+            + Add Images
+            <input
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
+              multiple
+              onChange={handleImageFileChange}
+              className="hidden"
+            />
+          </label>
         </div>
 
-        {formData.images.map((image, index) => (
-          <div key={index} className="flex gap-2">
-            <input
-              type="url"
-              value={image}
-              onChange={(e) => updateImage(index, e.target.value)}
-              className="flex-1 px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
-              placeholder="https://example.com/image.jpg"
-            />
-            {formData.images.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeImage(index)}
-                className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg"
-              >
-                Remove
-              </button>
-            )}
+        {/* Image Previews */}
+        {imagePreviewUrls.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {imagePreviewUrls.map((url, index) => (
+              <div key={index} className="relative group">
+                <img
+                  src={url}
+                  alt={`Preview ${index + 1}`}
+                  className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeImage(index)}
+                  className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                {index === 0 && (
+                  <div className="absolute bottom-2 left-2 px-2 py-1 bg-blue-500 text-white text-xs rounded">
+                    Main Image
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
+        )}
+
+        {imagePreviewUrls.length === 0 && (
+          <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
+            <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <p className="text-gray-600 mb-2">No images uploaded yet</p>
+            <p className="text-sm text-gray-500">Click "Add Images" to upload property photos</p>
+          </div>
+        )}
       </div>
 
       {/* Form Actions */}
       <div className="flex gap-4 pt-4 border-t border-gray-200">
         <button
           type="submit"
-          className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all"
+          disabled={isUploading}
+          className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          Save Property
+          {isUploading ? (
+            <>
+              <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Uploading Images...
+            </>
+          ) : (
+            'Save Property'
+          )}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
+          disabled={isUploading}
+          className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Cancel
         </button>
