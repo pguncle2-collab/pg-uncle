@@ -25,8 +25,6 @@ export async function GET(request: Request) {
           autoRefreshToken: true,
           detectSessionInUrl: true,
           storageKey: 'pguncle-auth',
-          // Disable lock mechanism to prevent AbortError
-          lock: false,
         },
       }
     );

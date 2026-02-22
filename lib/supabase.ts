@@ -19,8 +19,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     storageKey: 'pguncle-auth',
-    // Disable lock mechanism to prevent AbortError
-    lock: false,
   },
   global: {
     headers: {
