@@ -469,6 +469,7 @@ export default function AdminDashboard() {
                   address: selectedProperty.address,
                   coordinates: selectedProperty.coordinates || { lat: 30.7333, lng: 76.7794 },
                   description: 'Property description',
+                  gender: selectedProperty.gender || 'Boys',
                   roomTypes: selectedProperty.roomTypes?.map((rt: any) => ({
                     ...rt,
                     description: '',
@@ -490,6 +491,7 @@ export default function AdminDashboard() {
                         city: data.city,
                         address: data.address,
                         coordinates: data.coordinates,
+                        gender: data.gender,
                         roomTypes: data.roomTypes,
                         amenities: data.amenities,
                         houseRules: data.rules,
@@ -512,6 +514,7 @@ export default function AdminDashboard() {
                         image: data.images[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80',
                         images: data.images,
                         price: data.roomTypes[0]?.price || 0,
+                        gender: data.gender,
                         amenities: data.amenities,
                         houseRules: data.rules,
                         nearbyPlaces: [],
