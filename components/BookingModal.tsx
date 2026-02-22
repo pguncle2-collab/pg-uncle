@@ -59,6 +59,16 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     setIsSubmitting(true);
 
     try {
+      console.log('Submitting booking with data:', {
+        userId: user?.id,
+        propertyId,
+        roomType,
+        moveInDate: formData.moveInDate,
+        duration: formData.duration,
+        totalAmount,
+        specialRequests: formData.specialRequests,
+      });
+
       const response = await fetch('/api/bookings', {
         method: 'POST',
         headers: {
@@ -76,9 +86,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       });
 
       const data = await response.json();
+      console.log('API Response:', { status: response.status, data });
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create booking');
+        console.error('Booking failed:', data);
+        throw new Error(data.error || data.details || 'Failed to create booking');
       }
 
       console.log('Booking created successfully:', data);
@@ -90,10 +102,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         setFormData({ moveInDate: '', duration: 6, specialRequests: '' });
         onClose();
       }, 2000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating booking:', error);
+      console.error('Error details:', error.message);
       setIsSubmitting(false);
-      alert('Failed to create booking. Please try again.');
+      alert(`Failed to create booking: ${error.message}\n\nPlease check the console for more details.`);
     }
   };
 
