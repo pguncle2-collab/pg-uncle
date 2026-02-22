@@ -43,8 +43,20 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Error creating booking:', error);
+      
+      // Check if it's a column missing error
+      if (error.message.includes('column') && error.message.includes('does not exist')) {
+        return NextResponse.json(
+          { 
+            error: 'Database setup incomplete. Please run UPDATE_BOOKINGS_TABLE.sql in Supabase SQL Editor.',
+            details: error.message 
+          },
+          { status: 500 }
+        );
+      }
+      
       return NextResponse.json(
-        { error: 'Failed to create booking' },
+        { error: 'Failed to create booking', details: error.message },
         { status: 500 }
       );
     }
@@ -53,10 +65,10 @@ export async function POST(request: NextRequest) {
       { success: true, booking: data },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in booking API:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error.message },
       { status: 500 }
     );
   }
