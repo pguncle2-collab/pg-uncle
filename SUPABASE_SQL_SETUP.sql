@@ -1,5 +1,5 @@
 -- ============================================
--- pgUncle Database Setup - Run this in Supabase SQL Editor
+-- PGUNCLE Database Setup - Run this in Supabase SQL Editor
 -- ============================================
 
 -- Step 1: Enable UUID extension
@@ -235,7 +235,7 @@ VALUES
 ),
 (
   'City Center PG',
-  'Building A, Sector 17, Chandigarh, 160017',
+  'Building A, Sector 82A, IT City, Mohali, 160017',
   'Chandigarh',
   4.9,
   203,
@@ -256,7 +256,7 @@ VALUES
   ]',
   '["No smoking", "No pets allowed", "Visitors allowed till 10 PM", "Maintain cleanliness"]',
   '[
-    {"name": "Sector 17 Market", "distance": "0.5 km"},
+    {"name": "Sector 82A, IT City Market", "distance": "0.5 km"},
     {"name": "Government Museum", "distance": "1 km"},
     {"name": "Rose Garden", "distance": "2 km"}
   ]',

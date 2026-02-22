@@ -26,10 +26,10 @@ export const Hero: React.FC<HeroProps> = ({ onAuthClick }) => {
           <div className="inline-block mb-4 px-4 py-2 bg-blue-600/20 backdrop-blur-sm border border-blue-400/30 rounded-full">
             <span className="text-blue-300 text-sm font-medium">🏠 Premium PG Accommodations</span>
           </div>
-          <h1 className="text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
             Your Trusted Uncle for a Comfortable <span className="text-blue-400">PG Stay</span> in <span className="text-blue-400">Tricity Chandigarh</span>
           </h1>
-          <p className="text-xl lg:text-2xl text-gray-200 mb-8 leading-relaxed">
+          <p className="text-base md:text-xl lg:text-2xl text-gray-200 mb-8 leading-relaxed">
             Whether you're a student chasing dreams or professional building a career, <span className="text-blue-400 font-semibold">PGUNCLE</span> gives you a safe, clean and homely PG - without stress, brokers, or surprises.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">

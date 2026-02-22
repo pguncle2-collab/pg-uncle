@@ -60,10 +60,10 @@ export const Testimonials: React.FC = () => {
           <div className="inline-block mb-4 px-4 py-2 bg-blue-200 rounded-full">
             <span className="text-blue-800 text-sm font-semibold">TESTIMONIALS</span>
           </div>
-          <h2 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
+          <h2 className="text-2xl md:text-4xl lg:text-6xl font-bold text-white mb-6">
             Voices of Our <span className="text-blue-600">Happy Guests</span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-base md:text-xl text-gray-600 max-w-2xl mx-auto">
             Don't just take our word for it - hear from our satisfied guests
           </p>
         </div>

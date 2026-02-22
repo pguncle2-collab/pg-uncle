@@ -4,7 +4,7 @@
 
 ### 1. Supabase Account & Project
 - [ ] Create Supabase account at https://supabase.com
-- [ ] Create new project named "pgUncle"
+- [ ] Create new project named "PGUNCLE"
 - [ ] Wait for project initialization to complete
 - [ ] Note down your project URL and anon key
 

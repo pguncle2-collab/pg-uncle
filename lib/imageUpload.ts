@@ -32,6 +32,9 @@ export async function uploadImage(
     const fileExt = file.name.split('.').pop();
     const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
+    console.log('Attempting to upload to bucket: property-images');
+    console.log('File path:', fileName);
+
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
       .from('property-images')
@@ -42,7 +45,17 @@ export async function uploadImage(
 
     if (error) {
       console.error('Upload error:', error);
+      
+      // Check if bucket doesn't exist
+      if (error.message.includes('Bucket not found') || error.message.includes('bucket')) {
+        throw new Error('Storage bucket "property-images" not found. Please create it in Supabase Dashboard under Storage.');
+      }
+      
       throw new Error(`Upload failed: ${error.message}`);
+    }
+
+    if (!data || !data.path) {
+      throw new Error('Upload succeeded but no path returned');
     }
 
     // Get public URL
@@ -50,6 +63,7 @@ export async function uploadImage(
       .from('property-images')
       .getPublicUrl(data.path);
 
+    console.log('Upload successful:', publicUrl);
     return publicUrl;
   } catch (error) {
     console.error('Error uploading image:', error);

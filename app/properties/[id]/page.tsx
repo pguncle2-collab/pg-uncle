@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -11,9 +11,13 @@ import { BookVisitModal } from '@/components/BookVisitModal';
 import { RoomImageModal } from '@/components/RoomImageModal';
 import { BookingModal } from '@/components/BookingModal';
 import { DiscountPopup } from '@/components/DiscountPopup';
+import { propertyOperations } from '@/lib/supabaseOperations';
+import { Property } from '@/lib/supabase';
 
 export default function PropertyDetailPage() {
   const params = useParams();
+  const [property, setProperty] = useState<Property | null>(null);
+  const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedRoomType, setSelectedRoomType] = useState(0);
   const [selectedRoomImages, setSelectedRoomImages] = useState<{[key: number]: number}>({ 0: 0, 1: 0, 2: 0 });
@@ -24,6 +28,24 @@ export default function PropertyDetailPage() {
   const { openAuthModal } = useAuthModal();
   const { isAuthenticated } = useAuth();
 
+  useEffect(() => {
+    const fetchProperty = async () => {
+      try {
+        setLoading(true);
+        const data = await propertyOperations.getById(params.id as string);
+        setProperty(data);
+      } catch (error) {
+        console.error('Error fetching property:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (params.id) {
+      fetchProperty();
+    }
+  }, [params.id]);
+
   const handleBookNow = () => {
     if (!isAuthenticated) {
       openAuthModal();
@@ -32,78 +54,33 @@ export default function PropertyDetailPage() {
     }
   };
 
-  // Mock property data - in real app, fetch based on params.id
-  const property = {
-    id: params.id,
-    name: 'Sunshine PG',
-    city: 'Chandigarh',
-    location: 'Sector 22',
-    address: 'House No. 123, Sector 22-C, Chandigarh, 160022',
-    coordinates: {
-      lat: 30.7333,
-      lng: 76.7794,
-    },
-    roomTypes: [
-      {
-        type: 'Single',
-        price: 12000,
-        available: true,
-        description: 'Private room with attached bathroom',
-        features: [ 'Attached Bathroom', 'AC', 'Wardrobe', 'Mattress', 'Geyser'],
-        totalSlots: 10,
-        occupiedSlots: 8,
-        availableSlots: 2,
-        images: [
-          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-        ],
-      },
-      {
-        type: 'Double',
-        price: 8000,
-        available: true,
-        description: 'Shared room for 2 people',
-        features: [ 'Attached Bathroom', 'AC', 'Wardrobe', 'Mattress', 'Geyser'],
-        totalSlots: 15,
-        occupiedSlots: 10,
-        availableSlots: 5,
-        images: [
-          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-        ],
-      },
-      {
-        type: 'Triple',
-        price: 6000,
-        available: false,
-        description: 'Shared room for 3 people',
-        features: [ 'Attached Bathroom', 'Fan', 'Wardrobe', 'Mattress', 'Geyser'],
-        totalSlots: 8,
-        occupiedSlots: 8,
-        availableSlots: 0,
-        images: [
-          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-          'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-        ],
-      },
-    ],
-    rating: 4.8,
-    reviews: 124,
-    description: 'Welcome to Sunshine PG, a premium paying guest accommodation in the heart of Chandigarh. Our facility offers comfortable living spaces with modern amenities, perfect for students and working professionals. Located in Sector 22, you\'ll have easy access to markets, restaurants, and public transport.',
-    amenities: [
-      { name: 'Fully Furnished', icon: '🛌', available: true },
-      { name: 'Wifi', icon: '📶', available: true },
-      { name: 'Power Backup', icon: '🔋', available: true },
-      { name: 'Room Cleaning Service', icon: '🧹', available: true },
-      { name: 'Parking', icon: '🚗', available: true },
-      { name: 'Meals', icon: '🍱', available: true },
-      { name: 'Fridge', icon: '🧊', available: true },
-      { name: 'Geyser', icon: '♨️', available: true },
-      { name: 'RO', icon: '💦', available: true },
-    ],
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading property details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!property) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Property Not Found</h1>
+          <p className="text-gray-600 mb-4">The property you're looking for doesn't exist.</p>
+          <Link href="/" className="text-blue-600 hover:text-blue-700 font-semibold">
+            Back to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Mock data for features not yet in database
+  const mockData = {
     foodAndKitchen: {
       single: {
         foodAvailable: true,
@@ -144,12 +121,6 @@ export default function PropertyDetailPage() {
         gateClosingTime: '10:00 PM',
       },
     },
-    images: [
-      'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-      'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-      'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-      'https://media.gettyimages.com/id/889777132/photo/rooms-to-rent.jpg',
-    ],
     rules: {
       visitorEntry: true,
       nonVegFood: false,
@@ -165,8 +136,18 @@ export default function PropertyDetailPage() {
       { name: 'Chandigarh University', distance: '1.5 km', type: 'Education' },
       { name: 'Elante Mall', distance: '4.0 km', type: 'Shopping' },
     ],
-    contactPhone: '+91 98765 43210',
+    contactPhone: '+91 98765 43210'
   };
+
+  // Ensure room images exist
+  const roomTypesWithImages = property.roomTypes?.map(room => ({
+    ...room,
+    images: room.images && room.images.length > 0 
+      ? room.images 
+      : property.images && property.images.length > 0 
+        ? property.images 
+        : ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80']
+  })) || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -191,14 +172,14 @@ export default function PropertyDetailPage() {
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
               <div className="relative h-96">
                 <Image
-                  src={property.images[selectedImage]}
+                  src={(property.images && property.images[selectedImage]) || property.image}
                   alt={property.name}
                   fill
                   className="object-cover"
                 />
               </div>
               <div className="grid grid-cols-4 gap-2 p-4">
-                {property.images.map((image, index) => (
+                {(property.images || [property.image]).map((image, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
@@ -229,14 +210,14 @@ export default function PropertyDetailPage() {
                   <svg className="w-5 h-5 text-blue-500 fill-current" viewBox="0 0 20 20">
                     <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
                   </svg>
-                  <span className="font-bold text-gray-900">{property.rating}</span>
-                  <span className="text-sm text-gray-600">({property.reviews} reviews)</span>
+                  <span className="font-bold text-gray-900">{property.rating || 4.5}</span>
+                  <span className="text-sm text-gray-600">({property.reviews || 0} reviews)</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-4 mb-6">
                 <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full font-semibold">
-                  {property.roomTypes.length} Room Types Available
+                  {roomTypesWithImages.length} Room Types Available
                 </span>
               </div>
 
@@ -251,7 +232,7 @@ export default function PropertyDetailPage() {
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Room Types & Pricing</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                {property.roomTypes.map((room, index) => {
+                {roomTypesWithImages.map((room, index) => {
                   const isLowInventory = room.availableSlots > 0 && room.availableSlots <= 3;
                   const isCritical = room.availableSlots > 0 && room.availableSlots <= 1;
                   
@@ -328,7 +309,7 @@ export default function PropertyDetailPage() {
 
                       <div className="mb-4">
                         <h4 className="text-xl font-bold text-gray-900 mb-1">{room.type} Sharing</h4>
-                        <p className="text-sm text-gray-600">{room.description}</p>
+                        <p className="text-sm text-gray-600">{room.description || `${room.type} occupancy room`}</p>
                       </div>
                       
                       <div className="mb-4">
@@ -339,7 +320,7 @@ export default function PropertyDetailPage() {
                       </div>
                       
                       <div className="space-y-2 mb-4">
-                        {room.features.map((feature, idx) => (
+                        {(room.features || ['Attached Bathroom', 'Wardrobe', 'Mattress']).map((feature, idx) => (
                           <div key={idx} className="flex items-center gap-2 text-sm text-gray-700">
                             <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -426,10 +407,10 @@ export default function PropertyDetailPage() {
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900 mb-1">Food Available</p>
                     <p className="text-sm text-gray-600 mb-2">
-                      {property.foodAndKitchen[property.roomTypes[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple'].mealsProvided.join(', ')}
+                      {mockData.foodAndKitchen[roomTypesWithImages[selectedRoomType]?.type.toLowerCase() as 'single' | 'double' | 'triple']?.mealsProvided.join(', ') || 'Breakfast, Dinner'}
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {property.foodAndKitchen[property.roomTypes[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple'].mealsProvided.map((meal, index) => (
+                      {(mockData.foodAndKitchen[roomTypesWithImages[selectedRoomType]?.type.toLowerCase() as 'single' | 'double' | 'triple']?.mealsProvided || ['Breakfast', 'Dinner']).map((meal, index) => (
                         <span key={index} className="px-3 py-1 bg-white border border-green-300 rounded-full text-xs font-medium text-gray-700">
                           {meal}
                         </span>
@@ -445,12 +426,12 @@ export default function PropertyDetailPage() {
                     <span className="font-medium text-gray-900">Meals provided</span>
                   </div>
                   <span className="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold">
-                    {property.foodAndKitchen[property.roomTypes[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple'].mealType}
+                    {mockData.foodAndKitchen[roomTypesWithImages[selectedRoomType]?.type.toLowerCase() as 'single' | 'double' | 'triple']?.mealType || 'Veg Only'}
                   </span>
                 </div>
 
                 {/* Fridge */}
-                {property.foodAndKitchen[property.roomTypes[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple'].hasFridge && (
+                {mockData.foodAndKitchen[roomTypesWithImages[selectedRoomType]?.type.toLowerCase() as 'single' | 'double' | 'triple']?.hasFridge && (
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">🧊</span>
@@ -469,7 +450,7 @@ export default function PropertyDetailPage() {
                     <span className="font-medium text-gray-900">Food Charges</span>
                   </div>
                   <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
-                    {property.foodAndKitchen[property.roomTypes[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple'].foodCharges}
+                    {mockData.foodAndKitchen[roomTypesWithImages[selectedRoomType]?.type.toLowerCase() as 'single' | 'double' | 'triple']?.foodCharges || 'Included in Rent'}
                   </span>
                 </div>
               </div>
@@ -488,7 +469,7 @@ export default function PropertyDetailPage() {
                     <span className="font-medium text-gray-900">Deposit Amount</span>
                   </div>
                   <span className="text-xl font-bold text-gray-900">
-                    ₹{property.otherCharges[property.roomTypes[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple'].depositAmount.toLocaleString()}
+                    ₹{(mockData.otherCharges[roomTypesWithImages[selectedRoomType]?.type.toLowerCase() as 'single' | 'double' | 'triple']?.depositAmount || roomTypesWithImages[selectedRoomType]?.price || 0).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -506,39 +487,39 @@ export default function PropertyDetailPage() {
                     <span className="font-medium text-gray-900">Notice Period</span>
                   </div>
                   <span className="text-lg font-semibold text-gray-900">
-                    {property.otherCharges[property.roomTypes[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple'].noticePeriod}
+                    {mockData.otherCharges[roomTypesWithImages[selectedRoomType]?.type.toLowerCase() as 'single' | 'double' | 'triple']?.noticePeriod || '1 Month'}
                   </span>
                 </div>
 
                 {/* Rules Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6">
-                  <div className={`p-4 rounded-xl border-2 ${property.rules.visitorEntry ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                  <div className={`p-4 rounded-xl border-2 ${mockData.rules.visitorEntry ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xl">{property.rules.visitorEntry ? '✅' : '❌'}</span>
+                      <span className="text-xl">{mockData.rules.visitorEntry ? '✅' : '❌'}</span>
                       <span className="font-medium text-gray-900 text-sm">Visitor Entry</span>
                     </div>
                     <p className="text-xs text-gray-600">
-                      {property.rules.visitorEntry ? 'Allowed' : 'Not Allowed'}
+                      {mockData.rules.visitorEntry ? 'Allowed' : 'Not Allowed'}
                     </p>
                   </div>
 
-                  <div className={`p-4 rounded-xl border-2 ${property.rules.loudMusic ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                  <div className={`p-4 rounded-xl border-2 ${mockData.rules.loudMusic ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xl">{property.rules.loudMusic ? '✅' : '❌'}</span>
+                      <span className="text-xl">{mockData.rules.loudMusic ? '✅' : '❌'}</span>
                       <span className="font-medium text-gray-900 text-sm">Loud Music</span>
                     </div>
                     <p className="text-xs text-gray-600">
-                      {property.rules.loudMusic ? 'Allowed' : 'Not Allowed'}
+                      {mockData.rules.loudMusic ? 'Allowed' : 'Not Allowed'}
                     </p>
                   </div>
 
-                  <div className={`p-4 rounded-xl border-2 ${property.rules.party ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                  <div className={`p-4 rounded-xl border-2 ${mockData.rules.party ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xl">{property.rules.party ? '✅' : '❌'}</span>
+                      <span className="text-xl">{mockData.rules.party ? '✅' : '❌'}</span>
                       <span className="font-medium text-gray-900 text-sm">Party</span>
                     </div>
                     <p className="text-xs text-gray-600">
-                      {property.rules.party ? 'Allowed' : 'Not Allowed'}
+                      {mockData.rules.party ? 'Allowed' : 'Not Allowed'}
                     </p>
                   </div>
                 </div>
@@ -549,7 +530,7 @@ export default function PropertyDetailPage() {
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Nearby Places</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {property.nearbyPlaces.map((place, index) => (
+                {(property.nearbyPlaces || mockData.nearbyPlaces).map((place, index) => (
                   <div key={index} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                       <span className="text-2xl">📍</span>
@@ -649,7 +630,7 @@ export default function PropertyDetailPage() {
                 </button>
 
                 <a
-                  href={`tel:${property.contactPhone}`}
+                  href={`tel:${property.contactPhone || mockData.contactPhone}`}
                   className="w-full py-4 rounded-xl font-bold text-lg border-2 border-blue-500 text-blue-600 hover:bg-blue-50 transition-all duration-300 flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -686,24 +667,28 @@ export default function PropertyDetailPage() {
       />
 
       {/* Room Image Modal */}
-      <RoomImageModal
-        isOpen={showRoomImageModal}
-        onClose={() => setShowRoomImageModal(false)}
-        images={property.roomTypes[selectedRoomType].images}
-        roomType={property.roomTypes[selectedRoomType].type}
-        initialImageIndex={roomImageModalIndex}
-      />
+      {roomTypesWithImages[selectedRoomType] && (
+        <RoomImageModal
+          isOpen={showRoomImageModal}
+          onClose={() => setShowRoomImageModal(false)}
+          images={roomTypesWithImages[selectedRoomType].images || []}
+          roomType={roomTypesWithImages[selectedRoomType].type}
+          initialImageIndex={roomImageModalIndex}
+        />
+      )}
 
       {/* Booking Modal */}
-      <BookingModal
-        isOpen={showBookingModal}
-        onClose={() => setShowBookingModal(false)}
-        propertyId={property.id as string}
-        propertyName={property.name}
-        roomType={property.roomTypes[selectedRoomType].type}
-        price={property.roomTypes[selectedRoomType].price}
-        depositAmount={property.otherCharges[property.roomTypes[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple'].depositAmount}
-      />
+      {roomTypesWithImages[selectedRoomType] && (
+        <BookingModal
+          isOpen={showBookingModal}
+          onClose={() => setShowBookingModal(false)}
+          propertyId={property.id as string}
+          propertyName={property.name}
+          roomType={roomTypesWithImages[selectedRoomType].type}
+          price={roomTypesWithImages[selectedRoomType].price}
+          depositAmount={mockData.otherCharges[roomTypesWithImages[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple']?.depositAmount || roomTypesWithImages[selectedRoomType].price}
+        />
+      )}
 
       {/* Discount Popup */}
       <DiscountPopup />

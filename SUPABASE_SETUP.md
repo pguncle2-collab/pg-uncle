@@ -6,7 +6,7 @@
 2. Sign up or log in
 3. Click "New Project"
 4. Fill in project details:
-   - Name: pgUncle
+   - Name: PGUNCLE
    - Database Password: (choose a strong password)
    - Region: (choose closest to your users)
 5. Wait for project to be created
@@ -119,7 +119,7 @@ INSERT INTO properties (name, address, city, rating, reviews, type, availability
 VALUES 
 (
   'Sunshine PG',
-  'Sector 17, Chandigarh',
+  'Sector 82A, IT City, Mohali',
   'Chandigarh',
   4.8,
   124,

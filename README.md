@@ -1,4 +1,4 @@
-# pgUncle - PG Accommodation Website
+# PGUNCLE - PG Accommodation Website
 
 A modern, fully responsive React + Next.js + TypeScript + Tailwind CSS website for PG (Paying Guest) accommodations in Chandigarh.
 

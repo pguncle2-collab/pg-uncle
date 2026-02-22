@@ -40,6 +40,7 @@ export interface Property {
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
+  contactPhone?: string;
 }
 
 export interface RoomType {
@@ -64,6 +65,7 @@ export interface Amenity {
 export interface NearbyPlace {
   name: string;
   distance: string;
+  type?: string;
 }
 
 export interface User {

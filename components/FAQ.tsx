@@ -46,10 +46,10 @@ export const FAQ: React.FC = () => {
           <div className="inline-block mb-4 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full">
             <span className="text-blue-300 text-sm font-semibold">FAQ</span>
           </div>
-          <h2 className="text-4xl lg:text-6xl font-bold text-white mb-6">
+          <h2 className="text-2xl md:text-4xl lg:text-6xl font-bold text-white mb-6">
             Top FAQs for Your <span className="text-blue-400">Stay</span>
           </h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+          <p className="text-base md:text-xl text-gray-300 max-w-2xl mx-auto">
             Find answers to commonly asked questions about our PG accommodations
           </p>
         </div>
@@ -70,7 +70,7 @@ export const FAQ: React.FC = () => {
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
                     {faq.icon}
                   </div>
-                  <p className="text-lg lg:text-xl font-semibold text-white">{faq.question}</p>
+                  <p className="text-base md:text-lg lg:text-xl font-semibold text-white">{faq.question}</p>
                 </div>
                 <div className={`w-10 h-10 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0 transition-transform duration-300 ${
                   openIndex === index ? 'rotate-180 bg-blue-500' : ''

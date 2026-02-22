@@ -71,10 +71,10 @@ export const Features: React.FC = () => {
           <div className="inline-block mb-4 px-4 py-2 bg-blue-100 rounded-full">
             <span className="text-blue-600 text-sm font-semibold">WHY CHOOSE US</span>
           </div>
-          <h2 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
+          <h2 className="text-2xl md:text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
             Why Choose <span className="text-blue-600">PGUNCLE?</span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-base md:text-xl text-gray-600 max-w-2xl mx-auto">
             We make finding your perfect PG accommodation simple and stress-free
           </p>
         </div>
@@ -99,7 +99,7 @@ export const Features: React.FC = () => {
               </div>
               
               <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
+                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
                   {feature.title}
                 </h3>
                 <p className="text-gray-600 leading-relaxed">{feature.description}</p>

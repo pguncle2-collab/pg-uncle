@@ -259,21 +259,6 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              PG For *
-            </label>
-            <select
-              value={formData.gender}
-              onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-              className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
-              required
-            >
-              <option value="Boys">🧔 Boys</option>
-              <option value="Girls">👩 Girls</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
               Location/Sector *
             </label>
             <input
@@ -368,7 +353,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
           <div>
             <h4 className="text-lg font-bold text-gray-900">Room Types & Inventory</h4>
             <p className="text-sm text-gray-600 mt-1">
-              Add different room categories (Single, Double, Triple, Quad) and specify how many rooms of each type you have
+              Add different room types and specify: 1) Total rooms, 2) Available rooms, 3) Beds per room
             </p>
           </div>
           <button
@@ -384,9 +369,10 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm text-blue-900 font-semibold mb-2">💡 Example:</p>
           <ul className="text-sm text-blue-800 space-y-1">
-            <li>• <strong>Single Occupancy:</strong> 10 total rooms, 7 occupied = 3 available</li>
-            <li>• <strong>Double Occupancy:</strong> 15 total rooms, 12 occupied = 3 available</li>
-            <li>• <strong>Triple Occupancy:</strong> 8 total rooms, 6 occupied = 2 available</li>
+            <li>• <strong>Single Occupancy:</strong> 10 total rooms, 3 available, 1 bed per room = 3 beds available</li>
+            <li>• <strong>Double Occupancy:</strong> 15 total rooms, 5 available, 2 beds per room = 10 beds available</li>
+            <li>• <strong>Triple Occupancy:</strong> 8 total rooms, 2 available, 3 beds per room = 6 beds available</li>
+            <li>• <strong>Quad Occupancy:</strong> 5 total rooms, 1 available, 4 beds per room = 4 beds available</li>
           </ul>
         </div>
 
@@ -420,26 +406,8 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
                   <option value="Single">Single Occupancy</option>
                   <option value="Double">Double Occupancy</option>
                   <option value="Triple">Triple Occupancy</option>
+                  <option value="Quad">Quad Occupancy</option>
                 </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Number of Beds per Room *
-                </label>
-                <input
-                  type="number"
-                  value={room.beds}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    updateRoomType(index, 'beds', value === '' ? 1 : parseInt(value));
-                  }}
-                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-base"
-                  placeholder="e.g., 1, 2, or 3"
-                  min="1"
-                  max="10"
-                  required
-                />
               </div>
 
               <div>
@@ -461,70 +429,101 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Total Rooms Available *
-                  <span className="block text-xs text-gray-500 font-normal mt-1">
-                    How many {room.type || 'rooms'} do you have?
-                  </span>
-                </label>
-                <input
-                  type="number"
-                  value={room.totalSlots}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const total = value === '' ? 0 : parseInt(value);
-                    const available = Math.max(0, total - (room.occupiedSlots || 0));
-                    updateRoomTypeMultiple(index, {
-                      totalSlots: total,
-                      availableSlots: available
-                    });
-                  }}
-                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-base"
-                  placeholder="e.g., 10"
-                  min="0"
-                  required
-                />
-              </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <h5 className="text-sm font-semibold text-blue-900 mb-3">Room & Bed Inventory</h5>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    1. Total Number of Rooms *
+                    <span className="block text-xs text-gray-500 font-normal mt-0.5">
+                      How many {room.type || 'rooms'} exist?
+                    </span>
+                  </label>
+                  <input
+                    type="number"
+                    value={room.totalSlots}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const total = value === '' ? 0 : parseInt(value);
+                      const occupied = room.occupiedSlots || 0;
+                      const available = Math.max(0, total - occupied);
+                      updateRoomTypeMultiple(index, {
+                        totalSlots: total,
+                        availableSlots: available
+                      });
+                    }}
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-base"
+                    placeholder="e.g., 10"
+                    min="0"
+                    required
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Currently Occupied *
-                  <span className="block text-xs text-gray-500 font-normal mt-1">
-                    How many are booked?
-                  </span>
-                </label>
-                <input
-                  type="number"
-                  value={room.occupiedSlots}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const occupied = value === '' ? 0 : parseInt(value);
-                    const maxOccupied = Math.min(occupied, room.totalSlots || 0);
-                    const available = Math.max(0, (room.totalSlots || 0) - maxOccupied);
-                    updateRoomTypeMultiple(index, {
-                      occupiedSlots: maxOccupied,
-                      availableSlots: available
-                    });
-                  }}
-                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-base"
-                  placeholder="e.g., 7"
-                  min="0"
-                  max={room.totalSlots || 0}
-                  required
-                />
-              </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    2. Total Rooms Available *
+                    <span className="block text-xs text-gray-500 font-normal mt-0.5">
+                      Not occupied/booked
+                    </span>
+                  </label>
+                  <input
+                    type="number"
+                    value={room.availableSlots}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const available = value === '' ? 0 : parseInt(value);
+                      const maxAvailable = Math.min(available, room.totalSlots || 0);
+                      const occupied = Math.max(0, (room.totalSlots || 0) - maxAvailable);
+                      updateRoomTypeMultiple(index, {
+                        availableSlots: maxAvailable,
+                        occupiedSlots: occupied
+                      });
+                    }}
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-base"
+                    placeholder="e.g., 3"
+                    min="0"
+                    max={room.totalSlots || 0}
+                    required
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Available Now
-                  <span className="block text-xs text-gray-500 font-normal mt-1">
-                    Auto-calculated
-                  </span>
-                </label>
-                <div className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg bg-gray-50 text-base font-semibold text-gray-900 flex items-center justify-center">
-                  {room.availableSlots || 0}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    3. Total Beds Available *
+                    <span className="block text-xs text-gray-500 font-normal mt-0.5">
+                      Beds per room × Available rooms
+                    </span>
+                  </label>
+                  <input
+                    type="number"
+                    value={room.beds}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      updateRoomType(index, 'beds', value === '' ? 1 : parseInt(value));
+                    }}
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-base"
+                    placeholder="e.g., 1, 2, or 3"
+                    min="1"
+                    required
+                  />
+                </div>
+              </div>
+              
+              {/* Summary */}
+              <div className="mt-3 pt-3 border-t border-blue-200">
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="text-center">
+                    <div className="font-semibold text-gray-900">{room.totalSlots || 0}</div>
+                    <div className="text-gray-600">Total Rooms</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-green-600">{room.availableSlots || 0}</div>
+                    <div className="text-gray-600">Available</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-blue-600">{(room.beds || 0) * (room.availableSlots || 0)}</div>
+                    <div className="text-gray-600">Total Beds</div>
+                  </div>
                 </div>
               </div>
             </div>

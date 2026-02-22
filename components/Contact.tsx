@@ -33,10 +33,10 @@ export const Contact: React.FC = () => {
           <div className="inline-block mb-4 px-4 py-2 bg-blue-100 rounded-full">
             <span className="text-blue-700 text-sm font-semibold">GET IN TOUCH</span>
           </div>
-          <h2 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
+          <h2 className="text-2xl md:text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
             Contact Us for <span className="text-blue-600">PG Details</span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-base md:text-xl text-gray-600 max-w-2xl mx-auto">
             Reach out to PGUNCLE for booking inquiries and amenities information
           </p>
         </div>
@@ -44,7 +44,7 @@ export const Contact: React.FC = () => {
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 max-w-6xl mx-auto">
           <div className="w-full lg:w-1/2 space-y-8">
             <div className="bg-gradient-to-br from-blue-500 to-cyan-500 p-8 rounded-2xl text-white shadow-xl">
-              <h3 className="text-2xl font-bold mb-4">Let's Connect</h3>
+              <h3 className="text-xl md:text-2xl font-bold mb-4">Let's Connect</h3>
               <p className="text-blue-50 mb-6">
                 Have questions? We're here to help you.
               </p>
