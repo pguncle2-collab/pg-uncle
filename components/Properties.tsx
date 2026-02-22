@@ -225,10 +225,12 @@ export const Properties: React.FC = () => {
 
               <div className="p-6">
                 <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
-                      {property.name}
-                    </h3>
+                  <div className="flex-1">
+                    <Link href={`/properties/${property.id}`}>
+                      <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors cursor-pointer hover:underline">
+                        {property.name}
+                      </h3>
+                    </Link>
                     <p className="text-sm text-gray-600 flex items-center gap-1">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
