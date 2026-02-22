@@ -1,14 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 
-// Initialize Razorpay instance
-const razorpay = new Razorpay({
-  key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || '',
-});
+// Function to get Razorpay instance
+function getRazorpayInstance() {
+  const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!keyId || !keySecret) {
+    throw new Error('Razorpay credentials not configured');
+  }
+
+  return new Razorpay({
+    key_id: keyId,
+    key_secret: keySecret,
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Razorpay is configured
+    const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+    if (!keyId || !keySecret) {
+      return NextResponse.json(
+        { error: 'Payment gateway not configured' },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     const { amount, currency = 'INR', receipt, notes } = body;
 
@@ -20,7 +40,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create Razorpay order
+    // Get Razorpay instance and create order
+    const razorpay = getRazorpayInstance();
     const order = await razorpay.orders.create({
       amount: Math.round(amount * 100), // Convert to paise
       currency,
