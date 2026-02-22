@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 
 interface Testimonial {
   name: string;
@@ -17,24 +16,37 @@ export const Testimonials: React.FC = () => {
       name: 'Ananya Sharma',
       role: 'Software Engineer',
       text: 'PGUNCLE made finding a PG in Chandigarh effortless. The detailed amenities listed helped me choose the perfect home. Highly recommended!',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
+      avatar: 'AS',
       rating: 5,
     },
     {
       name: 'Rohan Verma',
       role: 'Marketing Manager',
       text: 'PGUNCLE transformed my PG hunt in Chandigarh. The detailed amenities helped me make an informed choice quickly. A fantastic service!',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+      avatar: 'RV',
       rating: 5,
     },
     {
       name: 'Priya Patel',
       role: 'Student',
       text: 'Amazing experience! The booking process was smooth and the PG exceeded my expectations. Great amenities and friendly staff.',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80',
+      avatar: 'PP',
       rating: 5,
     },
   ];
+
+  // Generate gradient colors based on initials
+  const getAvatarGradient = (initials: string) => {
+    const gradients = [
+      'from-blue-500 to-cyan-500',
+      'from-purple-500 to-pink-500',
+      'from-green-500 to-emerald-500',
+      'from-orange-500 to-red-500',
+      'from-indigo-500 to-purple-500',
+    ];
+    const index = initials.charCodeAt(0) % gradients.length;
+    return gradients[index];
+  };
 
   return (
     <section className="py-16 lg:py-32 bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 relative overflow-hidden">
@@ -76,13 +88,8 @@ export const Testimonials: React.FC = () => {
                 </p>
                 
                 <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
-                  <div className="relative w-14 h-14 rounded-full overflow-hidden ring-2 ring-blue-400 ring-offset-2">
-                    <Image
-                      src={testimonial.avatar}
-                      alt={testimonial.name}
-                      fill
-                      className="object-cover"
-                    />
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-xl bg-gradient-to-br ${getAvatarGradient(testimonial.avatar)} ring-2 ring-offset-2 ring-blue-400 shadow-lg`}>
+                    {testimonial.avatar}
                   </div>
                   <div>
                     <p className="font-bold text-gray-900">{testimonial.name}</p>
