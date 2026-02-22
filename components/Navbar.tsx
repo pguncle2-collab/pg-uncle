@@ -97,10 +97,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
               Properties
             </Link>
             <Link
-              href="/main#pricing"
+              href="/about"
               className="font-medium text-gray-700 transition-colors hover:text-sky-600 hover:bg-sky-200/50 px-3 py-2 rounded-lg"
             >
-              Pricing
+              About
             </Link>
             <Link
               href="/main#contact"
