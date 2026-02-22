@@ -266,13 +266,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                 Properties
               </Link>
               <Link
-                href="/main#pricing"
-                className="px-4 py-3 text-gray-700 hover:bg-sky-100 rounded-xl font-medium transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Pricing
-              </Link>
-              <Link
                 href="/main#contact"
                 className="px-4 py-3 text-gray-700 hover:bg-sky-100 rounded-xl font-medium transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}

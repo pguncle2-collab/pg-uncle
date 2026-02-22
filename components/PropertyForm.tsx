@@ -25,7 +25,6 @@ interface PropertyFormData {
     lng: number;
   };
   description: string;
-  gender: string;
   roomTypes: RoomType[];
   amenities: {
     name: string;
@@ -69,7 +68,6 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
       address: '',
       coordinates: { lat: 30.7333, lng: 76.7794 },
       description: '',
-      gender: 'Boys',
       roomTypes: [
         { type: 'Single', price: 0, available: true, description: '', features: [], totalSlots: 0, occupiedSlots: 0, availableSlots: 0, beds: 1 },
       ],

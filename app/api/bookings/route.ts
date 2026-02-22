@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
       duration,
       totalAmount,
       specialRequests,
+      paymentDetails,
     } = body;
 
     // Validate required fields
@@ -35,6 +36,10 @@ export async function POST(request: NextRequest) {
 
     console.log('Inserting booking into database...');
     
+    // Determine booking status based on payment
+    const bookingStatus = paymentDetails ? 'confirmed' : 'pending';
+    const paymentId = paymentDetails?.razorpay_payment_id || `PAY${Date.now()}`;
+    
     // Insert booking into database
     const { data, error } = await supabase
       .from('bookings')
@@ -47,8 +52,8 @@ export async function POST(request: NextRequest) {
           duration: duration,
           total_amount: totalAmount,
           special_requests: specialRequests || null,
-          status: 'pending',
-          payment_id: `PAY${Date.now()}`, // Generate a temporary payment ID
+          status: bookingStatus,
+          payment_id: paymentId,
         },
       ])
       .select()
@@ -106,72 +111,103 @@ export async function POST(request: NextRequest) {
         });
 
         // Email to user
+        const emailSubject = paymentDetails 
+          ? '✅ Payment Successful - Booking Confirmed - PGUNCLE'
+          : '🎉 Booking Confirmed - PGUNCLE';
+        
         await transporter.sendMail({
           from: process.env.SMTP_FROM || process.env.SMTP_USER,
           to: user?.email,
-          subject: '🎉 Booking Confirmed - PGUNCLE',
+          subject: emailSubject,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #3B82F6;">Booking Confirmed!</h2>
-              <p>Dear ${user?.full_name || 'User'},</p>
-              <p>Your booking has been confirmed. Here are the details:</p>
-              
-              <div style="background: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="margin-top: 0;">Booking Details</h3>
-                <p><strong>Property:</strong> ${property?.name}</p>
-                <p><strong>Location:</strong> ${property?.address}, ${property?.city}</p>
-                <p><strong>Room Type:</strong> ${roomType} Sharing</p>
-                <p><strong>Move-in Date:</strong> ${new Date(moveInDate).toLocaleDateString()}</p>
-                <p><strong>Duration:</strong> ${duration} month(s)</p>
-                <p><strong>Total Amount:</strong> ₹${totalAmount.toLocaleString()}</p>
-                ${specialRequests ? `<p><strong>Special Requests:</strong> ${specialRequests}</p>` : ''}
+              <div style="background: linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h2 style="color: white; margin: 0;">🎉 Booking Confirmed!</h2>
+                ${paymentDetails ? '<p style="color: white; margin: 10px 0 0 0;">Payment Successful</p>' : ''}
               </div>
+              
+              <div style="background: white; padding: 30px; border: 1px solid #E5E7EB; border-top: none;">
+                <p style="font-size: 16px; color: #374151;">Dear ${user?.full_name || 'User'},</p>
+                <p style="font-size: 16px; color: #374151;">
+                  ${paymentDetails 
+                    ? 'Your payment has been successfully processed and your booking is confirmed!' 
+                    : 'Your booking has been confirmed. Here are the details:'}
+                </p>
+                
+                ${paymentDetails ? `
+                <div style="background: #ECFDF5; border-left: 4px solid #10B981; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                  <h3 style="margin: 0 0 10px 0; color: #065F46; font-size: 16px;">Payment Receipt</h3>
+                  <p style="margin: 5px 0; color: #065F46;"><strong>Payment ID:</strong> ${paymentDetails.razorpay_payment_id}</p>
+                  <p style="margin: 5px 0; color: #065F46;"><strong>Order ID:</strong> ${paymentDetails.razorpay_order_id}</p>
+                  <p style="margin: 5px 0; color: #065F46;"><strong>Amount Paid:</strong> ₹${totalAmount.toLocaleString()}</p>
+                  <p style="margin: 5px 0; color: #065F46;"><strong>Payment Date:</strong> ${new Date().toLocaleString()}</p>
+                  <p style="margin: 5px 0; color: #065F46;"><strong>Status:</strong> <span style="color: #10B981; font-weight: bold;">SUCCESS</span></p>
+                </div>
+                ` : ''}
+                
+                <div style="background: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <h3 style="margin-top: 0; color: #1F2937;">Booking Details</h3>
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                      <td style="padding: 8px 0; color: #6B7280;">Booking ID:</td>
+                      <td style="padding: 8px 0; color: #1F2937; font-weight: 600;">${data.id}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 0; color: #6B7280;">Property:</td>
+                      <td style="padding: 8px 0; color: #1F2937; font-weight: 600;">${property?.name}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 0; color: #6B7280;">Location:</td>
+                      <td style="padding: 8px 0; color: #1F2937;">${property?.address}, ${property?.city}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 0; color: #6B7280;">Room Type:</td>
+                      <td style="padding: 8px 0; color: #1F2937;">${roomType} Sharing</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 0; color: #6B7280;">Move-in Date:</td>
+                      <td style="padding: 8px 0; color: #1F2937;">${new Date(moveInDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 0; color: #6B7280;">Duration:</td>
+                      <td style="padding: 8px 0; color: #1F2937;">${duration} month(s)</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 0; color: #6B7280; border-top: 2px solid #D1D5DB; padding-top: 12px;">Total Amount:</td>
+                      <td style="padding: 8px 0; color: #1F2937; font-weight: bold; font-size: 18px; border-top: 2px solid #D1D5DB; padding-top: 12px;">₹${totalAmount.toLocaleString()}</td>
+                    </tr>
+                    ${specialRequests ? `
+                    <tr>
+                      <td style="padding: 8px 0; color: #6B7280; vertical-align: top;">Special Requests:</td>
+                      <td style="padding: 8px 0; color: #1F2937;">${specialRequests}</td>
+                    </tr>
+                    ` : ''}
+                  </table>
+                </div>
 
-              <p>We will contact you shortly to finalize the details.</p>
+                <div style="background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                  <p style="margin: 0; color: #92400E; font-size: 14px;">
+                    <strong>Next Steps:</strong> Our team will contact you within 24 hours to coordinate your move-in and provide property access details.
+                  </p>
+                </div>
+                
+                <p style="color: #6B7280; font-size: 14px; margin-top: 30px; border-top: 1px solid #E5E7EB; padding-top: 20px;">
+                  If you have any questions, please contact us at <a href="mailto:info@pguncle.com" style="color: #3B82F6;">info@pguncle.com</a>
+                </p>
+                
+                <p style="color: #1F2937; margin-top: 20px;">Best regards,<br><strong>Team PGUNCLE</strong></p>
+              </div>
               
-              <p style="color: #6B7280; font-size: 14px; margin-top: 30px;">
-                If you have any questions, please contact us at info@pguncle.com
-              </p>
-              
-              <p>Best regards,<br>Team PGUNCLE</p>
+              <div style="background: #F9FAFB; padding: 20px; text-align: center; border-radius: 0 0 8px 8px;">
+                <p style="color: #6B7280; font-size: 12px; margin: 0;">
+                  This is an automated email. Please do not reply to this email.
+                </p>
+              </div>
             </div>
           `,
         });
 
-        // Email to admin
-        await transporter.sendMail({
-          from: process.env.SMTP_FROM || process.env.SMTP_USER,
-          to: process.env.ADMIN_EMAIL || 'info@pguncle.com',
-          replyTo: user?.email,
-          subject: '🔔 New Booking Received - PGUNCLE',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #10B981;">New Booking Received!</h2>
-              
-              <div style="background: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="margin-top: 0;">Customer Details</h3>
-                <p><strong>Name:</strong> ${user?.full_name}</p>
-                <p><strong>Email:</strong> ${user?.email}</p>
-                
-                <h3>Booking Details</h3>
-                <p><strong>Property:</strong> ${property?.name}</p>
-                <p><strong>Location:</strong> ${property?.address}, ${property?.city}</p>
-                <p><strong>Room Type:</strong> ${roomType} Sharing</p>
-                <p><strong>Move-in Date:</strong> ${new Date(moveInDate).toLocaleDateString()}</p>
-                <p><strong>Duration:</strong> ${duration} month(s)</p>
-                <p><strong>Total Amount:</strong> ₹${totalAmount.toLocaleString()}</p>
-                ${specialRequests ? `<p><strong>Special Requests:</strong> ${specialRequests}</p>` : ''}
-                
-                <p><strong>Booking ID:</strong> ${data.id}</p>
-                <p><strong>Status:</strong> Pending</p>
-              </div>
-
-              <p style="color: #EF4444; font-weight: bold;">Action Required: Contact the customer to confirm booking details.</p>
-            </div>
-          `,
-        });
-
-        console.log('✅ Booking confirmation emails sent successfully');
+        console.log('✅ Booking confirmation email sent to user successfully');
       } else {
         console.warn('⚠️ SMTP not configured. Booking created but emails not sent.');
       }

@@ -27,12 +27,30 @@ function mapDbToProperty(dbRow: any): Property {
 
 // Properties Operations
 export const propertyOperations = {
-  // Get all properties
+  // Get all properties (optimized for list view)
   async getAll() {
     const { data, error } = await supabase
       .from('properties')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select(`
+        id,
+        name,
+        address,
+        city,
+        rating,
+        reviews,
+        type,
+        availability,
+        image,
+        images,
+        price,
+        amenities,
+        room_types,
+        is_active,
+        created_at
+      `)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(50);
     
     if (error) throw error;
     return (data || []).map(mapDbToProperty);

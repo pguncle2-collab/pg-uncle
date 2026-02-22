@@ -60,10 +60,10 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Send email to info@pguncle.com
+      // Send email to admin
       await transporter.sendMail({
         from: process.env.SMTP_FROM || process.env.SMTP_USER,
-        to: 'info@pguncle.com',
+        to: process.env.ADMIN_EMAIL || process.env.SMTP_USER,
         replyTo: email, // User's email for easy reply
         subject: `Contact Form: ${subject}`,
         html: `
@@ -136,7 +136,7 @@ Received: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
         `,
       });
 
-      console.log('Email sent successfully to info@pguncle.com');
+      console.log('✅ Contact form email sent successfully to', process.env.ADMIN_EMAIL || process.env.SMTP_USER);
 
     } catch (emailError) {
       console.error('Email sending error:', emailError);

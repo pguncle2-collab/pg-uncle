@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       // Send email to admin
       await transporter.sendMail({
         from: process.env.SMTP_FROM || process.env.SMTP_USER,
-        to: 'info@pguncle.com',
+        to: process.env.ADMIN_EMAIL || process.env.SMTP_USER,
         replyTo: email,
         subject: `🏠 New Visit Request: ${propertyName}`,
         html: `
@@ -185,7 +185,112 @@ Action Required: Please contact the visitor to confirm the visit schedule.
         `,
       });
 
-      console.log('Visit booking email sent successfully to info@pguncle.com');
+      console.log('✅ Visit booking email sent successfully to', process.env.ADMIN_EMAIL || process.env.SMTP_USER);
+
+      // Send confirmation email to user
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: email,
+        subject: `✅ Visit Confirmed: ${propertyName} - PGUNCLE`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center; }
+              .content { background: white; padding: 30px; border: 1px solid #e5e7eb; }
+              .highlight { background: #dbeafe; border-left: 4px solid #3b82f6; padding: 15px; border-radius: 4px; margin: 20px 0; }
+              .footer { background: #f9fafb; color: #6b7280; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1 style="margin: 0; font-size: 28px;">✅ Visit Confirmed!</h1>
+                <p style="margin: 10px 0 0 0; opacity: 0.9;">PGUNCLE - Property Visit</p>
+              </div>
+              <div class="content">
+                <p style="font-size: 16px; color: #374151;">Dear ${name},</p>
+                <p style="font-size: 16px; color: #374151;">
+                  Thank you for scheduling a visit with PGUNCLE! Your visit request has been confirmed.
+                </p>
+                
+                <div class="highlight">
+                  <h3 style="margin: 0 0 15px 0; color: #1f2937;">📍 Property Details</h3>
+                  <p style="margin: 5px 0; font-size: 18px; font-weight: bold; color: #3b82f6;">${propertyName}</p>
+                </div>
+
+                <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <h3 style="margin: 0 0 15px 0; color: #1f2937;">📅 Visit Schedule</h3>
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                      <td style="padding: 8px 0; color: #6b7280;">Date:</td>
+                      <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${formattedDate}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 0; color: #6b7280;">Time:</td>
+                      <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${visitTime}</td>
+                    </tr>
+                  </table>
+                </div>
+
+                ${message ? `
+                <div style="margin: 20px 0;">
+                  <p style="margin: 0; color: #6b7280; font-size: 14px;">Your message:</p>
+                  <p style="margin: 5px 0; color: #1f2937;">${message.replace(/\n/g, '<br>')}</p>
+                </div>
+                ` : ''}
+
+                <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                  <p style="margin: 0; color: #92400e; font-weight: bold;">📞 Next Steps:</p>
+                  <p style="margin: 10px 0 0 0; color: #92400e;">
+                    Our team will contact you shortly to confirm the visit details and provide directions to the property.
+                  </p>
+                </div>
+
+                <p style="color: #6b7280; font-size: 14px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+                  If you have any questions or need to reschedule, please contact us at 
+                  <a href="mailto:${process.env.ADMIN_EMAIL || process.env.SMTP_USER}" style="color: #3b82f6;">${process.env.ADMIN_EMAIL || process.env.SMTP_USER}</a>
+                </p>
+                
+                <p style="color: #1f2937; margin-top: 20px;">Best regards,<br><strong>Team PGUNCLE</strong></p>
+              </div>
+              <div class="footer">
+                <p style="margin: 0;">This is an automated confirmation email from PGUNCLE</p>
+                <p style="margin: 5px 0 0 0;">Please do not reply to this email</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `,
+        text: `
+Visit Confirmed - PGUNCLE
+
+Dear ${name},
+
+Thank you for scheduling a visit with PGUNCLE! Your visit request has been confirmed.
+
+Property: ${propertyName}
+
+Visit Schedule:
+Date: ${formattedDate}
+Time: ${visitTime}
+
+${message ? `Your message:\n${message}\n\n` : ''}
+
+Next Steps:
+Our team will contact you shortly to confirm the visit details and provide directions to the property.
+
+If you have any questions or need to reschedule, please contact us at ${process.env.ADMIN_EMAIL || process.env.SMTP_USER}
+
+Best regards,
+Team PGUNCLE
+        `,
+      });
+
+      console.log('✅ Visit confirmation email sent to user:', email);
 
     } catch (emailError) {
       console.error('Email sending error:', emailError);

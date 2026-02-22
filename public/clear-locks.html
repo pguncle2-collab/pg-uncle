@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clear Supabase Locks</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    .danger {
+      background: #ef4444;
+    }
+    .danger:hover {
+      background: #dc2626;
+    }
+    .success {
+      background: #10b981;
+    }
+    .message {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 6px;
+      display: none;
+    }
+    .message.show {
+      display: block;
+    }
+    .message.success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .message.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .info {
+      background: #dbeafe;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 20px 0;
+      color: #1e40af;
+    }
+    pre {
+      background: #f3f4f6;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Clear Supabase Locks</h1>
+    
+    <div class="info">
+      <strong>What this does:</strong>
+      <p>This tool clears stuck Supabase authentication locks from your browser's localStorage that can cause AbortError issues.</p>
+    </div>
+
+    <h3>Current Storage Keys:</h3>
+    <pre id="storageKeys">Loading...</pre>
+
+    <div style="margin-top: 20px;">
+      <button onclick="clearSupabaseLocks()">Clear Supabase Locks Only</button>
+      <button onclick="clearAllStorage()" class="danger">Clear All Storage (Logs you out)</button>
+      <button onclick="refreshKeys()">Refresh View</button>
+    </div>
+
+    <div id="message" class="message"></div>
+
+    <div class="info" style="margin-top: 30px;">
+      <strong>After clearing:</strong>
+      <ol>
+        <li>Close this tab</li>
+        <li>Go back to your app</li>
+        <li>Hard refresh: <code>Ctrl+Shift+R</code> (Windows) or <code>Cmd+Shift+R</code> (Mac)</li>
+        <li>The AbortError should be gone</li>
+      </ol>
+    </div>
+  </div>
+
+  <script>
+    function showMessage(text, type = 'success') {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = `message show ${type}`;
+      setTimeout(() => {
+        msg.className = 'message';
+      }, 5000);
+    }
+
+    function displayStorageKeys() {
+      const keys = Object.keys(localStorage);
+      const display = document.getElementById('storageKeys');
+      
+      if (keys.length === 0) {
+        display.textContent = 'No keys found in localStorage';
+        return;
+      }
+
+      const supabaseKeys = keys.filter(k => 
+        k.includes('supabase') || 
+        k.includes('auth') || 
+        k.includes('pguncle')
+      );
+
+      if (supabaseKeys.length === 0) {
+        display.textContent = 'No Supabase-related keys found';
+      } else {
+        display.textContent = supabaseKeys.join('\n');
+      }
+    }
+
+    function clearSupabaseLocks() {
+      let cleared = 0;
+      const keys = Object.keys(localStorage);
+      
+      keys.forEach(key => {
+        // Clear lock-related keys
+        if (key.includes('lock') || key.includes('supabase.auth.token')) {
+          localStorage.removeItem(key);
+          cleared++;
+        }
+      });
+
+      displayStorageKeys();
+      showMessage(`✅ Cleared ${cleared} lock-related keys. Refresh your app now.`, 'success');
+    }
+
+    function clearAllStorage() {
+      if (!confirm('This will log you out. Are you sure?')) {
+        return;
+      }
+
+      const count = localStorage.length;
+      localStorage.clear();
+      displayStorageKeys();
+      showMessage(`✅ Cleared all ${count} storage keys. You've been logged out.`, 'success');
+    }
+
+    function refreshKeys() {
+      displayStorageKeys();
+      showMessage('✅ Refreshed storage view', 'success');
+    }
+
+    // Display keys on load
+    displayStorageKeys();
+  </script>
+</body>
+</html>

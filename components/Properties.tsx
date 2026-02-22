@@ -28,6 +28,16 @@ export const Properties: React.FC = () => {
   const cities = ['All', 'Chandigarh', 'Mohali', 'Panchkula', 'Zirakpur'];
   const types = ['All', 'Single', 'Double', 'Triple', 'Quad'];
 
+  // Helper function to optimize image URLs
+  const optimizeImageUrl = (url: string): string => {
+    // If it's a Supabase storage URL, add transformation parameters
+    if (url.includes('supabase.co/storage')) {
+      // Add width and quality parameters for faster loading
+      return `${url}?width=600&quality=80`;
+    }
+    return url;
+  };
+
   // Transform data to match component interface
   const transformedProperties: PropertyDisplay[] = properties.map((prop) => ({
     id: prop.id,
@@ -36,8 +46,8 @@ export const Properties: React.FC = () => {
     location: prop.address,
     price: prop.price,
     type: prop.roomTypes?.[0]?.type || 'Single',
-    gender: prop.gender || 'All',
-    image: prop.images?.[0] || prop.image || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80',
+    gender: 'All', // Default to 'All' since gender field was removed
+    image: optimizeImageUrl(prop.images?.[0] || prop.image || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80'),
     rating: prop.rating || 4.5,
     reviews: prop.reviews || 0,
     amenities: prop.amenities?.filter(a => a.available).map(a => a.name) || [],
@@ -50,14 +60,40 @@ export const Properties: React.FC = () => {
     return cityMatch && typeMatch;
   });
 
-  // Show loading state
+  // Show loading state with skeleton
   if (loading) {
     return (
       <section id="properties" className="py-16 lg:py-32 bg-gradient-to-b from-white to-gray-50">
         <div className="container mx-auto px-5 md:px-6">
-          <div className="text-center py-16">
-            <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
-            <p className="mt-4 text-xl text-gray-600">Loading properties...</p>
+          <div className="text-center mb-16">
+            <div className="inline-block mb-4 px-4 py-2 bg-blue-100 rounded-full">
+              <span className="text-blue-600 text-sm font-semibold">AVAILABLE PROPERTIES</span>
+            </div>
+            <h2 className="text-2xl md:text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
+              Find Your <span className="text-blue-600">Perfect PG</span>
+            </h2>
+          </div>
+
+          {/* Loading Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-white rounded-2xl shadow-lg overflow-hidden animate-pulse">
+                <div className="h-64 bg-gray-200"></div>
+                <div className="p-6">
+                  <div className="h-6 bg-gray-200 rounded mb-3 w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-4 w-1/2"></div>
+                  <div className="flex gap-2 mb-4">
+                    <div className="h-6 bg-gray-200 rounded w-16"></div>
+                    <div className="h-6 bg-gray-200 rounded w-16"></div>
+                    <div className="h-6 bg-gray-200 rounded w-16"></div>
+                  </div>
+                  <div className="flex justify-between items-center pt-4">
+                    <div className="h-8 bg-gray-200 rounded w-24"></div>
+                    <div className="h-10 bg-gray-200 rounded w-32"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -143,7 +179,7 @@ export const Properties: React.FC = () => {
 
         {/* Properties Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredProperties.map((property) => (
+          {filteredProperties.map((property, index) => (
             <div
               key={property.id}
               className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden hover:-translate-y-2"
@@ -154,6 +190,8 @@ export const Properties: React.FC = () => {
                   alt={property.name}
                   fill
                   className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  priority={index < 3}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 />
                 {!property.available && (
                   <div className="absolute inset-0 bg-black/60 flex items-center justify-center">

@@ -20,19 +20,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check active session
-    const checkSession = async () => {
+    let mounted = true;
+    
+    // Check active session with retry logic
+    const checkSession = async (retryCount = 0) => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        if (error) {
+          console.error('Session error:', error);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+        
         setUser(session?.user ?? null);
         
         // If user exists, ensure they have a record in users table
         if (session?.user) {
           await ensureUserRecord(session.user);
         }
-      } catch (error) {
-        console.error('Error checking session:', error);
-      } finally {
+        
+        setLoading(false);
+      } catch (error: any) {
+        if (!mounted) return;
+        
+        // Handle abort errors gracefully with retry
+        if (error.name === 'AbortError' && retryCount < 2) {
+          console.warn(`Session check attempt ${retryCount + 1} timed out. Retrying...`);
+          setTimeout(() => checkSession(retryCount + 1), 1000);
+          return;
+        }
+        
+        if (error.name === 'AbortError') {
+          console.warn('⚠️ Supabase connection timeout. Your project may be paused.');
+          console.warn('📍 Check: https://supabase.com/dashboard');
+        } else {
+          console.error('Error checking session:', error);
+        }
+        
+        setUser(null);
         setLoading(false);
       }
     };
@@ -41,17 +70,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return;
+      
       setUser(session?.user ?? null);
       
       // If user exists, ensure they have a record in users table
       if (session?.user) {
-        await ensureUserRecord(session.user);
+        await ensureUserRecord(session.user).catch(err => {
+          console.warn('Failed to ensure user record:', err);
+        });
       }
       
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Helper function to ensure user record exists in users table

@@ -114,8 +114,30 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         handler: async (response: any) => {
           console.log('Payment successful:', response);
           
-          // Create booking after successful payment
           try {
+            // Step 1: Verify payment signature
+            console.log('Verifying payment...');
+            const verifyResponse = await fetch('/api/razorpay/verify-payment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await verifyResponse.json();
+
+            if (!verifyData.success) {
+              throw new Error('Payment verification failed');
+            }
+
+            console.log('Payment verified successfully');
+
+            // Step 2: Create booking with payment details
             const bookingResponse = await fetch('/api/bookings', {
               method: 'POST',
               headers: {
@@ -129,6 +151,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 duration: formData.duration,
                 totalAmount,
                 specialRequests: formData.specialRequests,
+                paymentDetails: {
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                },
               }),
             });
 
@@ -146,6 +173,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               setSubmitSuccess(false);
               setFormData({ moveInDate: '', duration: 6, specialRequests: '' });
               onClose();
+              // Refresh the page to show updated bookings
+              window.location.reload();
             }, 2000);
           } catch (bookingError: any) {
             console.error('Error creating booking after payment:', bookingError);
@@ -228,9 +257,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h4 className="text-3xl font-bold text-gray-900 mb-3">Booking Confirmed!</h4>
-            <p className="text-gray-600 text-lg">
-              We'll contact you shortly to finalize the details.
+            <h4 className="text-3xl font-bold text-gray-900 mb-3">Payment Successful!</h4>
+            <p className="text-gray-600 text-lg mb-2">
+              Your booking has been confirmed.
+            </p>
+            <p className="text-gray-500 text-sm">
+              A confirmation email with receipt has been sent to your email address.
             </p>
           </div>
         ) : (

@@ -18,7 +18,17 @@ export async function GET(request: Request) {
   if (code) {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storageKey: 'pguncle-auth',
+          // Disable lock mechanism to prevent AbortError
+          lock: false,
+        },
+      }
     );
     
     const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
