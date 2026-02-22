@@ -106,17 +106,14 @@ export default function PropertyDetailPage() {
     },
     otherCharges: {
       single: {
-        depositAmount: 12000,
         noticePeriod: '1 Month',
         gateClosingTime: '10:00 PM',
       },
       double: {
-        depositAmount: 8000,
         noticePeriod: '1 Month',
         gateClosingTime: '10:00 PM',
       },
       triple: {
-        depositAmount: 6000,
         noticePeriod: '1 Month',
         gateClosingTime: '10:00 PM',
       },
@@ -197,39 +194,39 @@ export default function PropertyDetailPage() {
             <div className="bg-white rounded-2xl shadow-lg p-6 property-price-container">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{property.name}</h1>
-                  <p className="text-gray-600 flex items-center gap-2">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{property.name}</h1>
+                  <p className="text-sm md:text-base text-gray-600 flex items-center gap-2">
+                    <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     {property.address}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 bg-blue-100 px-4 py-2 rounded-xl">
-                  <svg className="w-5 h-5 text-blue-500 fill-current" viewBox="0 0 20 20">
+                <div className="flex items-center gap-2 bg-blue-100 px-3 md:px-4 py-1.5 md:py-2 rounded-xl">
+                  <svg className="w-4 h-4 md:w-5 md:h-5 text-blue-500 fill-current" viewBox="0 0 20 20">
                     <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
                   </svg>
-                  <span className="font-bold text-gray-900">{property.rating || 4.5}</span>
-                  <span className="text-sm text-gray-600">({property.reviews || 0} reviews)</span>
+                  <span className="text-sm md:text-base font-bold text-gray-900">{property.rating || 4.5}</span>
+                  <span className="text-xs md:text-sm text-gray-600">({property.reviews || 0})</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-4 mb-6">
-                <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full font-semibold">
+                <span className="px-3 md:px-4 py-1.5 md:py-2 bg-blue-100 text-blue-700 rounded-full text-sm md:text-base font-semibold">
                   {roomTypesWithImages.length} Room Types Available
                 </span>
               </div>
 
               <div className="prose max-w-none">
-                <h3 className="text-xl font-bold text-gray-900 mb-3">About this PG</h3>
-                <p className="text-gray-600 leading-relaxed">{property.description}</p>
+                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3">About this PG</h3>
+                <p className="text-sm md:text-base text-gray-600 leading-relaxed">{property.description}</p>
               </div>
             </div>
 
             {/* Room Types & Pricing */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Room Types & Pricing</h3>
+              <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">Room Types & Pricing</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 {roomTypesWithImages.map((room, index) => {
@@ -308,21 +305,21 @@ export default function PropertyDetailPage() {
                       </div>
 
                       <div className="mb-4">
-                        <h4 className="text-xl font-bold text-gray-900 mb-1">{room.type} Sharing</h4>
-                        <p className="text-sm text-gray-600">{room.description || `${room.type} occupancy room`}</p>
+                        <h4 className="text-lg md:text-xl font-bold text-gray-900 mb-1">{room.type} Sharing</h4>
+                        <p className="text-xs md:text-sm text-gray-600">{room.description || `${room.type} occupancy room`}</p>
                       </div>
                       
                       <div className="mb-4">
                         <div className="flex items-baseline gap-2">
-                          <span className="text-3xl font-bold text-gray-900">₹{room.price}</span>
-                          <span className="text-gray-600">/month</span>
+                          <span className="text-2xl md:text-3xl font-bold text-gray-900">₹{room.price}</span>
+                          <span className="text-sm md:text-base text-gray-600">/month</span>
                         </div>
                       </div>
                       
                       <div className="space-y-2 mb-4">
                         {(room.features || ['Attached Bathroom', 'Wardrobe', 'Mattress']).map((feature, idx) => (
-                          <div key={idx} className="flex items-center gap-2 text-sm text-gray-700">
-                            <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <div key={idx} className="flex items-center gap-2 text-xs md:text-sm text-gray-700">
+                            <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                             {feature}
@@ -375,8 +372,8 @@ export default function PropertyDetailPage() {
             {/* Common Area and Amenities */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-gray-900">Common Area and Amenities</h3>
-                <span className="text-sm font-semibold text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900">Common Area and Amenities</h3>
+                <span className="text-xs md:text-sm font-semibold text-gray-600 bg-gray-100 px-2 md:px-3 py-1 rounded-full">
                   {property.amenities.filter(a => a.available).length} Available
                 </span>
               </div>
@@ -386,8 +383,8 @@ export default function PropertyDetailPage() {
                     key={index}
                     className="flex items-center gap-3 p-4 rounded-xl border-2 border-green-200 bg-green-50"
                   >
-                    <span className="text-2xl">{amenity.icon}</span>
-                    <span className="font-medium text-gray-900 text-sm">{amenity.name}</span>
+                    <span className="text-xl md:text-2xl">{amenity.icon}</span>
+                    <span className="font-medium text-gray-900 text-xs md:text-sm">{amenity.name}</span>
                   </div>
                 ))}
               </div>
@@ -396,22 +393,22 @@ export default function PropertyDetailPage() {
 
             {/* Food and Kitchen */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Food and Kitchen</h3>
+              <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">Food and Kitchen</h3>
               
               <div className="space-y-4">
                 {/* Food Available */}
                 <div className="flex items-start gap-4 p-4 bg-green-50 rounded-xl border-2 border-green-200">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-2xl">🍽️</span>
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-xl md:text-2xl">🍽️</span>
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-gray-900 mb-1">Food Available</p>
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p className="text-sm md:text-base font-semibold text-gray-900 mb-1">Food Available</p>
+                    <p className="text-xs md:text-sm text-gray-600 mb-2">
                       {mockData.foodAndKitchen[roomTypesWithImages[selectedRoomType]?.type.toLowerCase() as 'single' | 'double' | 'triple']?.mealsProvided.join(', ') || 'Breakfast, Dinner'}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {(mockData.foodAndKitchen[roomTypesWithImages[selectedRoomType]?.type.toLowerCase() as 'single' | 'double' | 'triple']?.mealsProvided || ['Breakfast', 'Dinner']).map((meal, index) => (
-                        <span key={index} className="px-3 py-1 bg-white border border-green-300 rounded-full text-xs font-medium text-gray-700">
+                        <span key={index} className="px-2 md:px-3 py-1 bg-white border border-green-300 rounded-full text-xs font-medium text-gray-700">
                           {meal}
                         </span>
                       ))}
@@ -465,11 +462,11 @@ export default function PropertyDetailPage() {
                 {/* Deposit Amount */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">💵</span>
-                    <span className="font-medium text-gray-900">Deposit Amount</span>
+                    <span className="text-xl md:text-2xl">💵</span>
+                    <span className="text-sm md:text-base font-medium text-gray-900">Deposit Amount</span>
                   </div>
-                  <span className="text-xl font-bold text-gray-900">
-                    ₹{(mockData.otherCharges[roomTypesWithImages[selectedRoomType]?.type.toLowerCase() as 'single' | 'double' | 'triple']?.depositAmount || roomTypesWithImages[selectedRoomType]?.price || 0).toLocaleString()}
+                  <span className="text-base md:text-xl font-bold text-gray-900">
+                    ₹{(roomTypesWithImages[selectedRoomType]?.price || 0).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -477,16 +474,16 @@ export default function PropertyDetailPage() {
 
             {/* House Rules */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">House Rules</h3>
+              <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">House Rules</h3>
               
               <div className="space-y-4">
                 {/* Notice Period */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">📅</span>
-                    <span className="font-medium text-gray-900">Notice Period</span>
+                    <span className="text-xl md:text-2xl">📅</span>
+                    <span className="text-sm md:text-base font-medium text-gray-900">Notice Period</span>
                   </div>
-                  <span className="text-lg font-semibold text-gray-900">
+                  <span className="text-base md:text-lg font-semibold text-gray-900">
                     {mockData.otherCharges[roomTypesWithImages[selectedRoomType]?.type.toLowerCase() as 'single' | 'double' | 'triple']?.noticePeriod || '1 Month'}
                   </span>
                 </div>
@@ -686,7 +683,7 @@ export default function PropertyDetailPage() {
           propertyName={property.name}
           roomType={roomTypesWithImages[selectedRoomType].type}
           price={roomTypesWithImages[selectedRoomType].price}
-          depositAmount={mockData.otherCharges[roomTypesWithImages[selectedRoomType].type.toLowerCase() as 'single' | 'double' | 'triple']?.depositAmount || roomTypesWithImages[selectedRoomType].price}
+          depositAmount={roomTypesWithImages[selectedRoomType].price}
         />
       )}
 
