@@ -59,54 +59,113 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      console.log('Submitting booking with data:', {
-        userId: user?.id,
-        propertyId,
-        roomType,
-        moveInDate: formData.moveInDate,
-        duration: formData.duration,
-        totalAmount,
-        specialRequests: formData.specialRequests,
-      });
+      console.log('Initiating Razorpay payment...');
 
-      const response = await fetch('/api/bookings', {
+      // Load Razorpay script
+      const { loadRazorpayScript, initializeRazorpay, RAZORPAY_KEY_ID } = await import('@/lib/razorpay');
+      
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        throw new Error('Failed to load Razorpay. Please try again.');
+      }
+
+      // Create Razorpay order
+      const orderResponse = await fetch('/api/razorpay/create-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: user?.id,
-          propertyId,
-          roomType,
-          moveInDate: formData.moveInDate,
-          duration: formData.duration,
-          totalAmount,
-          specialRequests: formData.specialRequests,
+          amount: totalAmount,
+          currency: 'INR',
+          receipt: `booking_${Date.now()}`,
+          notes: {
+            propertyId,
+            roomType,
+            duration: formData.duration.toString(),
+          },
         }),
       });
 
-      const data = await response.json();
-      console.log('API Response:', { status: response.status, data });
-
-      if (!response.ok) {
-        console.error('Booking failed:', data);
-        throw new Error(data.error || data.details || 'Failed to create booking');
+      const orderData = await orderResponse.json();
+      
+      if (!orderResponse.ok) {
+        throw new Error(orderData.error || 'Failed to create payment order');
       }
 
-      console.log('Booking created successfully:', data);
-      setIsSubmitting(false);
-      setSubmitSuccess(true);
+      console.log('Razorpay order created:', orderData.order.id);
 
-      setTimeout(() => {
-        setSubmitSuccess(false);
-        setFormData({ moveInDate: '', duration: 6, specialRequests: '' });
-        onClose();
-      }, 2000);
+      // Initialize Razorpay payment
+      await initializeRazorpay({
+        key: RAZORPAY_KEY_ID,
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: 'PGUNCLE',
+        description: `${roomType} Room Booking`,
+        order_id: orderData.order.id,
+        prefill: {
+          name: user?.user_metadata?.full_name || user?.user_metadata?.name || 'User',
+          email: user?.email || '',
+          contact: user?.user_metadata?.phone || user?.phone || '',
+        },
+        theme: {
+          color: '#3B82F6',
+        },
+        handler: async (response: any) => {
+          console.log('Payment successful:', response);
+          
+          // Create booking after successful payment
+          try {
+            const bookingResponse = await fetch('/api/bookings', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                userId: user?.id,
+                propertyId,
+                roomType,
+                moveInDate: formData.moveInDate,
+                duration: formData.duration,
+                totalAmount,
+                specialRequests: formData.specialRequests,
+              }),
+            });
+
+            const bookingData = await bookingResponse.json();
+
+            if (!bookingResponse.ok) {
+              throw new Error(bookingData.error || 'Failed to create booking');
+            }
+
+            console.log('Booking created successfully:', bookingData);
+            setIsSubmitting(false);
+            setSubmitSuccess(true);
+
+            setTimeout(() => {
+              setSubmitSuccess(false);
+              setFormData({ moveInDate: '', duration: 6, specialRequests: '' });
+              onClose();
+            }, 2000);
+          } catch (bookingError: any) {
+            console.error('Error creating booking after payment:', bookingError);
+            setIsSubmitting(false);
+            alert(`Payment successful but booking failed: ${bookingError.message}\n\nPlease contact support with payment ID: ${response.razorpay_payment_id}`);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            console.log('Payment cancelled by user');
+            setIsSubmitting(false);
+          },
+        },
+      });
+
     } catch (error: any) {
-      console.error('Error creating booking:', error);
+      console.error('Error in payment flow:', error);
       console.error('Error details:', error.message);
       setIsSubmitting(false);
-      alert(`Failed to create booking: ${error.message}\n\nPlease check the console for more details.`);
+      alert(`Failed to initiate payment: ${error.message}\n\nPlease check the console for more details.`);
     }
   };
 
@@ -390,10 +449,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
-                        Processing...
+                        Processing Payment...
                       </>
                     ) : (
-                      'Confirm Booking'
+                      'Proceed to Payment'
                     )}
                   </button>
                 </div>
