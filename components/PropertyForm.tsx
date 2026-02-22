@@ -43,8 +43,25 @@ interface PropertyFormProps {
 }
 
 export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmit, onCancel }) => {
+  const defaultAmenities = [
+    { name: 'Fully Furnished', icon: '🛌', available: true },
+    { name: 'Wifi', icon: '📶', available: true },
+    { name: 'Power Backup', icon: '🔋', available: true },
+    { name: 'Room Cleaning Service', icon: '🧹', available: true },
+    { name: 'Parking', icon: '🚗', available: true },
+    { name: 'Meals', icon: '🍱', available: true },
+    { name: 'Fridge', icon: '🧊', available: true },
+    { name: 'Geyser', icon: '♨️', available: true },
+    { name: 'RO', icon: '💦', available: true },
+  ];
+
   const [formData, setFormData] = useState<PropertyFormData>(
-    initialData || {
+    initialData ? {
+      ...initialData,
+      amenities: initialData.amenities && initialData.amenities.length > 0 
+        ? initialData.amenities 
+        : defaultAmenities
+    } : {
       name: '',
       city: 'Chandigarh',
       location: '',
@@ -55,15 +72,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
       roomTypes: [
         { type: 'Single', price: 0, available: true, description: '', features: [], totalSlots: 0, occupiedSlots: 0, availableSlots: 0 },
       ],
-      amenities: [
-        { name: 'Wi-Fi', icon: '📶', available: true },
-        { name: 'AC', icon: '❄️', available: true },
-        { name: 'Meals', icon: '🍽️', available: true },
-        { name: 'Laundry', icon: '🧺', available: true },
-        { name: 'Parking', icon: '🚗', available: true },
-        { name: 'Security', icon: '🔒', available: true },
-        { name: 'Housekeeping', icon: '🧹', available: true },
-      ],
+      amenities: defaultAmenities,
       rules: [''],
       images: [''],
       contactPhone: '',
