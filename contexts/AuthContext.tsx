@@ -25,6 +25,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
+        
+        // If user exists, ensure they have a record in users table
+        if (session?.user) {
+          await ensureUserRecord(session.user);
+        }
       } catch (error) {
         console.error('Error checking session:', error);
       } finally {
@@ -35,13 +40,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
+      
+      // If user exists, ensure they have a record in users table
+      if (session?.user) {
+        await ensureUserRecord(session.user);
+      }
+      
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Helper function to ensure user record exists in users table
+  const ensureUserRecord = async (authUser: User) => {
+    try {
+      // Check if user exists in users table
+      const { data: existingUser, error: fetchError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', authUser.id)
+        .single();
+
+      // If user doesn't exist, create them
+      if (fetchError && fetchError.code === 'PGRST116') {
+        console.log('Creating user record for:', authUser.email);
+        
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert([
+            {
+              id: authUser.id,
+              email: authUser.email,
+              full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
+              phone: authUser.user_metadata?.phone || authUser.phone || null,
+              role: 'user',
+            },
+          ]);
+
+        if (insertError) {
+          console.error('Error creating user record:', insertError);
+        } else {
+          console.log('User record created successfully');
+        }
+      } else if (fetchError) {
+        console.error('Error checking user existence:', fetchError);
+      }
+    } catch (error) {
+      console.error('Error in ensureUserRecord:', error);
+    }
+  };
 
   const signUp = async (email: string, password: string, fullName: string, phone: string) => {
     try {
