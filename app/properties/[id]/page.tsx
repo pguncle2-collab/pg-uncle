@@ -338,7 +338,7 @@ export default function PropertyDetailPage() {
                         </div>
                       </div>
                       
-                      <div className="space-y-2">
+                      <div className="space-y-2 mb-4">
                         {room.features.map((feature, idx) => (
                           <div key={idx} className="flex items-center gap-2 text-sm text-gray-700">
                             <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -347,6 +347,35 @@ export default function PropertyDetailPage() {
                             {feature}
                           </div>
                         ))}
+                      </div>
+
+                      {/* Mobile Booking Buttons - Only visible on mobile */}
+                      <div className="lg:hidden space-y-2 mt-4 pt-4 border-t border-gray-200">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedRoomType(index);
+                            handleBookNow();
+                          }}
+                          disabled={!room.available}
+                          className={`w-full py-3 rounded-lg font-semibold transition-colors ${
+                            room.available
+                              ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600'
+                              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          }`}
+                        >
+                          {room.available ? 'Book Now' : 'Fully Booked'}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedRoomType(index);
+                            setShowVisitModal(true);
+                          }}
+                          className="w-full py-3 border-2 border-blue-500 text-blue-500 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+                        >
+                          Schedule a Visit
+                        </button>
                       </div>
                       
                       {selectedRoomType === index && (
