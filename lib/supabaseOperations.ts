@@ -125,78 +125,100 @@ export const propertyOperations = {
 
   // Add new property (invalidate cache)
   async create(property: Omit<Property, 'id' | 'createdAt' | 'updatedAt'>) {
-    const { data, error } = await supabase
-      .from('properties')
-      .insert([{
+    try {
+      const insertData = {
         name: property.name,
         address: property.address,
         city: property.city,
-        rating: property.rating,
-        reviews: property.reviews,
+        rating: property.rating || 0,
+        reviews: property.reviews || 0,
         type: property.type,
-        availability: property.availability,
+        availability: property.availability || 'Available',
         image: property.image,
         images: property.images || [],
         price: property.price,
-        amenities: property.amenities,
-        house_rules: property.houseRules,
-        nearby_places: property.nearbyPlaces,
+        amenities: property.amenities || [],
+        house_rules: property.houseRules || [],
+        nearby_places: property.nearbyPlaces || [],
         coordinates: property.coordinates,
-        room_types: property.roomTypes,
-        is_active: property.isActive,
-        contact_phone: property.contactPhone
-      }])
-      .select()
-      .single();
-    
-    if (error) throw error;
-    
-    // Invalidate cache
-    serverCache.delete('properties:all');
-    serverCache.delete(`properties:city:${property.city}`);
-    
-    return mapDbToProperty(data);
+        room_types: property.roomTypes || [],
+        is_active: property.isActive !== undefined ? property.isActive : true,
+        contact_phone: property.contactPhone || null
+      };
+
+      console.log('Creating property with data:', insertData);
+
+      const { data, error } = await supabase
+        .from('properties')
+        .insert([insertData])
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Supabase insert error:', error);
+        throw new Error(`Database error: ${error.message} (${error.code})`);
+      }
+      
+      // Invalidate cache
+      serverCache.delete('properties:all');
+      serverCache.delete(`properties:city:${property.city}`);
+      
+      return mapDbToProperty(data);
+    } catch (error: any) {
+      console.error('Error in create operation:', error);
+      throw error;
+    }
   },
 
   // Update property (invalidate cache)
   async update(id: string, property: Partial<Property>) {
-    const updateData: any = {};
-    
-    if (property.name) updateData.name = property.name;
-    if (property.address) updateData.address = property.address;
-    if (property.city) updateData.city = property.city;
-    if (property.rating !== undefined) updateData.rating = property.rating;
-    if (property.reviews !== undefined) updateData.reviews = property.reviews;
-    if (property.type) updateData.type = property.type;
-    if (property.availability) updateData.availability = property.availability;
-    if (property.image) updateData.image = property.image;
-    if (property.images) updateData.images = property.images;
-    if (property.price !== undefined) updateData.price = property.price;
-    if (property.amenities) updateData.amenities = property.amenities;
-    if (property.houseRules) updateData.house_rules = property.houseRules;
-    if (property.nearbyPlaces) updateData.nearby_places = property.nearbyPlaces;
-    if (property.coordinates) updateData.coordinates = property.coordinates;
-    if (property.roomTypes) updateData.room_types = property.roomTypes;
-    if (property.isActive !== undefined) updateData.is_active = property.isActive;
-    if (property.contactPhone) updateData.contact_phone = property.contactPhone;
+    try {
+      const updateData: any = {};
+      
+      if (property.name) updateData.name = property.name;
+      if (property.address) updateData.address = property.address;
+      if (property.city) updateData.city = property.city;
+      if (property.rating !== undefined) updateData.rating = property.rating;
+      if (property.reviews !== undefined) updateData.reviews = property.reviews;
+      if (property.type) updateData.type = property.type;
+      if (property.availability) updateData.availability = property.availability;
+      if (property.image) updateData.image = property.image;
+      if (property.images) updateData.images = property.images;
+      if (property.price !== undefined) updateData.price = property.price;
+      if (property.amenities) updateData.amenities = property.amenities;
+      if (property.houseRules) updateData.house_rules = property.houseRules;
+      if (property.nearbyPlaces) updateData.nearby_places = property.nearbyPlaces;
+      if (property.coordinates) updateData.coordinates = property.coordinates;
+      if (property.roomTypes) updateData.room_types = property.roomTypes;
+      if (property.isActive !== undefined) updateData.is_active = property.isActive;
+      if (property.contactPhone) updateData.contact_phone = property.contactPhone;
 
-    const { data, error } = await supabase
-      .from('properties')
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    
-    // Invalidate cache
-    serverCache.delete('properties:all');
-    serverCache.delete(`property:${id}`);
-    if (property.city) {
-      serverCache.delete(`properties:city:${property.city}`);
+      console.log('Updating property', id, 'with data:', updateData);
+
+      const { data, error } = await supabase
+        .from('properties')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw new Error(`Database error: ${error.message} (${error.code})`);
+      }
+      
+      // Invalidate cache
+      serverCache.delete('properties:all');
+      serverCache.delete(`property:${id}`);
+      if (property.city) {
+        serverCache.delete(`properties:city:${property.city}`);
+      }
+      
+      return mapDbToProperty(data);
+    } catch (error: any) {
+      console.error('Error in update operation:', error);
+      throw error;
     }
-    
-    return mapDbToProperty(data);
   },
 
   // Delete property (invalidate cache)
