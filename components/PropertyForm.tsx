@@ -87,7 +87,19 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>(initialData?.images || []);
   const [roomImageFiles, setRoomImageFiles] = useState<{[key: number]: File[]}>({});
-  const [roomImagePreviewUrls, setRoomImagePreviewUrls] = useState<{[key: number]: string[]}>({});
+  const [roomImagePreviewUrls, setRoomImagePreviewUrls] = useState<{[key: number]: string[]}>(() => {
+    // Initialize with existing room images from initialData
+    if (initialData?.roomTypes) {
+      const roomImages: {[key: number]: string[]} = {};
+      initialData.roomTypes.forEach((room, index) => {
+        if (room.images && room.images.length > 0) {
+          roomImages[index] = room.images;
+        }
+      });
+      return roomImages;
+    }
+    return {};
+  });
   const [isUploading, setIsUploading] = useState(false);
 
   const cities = ['Chandigarh', 'Mohali', 'Panchkula', 'Zirakpur'];
