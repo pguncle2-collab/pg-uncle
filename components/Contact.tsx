@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { analytics } from '@/lib/analytics';
 
 export const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -22,6 +23,7 @@ export const Contact: React.FC = () => {
     setSuccess(false);
 
     try {
+      analytics.submitContactForm(formData.subject);
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
@@ -48,9 +50,11 @@ export const Contact: React.FC = () => {
         }, 5000);
       } else {
         setError(data.error || 'Failed to send message. Please try again.');
+        analytics.error('contact_form', data.error || 'Failed to send message');
       }
-    } catch (err) {
+    } catch (err: any) {
       setError('Failed to send message. Please check your connection and try again.');
+      analytics.error('contact_form', err.message || 'Network error');
     } finally {
       setLoading(false);
     }

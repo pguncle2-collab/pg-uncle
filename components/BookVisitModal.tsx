@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { analytics } from '@/lib/analytics';
 
 interface BookVisitModalProps {
   isOpen: boolean;
@@ -27,6 +28,13 @@ export const BookVisitModal: React.FC<BookVisitModalProps> = ({
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
+  // Track modal open
+  useEffect(() => {
+    if (isOpen) {
+      analytics.openVisitModal(propertyId, propertyName);
+    }
+  }, [isOpen, propertyId, propertyName]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -49,6 +57,7 @@ export const BookVisitModal: React.FC<BookVisitModalProps> = ({
 
       if (response.ok) {
         setSuccess(true);
+        analytics.scheduleVisit(propertyId, propertyName, formData.visitDate);
         setTimeout(() => {
           onClose();
           setSuccess(false);
@@ -63,6 +72,7 @@ export const BookVisitModal: React.FC<BookVisitModalProps> = ({
         }, 3000);
       } else {
         setError(data.error || 'Failed to book visit');
+        analytics.error('visit_booking', data.error || 'Failed to book visit');
       }
     } catch (err) {
       setError('Something went wrong. Please try again.');

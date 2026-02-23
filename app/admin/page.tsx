@@ -63,6 +63,7 @@ export default function AdminDashboard() {
   // Filter properties based on search and filters
   const filteredProperties = properties.filter(property => {
     const matchesSearch = property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         property.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          property.address.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCity = filterCity === 'all' || property.city === filterCity;
     const matchesStatus = filterStatus === 'all' || 
@@ -360,7 +361,7 @@ export default function AdminDashboard() {
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search by name or address..."
+                  placeholder="Search by name, location, or address..."
                   className="w-full px-4 py-3 pl-10 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors"
                 />
                 <svg
@@ -449,12 +450,13 @@ export default function AdminDashboard() {
                     <td className="px-6 py-4">
                       <div>
                         <div className="font-semibold text-gray-900">{property.name}</div>
-                        <div className="text-sm text-gray-600">{property.address}</div>
+                        <div className="text-sm text-gray-600">{property.location || property.city}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm">
                         <div className="font-medium text-gray-900">{property.city}</div>
+                        <div className="text-xs text-gray-500">{property.address}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -541,7 +543,7 @@ export default function AdminDashboard() {
                 initialData={selectedProperty ? {
                   name: selectedProperty.name,
                   city: selectedProperty.city,
-                  location: selectedProperty.address,
+                  location: selectedProperty.location || '',
                   address: selectedProperty.address,
                   coordinates: selectedProperty.coordinates || { lat: 30.7333, lng: 76.7794 },
                   description: selectedProperty.description || '',
@@ -591,6 +593,7 @@ export default function AdminDashboard() {
                       const updateData = {
                         name: data.name,
                         city: data.city,
+                        location: data.location,
                         address: data.address,
                         description: data.description,
                         coordinates: data.coordinates,
@@ -612,6 +615,7 @@ export default function AdminDashboard() {
                       const newPropertyData = {
                         name: data.name,
                         city: data.city,
+                        location: data.location,
                         address: data.address,
                         description: data.description,
                         rating: 4.5,

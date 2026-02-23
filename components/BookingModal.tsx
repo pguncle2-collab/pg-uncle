@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { analytics } from '@/lib/analytics';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -30,6 +31,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  // Track modal open
+  useEffect(() => {
+    if (isOpen) {
+      analytics.openBookingModal(propertyId, roomType, price);
+    }
+  }, [isOpen, propertyId, roomType, price]);
 
   if (!isOpen) return null;
 
@@ -60,6 +68,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
     try {
       console.log('Initiating Razorpay payment...');
+      analytics.initiateBooking(propertyId, roomType, totalAmount);
 
       // Load Razorpay script
       const { loadRazorpayScript, initializeRazorpay, RAZORPAY_KEY_ID } = await import('@/lib/razorpay');
@@ -170,6 +179,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             }
 
             console.log('Booking created successfully:', bookingData);
+            analytics.completeBooking(propertyId, roomType, totalAmount, response.razorpay_payment_id);
+            analytics.paymentSuccess(totalAmount, response.razorpay_payment_id);
             setIsSubmitting(false);
             setSubmitSuccess(true);
 
@@ -189,6 +200,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         modal: {
           ondismiss: () => {
             console.log('Payment cancelled by user');
+            analytics.cancelBooking(propertyId, roomType);
             setIsSubmitting(false);
           },
         },
@@ -197,6 +209,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     } catch (error: any) {
       console.error('Error in payment flow:', error);
       console.error('Error details:', error.message);
+      analytics.paymentFailed(totalAmount, error.message);
+      analytics.error('payment_flow', error.message);
       setIsSubmitting(false);
       alert(`Failed to initiate payment: ${error.message}\n\nPlease check the console for more details.`);
     }

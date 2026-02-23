@@ -7,6 +7,7 @@ function mapDbToProperty(dbRow: any): Property {
   return {
     id: dbRow.id,
     name: dbRow.name,
+    location: dbRow.location || '',
     address: dbRow.address,
     city: dbRow.city,
     rating: dbRow.rating,
@@ -67,6 +68,7 @@ export const propertyOperations = {
         .select(`
           id,
           name,
+          location,
           address,
           city,
           description,
@@ -133,6 +135,7 @@ export const propertyOperations = {
     try {
       const insertData: any = {
         name: property.name,
+        location: property.location || '',
         address: property.address,
         city: property.city,
         description: property.description || '',
@@ -181,6 +184,7 @@ export const propertyOperations = {
       const updateData: any = {};
       
       if (property.name) updateData.name = property.name;
+      if (property.location !== undefined) updateData.location = property.location;
       if (property.address) updateData.address = property.address;
       if (property.city) updateData.city = property.city;
       if (property.description !== undefined) updateData.description = property.description;
@@ -268,7 +272,7 @@ export const propertyOperations = {
     const { data, error } = await supabase
       .from('properties')
       .select('*')
-      .or(`name.ilike.%${query}%,address.ilike.%${query}%,city.ilike.%${query}%`)
+      .or(`name.ilike.%${query}%,location.ilike.%${query}%,address.ilike.%${query}%,city.ilike.%${query}%`)
       .eq('is_active', true);
     
     if (error) throw error;
@@ -510,7 +514,7 @@ export const paymentOperations = {
       .from('payments')
       .select(`
         *,
-        properties (name, address, city),
+        properties (name, location, address, city),
         bookings (check_in_date, room_type)
       `)
       .eq('user_id', userId)
@@ -526,7 +530,7 @@ export const paymentOperations = {
       .from('payments')
       .select(`
         *,
-        properties (name, address, city),
+        properties (name, location, address, city),
         bookings (check_in_date, room_type)
       `)
       .order('created_at', { ascending: false });

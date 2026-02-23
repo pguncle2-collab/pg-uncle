@@ -116,6 +116,18 @@ components/
 npm install
 ```
 
+### Environment Setup
+1. Copy `.env.local.example` to `.env.local`
+2. Fill in your environment variables:
+   - Supabase credentials
+   - Razorpay keys
+   - SMTP settings
+   - App version (for cache busting)
+
+```bash
+cp .env.local.example .env.local
+```
+
 ### Run Development Server
 ```bash
 npm run dev
@@ -132,6 +144,63 @@ npm run build
 ```bash
 npm start
 ```
+
+## 🚢 Deployment
+
+### Automatic Cache Clearing
+
+The app automatically clears localStorage, sessionStorage, and cookies when a new deployment is detected. This ensures users always get fresh data.
+
+**Before each deployment:**
+
+```bash
+# Update version automatically
+npm run update-version
+
+# Or set a specific version
+npm run update-version 1.0.1
+
+# Then build and deploy
+npm run build
+```
+
+**Or use the combined command:**
+
+```bash
+npm run deploy
+```
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
+
+### Platform-Specific
+
+**Vercel:**
+- Set `NEXT_PUBLIC_APP_VERSION` in environment variables
+- Push to main branch
+
+**Netlify:**
+- Set `NEXT_PUBLIC_APP_VERSION` in build settings
+- Deploy from Git
+
+**Custom Server:**
+```bash
+export NEXT_PUBLIC_APP_VERSION=1.0.0
+npm run build
+npm start
+```
+
+## 📊 Analytics
+
+Google Analytics (GA4) is integrated with comprehensive event tracking:
+
+- Property views and interactions
+- Booking flow events
+- Payment tracking
+- User authentication events
+- Navigation clicks
+- Error tracking
+
+See [ANALYTICS.md](./ANALYTICS.md) for details.
 
 ## 🛠️ Technologies Used
 

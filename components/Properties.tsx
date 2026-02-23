@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useProperties } from '@/hooks/useProperties';
+import { analytics } from '@/lib/analytics';
 
 interface PropertyDisplay {
   id: string;
@@ -80,7 +81,7 @@ export const Properties: React.FC = () => {
     id: prop.id,
     name: prop.name,
     city: prop.city,
-    location: prop.address,
+    location: prop.location || prop.address,
     price: prop.price,
     type: prop.roomTypes?.[0]?.type || 'Single',
     gender: 'All', // Default to 'All' since gender field was removed
@@ -96,6 +97,12 @@ export const Properties: React.FC = () => {
     // Removed type filter - show all types
     return cityMatch;
   });
+
+  // Track filter changes
+  const handleCityChange = (city: string) => {
+    setSelectedCity(city);
+    analytics.filterProperties('city', city);
+  };
 
   // Show loading state with skeleton
   if (loading) {
@@ -224,7 +231,7 @@ export const Properties: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Select City:</label>
                 <select
                   value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
+                  onChange={(e) => handleCityChange(e.target.value)}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-white text-gray-900 font-medium"
                 >
                   {cities.map((city) => (
@@ -241,7 +248,7 @@ export const Properties: React.FC = () => {
                 {cities.map((city) => (
                   <button
                     key={city}
-                    onClick={() => setSelectedCity(city)}
+                    onClick={() => handleCityChange(city)}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                       selectedCity === city
                         ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
@@ -372,6 +379,7 @@ export const Properties: React.FC = () => {
                   </div>
                   <Link
                     href={`/properties/${property.id}`}
+                    onClick={() => analytics.viewPropertyDetails(property.id, property.name)}
                     className={`px-6 py-2 rounded-xl font-semibold transition-all duration-300 ${property.available
                         ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 shadow-lg hover:shadow-xl'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'

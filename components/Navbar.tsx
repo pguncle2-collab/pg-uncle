@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { analytics } from '@/lib/analytics';
 
 interface NavbarProps {
   onAuthClick?: () => void;
@@ -38,6 +39,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
 
   const handleSignOut = async () => {
     await signOut();
+    analytics.logout();
     setShowUserMenu(false);
   };
 
@@ -86,24 +88,28 @@ export const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
           <div className="hidden md:flex items-center gap-8">
             <Link
               href="/main"
+              onClick={() => analytics.clickNavLink('Home')}
               className="font-medium text-gray-700 transition-colors hover:text-sky-600 hover:bg-sky-200/50 px-3 py-2 rounded-lg"
             >
               Home
             </Link>
             <Link
               href="/main#properties"
+              onClick={() => analytics.clickNavLink('Properties')}
               className="font-medium text-gray-700 transition-colors hover:text-sky-600 hover:bg-sky-200/50 px-3 py-2 rounded-lg"
             >
               Properties
             </Link>
             <Link
               href="/about"
+              onClick={() => analytics.clickNavLink('About')}
               className="font-medium text-gray-700 transition-colors hover:text-sky-600 hover:bg-sky-200/50 px-3 py-2 rounded-lg"
             >
               About
             </Link>
             <Link
               href="/main#contact"
+              onClick={() => analytics.clickNavLink('Contact')}
               className="font-medium text-gray-700 transition-colors hover:text-sky-600 hover:bg-sky-200/50 px-3 py-2 rounded-lg"
             >
               Contact
@@ -150,7 +156,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                     <Link
                       href="/bookings"
                       className="flex items-center gap-3 px-4 py-3 hover:bg-sky-100 transition-colors"
-                      onClick={() => setShowUserMenu(false)}
+                      onClick={() => {
+                        analytics.clickNavLink('My Bookings');
+                        setShowUserMenu(false);
+                      }}
                     >
                       <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -161,7 +170,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                     <Link
                       href="/profile"
                       className="flex items-center gap-3 px-4 py-3 hover:bg-sky-100 transition-colors"
-                      onClick={() => setShowUserMenu(false)}
+                      onClick={() => {
+                        analytics.clickNavLink('Profile Settings');
+                        setShowUserMenu(false);
+                      }}
                     >
                       <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -254,21 +266,30 @@ export const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
               <Link
                 href="/main"
                 className="px-4 py-3 text-gray-700 hover:bg-sky-100 rounded-xl font-medium transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => {
+                  analytics.clickNavLink('Home - Mobile');
+                  setIsMobileMenuOpen(false);
+                }}
               >
                 Home
               </Link>
               <Link
                 href="/main#properties"
                 className="px-4 py-3 text-gray-700 hover:bg-sky-100 rounded-xl font-medium transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => {
+                  analytics.clickNavLink('Properties - Mobile');
+                  setIsMobileMenuOpen(false);
+                }}
               >
                 Properties
               </Link>
               <Link
                 href="/main#contact"
                 className="px-4 py-3 text-gray-700 hover:bg-sky-100 rounded-xl font-medium transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => {
+                  analytics.clickNavLink('Contact - Mobile');
+                  setIsMobileMenuOpen(false);
+                }}
               >
                 Contact
               </Link>

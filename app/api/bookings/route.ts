@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
 
     const { data: property } = await supabase
       .from('properties')
-      .select('name, address, city')
+      .select('name, location, address, city')
       .eq('id', propertyId)
       .single();
 

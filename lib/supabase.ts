@@ -49,6 +49,7 @@ export const supabase = getSupabaseClient();
 export interface Property {
   id: string;
   name: string;
+  location: string;
   address: string;
   city: string;
   rating: number;

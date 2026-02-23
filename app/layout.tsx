@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Navbar } from '@/components/Navbar'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { VersionChecker } from '@/components/VersionChecker'
 // WhatsApp Button - COMMENTED OUT
 // import { WhatsAppButton } from '@/components/WhatsAppButton'
 
@@ -81,8 +82,23 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-3TXYLMX47G"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-3TXYLMX47G');
+            `,
+          }}
+        />
       </head>
       <body>
+        <VersionChecker />
         <AuthProvider>
           {children}
           {/* WhatsApp Button - COMMENTED OUT */}

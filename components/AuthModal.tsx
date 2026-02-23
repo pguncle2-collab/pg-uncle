@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { analytics } from '@/lib/analytics';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -32,7 +33,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultTa
     terms: false,
   });
 
-  // Handle Escape key press
+  // Handle Escape key press and track modal open
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -40,9 +41,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultTa
       }
     };
 
+    if (isOpen) {
+      analytics.openAuthModal(activeTab);
+    }
+
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, activeTab]);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +64,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultTa
       }
 
       // Success
+      analytics.login('email');
       setLoading(false);
       if (onSuccess) {
         onSuccess();
@@ -66,6 +72,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultTa
       onClose();
     } catch (err: any) {
       setError(err.message || 'An error occurred');
+      analytics.error('login', err.message);
       setLoading(false);
     }
   };
@@ -101,6 +108,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultTa
       }
 
       // Success
+      analytics.signup('email');
       setLoading(false);
       alert('Account created successfully! Please check your email to verify your account.');
       if (onSuccess) {
@@ -109,6 +117,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultTa
       onClose();
     } catch (err: any) {
       setError(err.message || 'An error occurred');
+      analytics.error('signup', err.message);
       setLoading(false);
     }
   };
@@ -118,6 +127,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultTa
     setLoading(true);
 
     try {
+      analytics.login('google');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -127,6 +137,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultTa
 
       if (error) {
         setError(error.message || 'Failed to sign in with Google');
+        analytics.error('google_signin', error.message);
         setLoading(false);
         return;
       }
@@ -134,6 +145,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultTa
       // OAuth will redirect, so we don't need to do anything else here
     } catch (err: any) {
       setError(err.message || 'An error occurred');
+      analytics.error('google_signin', err.message);
       setLoading(false);
     }
   };

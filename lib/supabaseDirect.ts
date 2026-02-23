@@ -7,7 +7,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 export async function fetchPropertiesDirect() {
-  const url = `${SUPABASE_URL}/rest/v1/properties?select=id,name,address,city,rating,reviews,type,availability,image,images,price,amenities,room_types,is_active,created_at&is_active=eq.true&order=created_at.desc&limit=50`;
+  const url = `${SUPABASE_URL}/rest/v1/properties?select=id,name,location,address,city,rating,reviews,type,availability,image,images,price,amenities,room_types,is_active,created_at&is_active=eq.true&order=created_at.desc&limit=50`;
   
   const response = await fetch(url, {
     method: 'GET',

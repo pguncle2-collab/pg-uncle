@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "update-version": "node scripts/update-version.js",
+    "deploy": "npm run update-version && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.93.3",
