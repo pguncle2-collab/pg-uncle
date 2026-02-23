@@ -63,6 +63,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
 
   const [formData, setFormData] = useState<PropertyFormData>(() => {
     if (initialData) {
+      console.log('PropertyForm initialData:', initialData);
       return {
         ...initialData,
         amenities: initialData.amenities && initialData.amenities.length > 0 
@@ -106,18 +107,6 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
   const [isUploading, setIsUploading] = useState(false);
 
   const cities = ['Chandigarh', 'Mohali', 'Panchkula', 'Zirakpur'];
-
-  // Update form data when initialData changes (for edit mode)
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
-        ...initialData,
-        amenities: initialData.amenities && initialData.amenities.length > 0 
-          ? initialData.amenities 
-          : defaultAmenities
-      });
-    }
-  }, [initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
