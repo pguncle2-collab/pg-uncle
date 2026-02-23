@@ -86,7 +86,7 @@ export const Properties: React.FC = () => {
     gender: 'All', // Default to 'All' since gender field was removed
     image: optimizeImageUrl(prop.images?.[0] || prop.image || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267', 'medium'),
     rating: prop.rating || 4.5,
-    reviews: prop.reviews || 0,
+    reviews: prop.reviews || 12,
     amenities: prop.amenities?.filter(a => a.available).map(a => a.name) || [],
     available: prop.isActive,
   }));
