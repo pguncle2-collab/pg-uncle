@@ -591,7 +591,6 @@ export default function AdminDashboard() {
                         name: data.name,
                         city: data.city,
                         address: data.address,
-                        description: data.description,
                         coordinates: data.coordinates,
                         roomTypes: data.roomTypes,
                         price: data.roomTypes[0]?.price || 0, // Update main price field
@@ -612,7 +611,6 @@ export default function AdminDashboard() {
                         name: data.name,
                         city: data.city,
                         address: data.address,
-                        description: data.description,
                         rating: 4.5,
                         reviews: 12,
                         type: data.roomTypes.map(rt => rt.type).join(', '),
