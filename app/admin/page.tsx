@@ -543,11 +543,18 @@ export default function AdminDashboard() {
                   location: selectedProperty.address,
                   address: selectedProperty.address,
                   coordinates: selectedProperty.coordinates || { lat: 30.7333, lng: 76.7794 },
-                  description: 'Property description',
+                  description: selectedProperty.description || '',
                   roomTypes: selectedProperty.roomTypes?.map((rt: any) => ({
-                    ...rt,
-                    description: '',
-                    features: [],
+                    type: rt.type,
+                    price: rt.price,
+                    available: rt.available,
+                    description: rt.description || '',
+                    features: rt.features || [],
+                    totalSlots: rt.totalSlots || 0,
+                    occupiedSlots: rt.occupiedSlots || 0,
+                    availableSlots: rt.availableSlots || 0,
+                    beds: rt.beds || 1,
+                    images: rt.images || [],
                   })) || [],
                   amenities: selectedProperty.amenities?.map((a: any) => {
                     // Update icons to match current defaults
@@ -565,8 +572,9 @@ export default function AdminDashboard() {
                       'RO Water': '💧',
                     };
                     return {
-                      ...a,
-                      icon: iconMap[a.name] || a.icon
+                      name: a.name,
+                      icon: iconMap[a.name] || a.icon,
+                      available: a.available
                     };
                   }) || [],
                   rules: selectedProperty.houseRules || [],
@@ -583,6 +591,7 @@ export default function AdminDashboard() {
                         name: data.name,
                         city: data.city,
                         address: data.address,
+                        description: data.description,
                         coordinates: data.coordinates,
                         roomTypes: data.roomTypes,
                         price: data.roomTypes[0]?.price || 0, // Update main price field
@@ -603,6 +612,7 @@ export default function AdminDashboard() {
                         name: data.name,
                         city: data.city,
                         address: data.address,
+                        description: data.description,
                         rating: 0,
                         reviews: 0,
                         type: data.roomTypes.map(rt => rt.type).join(', '),

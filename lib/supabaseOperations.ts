@@ -129,6 +129,7 @@ export const propertyOperations = {
         name: property.name,
         address: property.address,
         city: property.city,
+        description: property.description || '',
         rating: property.rating || 0,
         reviews: property.reviews || 0,
         type: property.type,
@@ -176,6 +177,7 @@ export const propertyOperations = {
       if (property.name) updateData.name = property.name;
       if (property.address) updateData.address = property.address;
       if (property.city) updateData.city = property.city;
+      if (property.description !== undefined) updateData.description = property.description;
       if (property.rating !== undefined) updateData.rating = property.rating;
       if (property.reviews !== undefined) updateData.reviews = property.reviews;
       if (property.type) updateData.type = property.type;
