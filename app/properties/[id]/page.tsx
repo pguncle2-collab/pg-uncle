@@ -160,7 +160,6 @@ export default function PropertyDetailPage() {
       { name: 'Chandigarh University', distance: '1.5 km', type: 'Education' },
       { name: 'Elante Mall', distance: '4.0 km', type: 'Shopping' },
     ],
-    contactPhone: '+91 98765 43210'
   };
 
   // Ensure room images exist (keep original URLs for state management)
@@ -700,16 +699,6 @@ export default function PropertyDetailPage() {
                   </svg>
                   Schedule a Visit
                 </button>
-
-                <a
-                  href={`tel:${property.contactPhone || mockData.contactPhone}`}
-                  className="w-full py-4 rounded-xl font-bold text-lg border-2 border-blue-500 text-blue-600 hover:bg-blue-50 transition-all duration-300 flex items-center justify-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                  Contact Us
-                </a>
 
                 <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
                   <div className="flex items-start gap-3">

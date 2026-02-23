@@ -572,7 +572,6 @@ export default function AdminDashboard() {
                   rules: selectedProperty.houseRules || [],
                   nearbyPlaces: selectedProperty.nearbyPlaces || [{ name: '', distance: '', type: 'Shopping' }],
                   images: selectedProperty.images || [selectedProperty.image],
-                  contactPhone: selectedProperty.contactPhone || '+91 98765 43210',
                 } : undefined}
                 onSubmit={async (data) => {
                   console.log('Form submitted with data:', data);
@@ -591,7 +590,6 @@ export default function AdminDashboard() {
                         houseRules: data.rules,
                         nearbyPlaces: data.nearbyPlaces,
                         images: data.images,
-                        contactPhone: data.contactPhone,
                       };
                       console.log('Update data:', updateData);
                       await updateProperty(selectedProperty.id, updateData);
@@ -618,7 +616,6 @@ export default function AdminDashboard() {
                         coordinates: data.coordinates,
                         roomTypes: data.roomTypes,
                         isActive: true,
-                        contactPhone: data.contactPhone,
                       };
                       console.log('New property data:', newPropertyData);
                       await addProperty(newPropertyData);

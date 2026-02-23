@@ -40,7 +40,6 @@ interface PropertyFormData {
     type: string;
   }[];
   images: string[];
-  contactPhone: string;
 }
 
 interface PropertyFormProps {
@@ -82,7 +81,6 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
       rules: [''],
       nearbyPlaces: [{ name: '', distance: '', type: 'Shopping' }],
       images: [''],
-      contactPhone: '',
     }
   );
 
@@ -372,20 +370,6 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
               placeholder="e.g., Sector 22"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Contact Phone *
-            </label>
-            <input
-              type="tel"
-              value={formData.contactPhone}
-              onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-              className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
-              placeholder="+91 98765 43210"
               required
             />
           </div>

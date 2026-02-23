@@ -71,7 +71,6 @@ export interface Property {
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
-  contactPhone?: string;
 }
 
 export interface RoomType {

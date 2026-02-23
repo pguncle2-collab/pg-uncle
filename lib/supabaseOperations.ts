@@ -24,7 +24,6 @@ function mapDbToProperty(dbRow: any): Property {
     isActive: dbRow.is_active ?? true,
     createdAt: dbRow.created_at,
     updatedAt: dbRow.updated_at,
-    contactPhone: dbRow.contact_phone,
   };
 }
 
@@ -145,11 +144,6 @@ export const propertyOperations = {
         is_active: property.isActive !== undefined ? property.isActive : true,
       };
 
-      // Only add contact_phone if it exists (for backward compatibility)
-      if (property.contactPhone) {
-        insertData.contact_phone = property.contactPhone;
-      }
-
       console.log('Creating property with data:', insertData);
 
       const { data, error } = await supabase
@@ -195,8 +189,6 @@ export const propertyOperations = {
       if (property.coordinates) updateData.coordinates = property.coordinates;
       if (property.roomTypes) updateData.room_types = property.roomTypes;
       if (property.isActive !== undefined) updateData.is_active = property.isActive;
-      // Only add contact_phone if it exists (for backward compatibility)
-      if (property.contactPhone) updateData.contact_phone = property.contactPhone;
 
       console.log('Updating property', id, 'with data:', updateData);
 
