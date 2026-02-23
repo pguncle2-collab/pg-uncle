@@ -150,24 +150,50 @@ export default function AdminDashboard() {
           <div className="text-6xl mb-4 text-center">⚠️</div>
           <h3 className="text-2xl font-bold text-red-900 mb-2 text-center">Database Error</h3>
           <p className="text-red-600 text-center mb-4">{error || adminError}</p>
-          <div className="flex gap-2 justify-center">
+          
+          {/* Check if it's a timeout/pause error */}
+          {((error || adminError || '').includes('timeout') || (error || adminError || '').includes('paused')) && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <p className="text-sm text-blue-900 font-semibold mb-2">💡 Quick Fix:</p>
+              <ol className="text-sm text-blue-800 space-y-1 list-decimal ml-4">
+                <li>Your Supabase project may be paused (free tier)</li>
+                <li>Click the button below to open Supabase Dashboard</li>
+                <li>Click "Restore Project" if you see it</li>
+                <li>Wait 1-2 minutes and click "Retry" here</li>
+              </ol>
+            </div>
+          )}
+          
+          <div className="flex flex-col gap-2">
             <button
               onClick={() => {
                 setAdminError(null);
                 fetchProperties();
               }}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold"
             >
-              Retry
+              🔄 Retry Connection
             </button>
+            
+            {((error || adminError || '').includes('timeout') || (error || adminError || '').includes('paused')) && (
+              <a
+                href="https://supabase.com/dashboard"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-center font-semibold"
+              >
+                🚀 Open Supabase Dashboard
+              </a>
+            )}
+            
             <button
               onClick={() => {
                 setIsAuthenticated(false);
                 setAdminError(null);
               }}
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 font-semibold"
             >
-              Back to Login
+              ← Back to Login
             </button>
           </div>
         </div>
@@ -191,6 +217,22 @@ export default function AdminDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <button
+                onClick={async () => {
+                  const startTime = Date.now();
+                  try {
+                    await fetchProperties();
+                    const duration = Date.now() - startTime;
+                    alert(`✅ Database Connected!\nResponse time: ${duration}ms`);
+                  } catch (err) {
+                    alert('❌ Database connection failed. Please check if your Supabase project is paused.');
+                  }
+                }}
+                className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 font-medium border border-blue-200"
+                title="Test database connection"
+              >
+                🔍 Test Connection
+              </button>
               <div className="text-sm text-green-600 font-semibold">
                 ✓ System Connected
               </div>

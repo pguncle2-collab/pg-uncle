@@ -142,11 +142,38 @@ export const Properties: React.FC = () => {
     return (
       <section id="properties" className="py-16 lg:py-32 bg-gradient-to-b from-white to-gray-50">
         <div className="container mx-auto px-5 md:px-6">
-          <div className="text-center py-16 bg-red-50 rounded-2xl px-8">
+          <div className="text-center py-16 bg-red-50 rounded-2xl px-8 max-w-2xl mx-auto">
             <div className="text-6xl mb-4">⚠️</div>
             <h3 className="text-2xl font-bold text-red-900 mb-2">Database Connection Error</h3>
             <p className="text-red-600 mb-4">{error}</p>
-            <p className="text-sm text-gray-600">Please try again later or contact support</p>
+            
+            {/* Show helpful message if it's a timeout/pause error */}
+            {(error.includes('timeout') || error.includes('paused')) && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-left">
+                <p className="text-sm text-blue-900 font-semibold mb-2">💡 This usually means:</p>
+                <ul className="text-sm text-blue-800 space-y-1 list-disc ml-4">
+                  <li>The database is paused (free tier pauses after inactivity)</li>
+                  <li>The administrator needs to restore it</li>
+                </ul>
+              </div>
+            )}
+            
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold"
+              >
+                🔄 Retry
+              </button>
+              {(error.includes('timeout') || error.includes('paused')) && (
+                <a
+                  href="mailto:info@pguncle.com?subject=Database Connection Issue"
+                  className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 font-semibold"
+                >
+                  📧 Contact Support
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </section>
