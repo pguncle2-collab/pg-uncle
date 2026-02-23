@@ -90,6 +90,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       const orderData = await orderResponse.json();
       
       if (!orderResponse.ok) {
+        // Check if it's a configuration error
+        if (orderResponse.status === 503 && orderData.error === 'Payment gateway not configured') {
+          throw new Error('Payment gateway is not configured. Please contact the administrator to set up Razorpay credentials.');
+        }
         throw new Error(orderData.error || 'Failed to create payment order');
       }
 
