@@ -16,6 +16,7 @@ function mapDbToProperty(dbRow: any): Property {
     image: dbRow.image,
     images: dbRow.images || [],
     price: dbRow.price,
+    description: dbRow.description || '',
     amenities: dbRow.amenities || [],
     houseRules: dbRow.house_rules || [],
     nearbyPlaces: dbRow.nearby_places || [],
