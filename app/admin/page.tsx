@@ -484,7 +484,6 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => {
-                            console.log('Edit clicked, selectedProperty:', property);
                             setSelectedProperty(property);
                             setShowEditModal(true);
                           }}

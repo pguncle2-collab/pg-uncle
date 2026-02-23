@@ -63,7 +63,6 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
 
   const [formData, setFormData] = useState<PropertyFormData>(() => {
     if (initialData) {
-      console.log('PropertyForm initialData:', initialData);
       return {
         ...initialData,
         amenities: initialData.amenities && initialData.amenities.length > 0 
