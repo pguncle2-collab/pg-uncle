@@ -23,7 +23,8 @@ export default function AdminDashboard() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === '@Admin-123@') {
+    const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin123';
+    if (password === adminPassword) {
       setIsAuthenticated(true);
       // Fetch properties after successful login
       setTimeout(() => {
