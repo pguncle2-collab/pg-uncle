@@ -47,7 +47,6 @@ export const DiscountPopup: React.FC = () => {
         className="relative w-full max-w-2xl bg-white rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden"
         style={{ 
           animation: 'scaleIn 0.4s ease-out',
-          maxHeight: 'calc(100vh - 40px)',
           maxHeight: 'calc(100dvh - 40px)' /* Use dynamic viewport height for mobile */
         }}
       >
@@ -63,7 +62,7 @@ export const DiscountPopup: React.FC = () => {
         </button>
 
         {/* Scrollable Content */}
-        <div className="overflow-y-auto overflow-x-hidden custom-scrollbar" style={{ maxHeight: 'calc(100vh - 40px)', maxHeight: 'calc(100dvh - 40px)' }}>
+        <div className="overflow-y-auto overflow-x-hidden custom-scrollbar" style={{ maxHeight: 'calc(100dvh - 40px)' }}>
           {/* Header with gradient */}
           <div className="relative bg-gradient-to-br from-purple-600 via-pink-600 to-red-600 text-white px-4 py-6 md:px-8 md:py-8">
             <div className="absolute inset-0 opacity-20">
