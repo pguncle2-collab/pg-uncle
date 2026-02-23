@@ -69,6 +69,7 @@ export const propertyOperations = {
           name,
           address,
           city,
+          description,
           rating,
           reviews,
           type,
@@ -77,9 +78,13 @@ export const propertyOperations = {
           images,
           price,
           amenities,
+          house_rules,
+          nearby_places,
+          coordinates,
           room_types,
           is_active,
-          created_at
+          created_at,
+          updated_at
         `)
         .eq('is_active', true)
         .order('created_at', { ascending: false })
