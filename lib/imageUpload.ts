@@ -22,10 +22,10 @@ export async function uploadImage(
       throw new Error('Invalid file type. Only JPEG, PNG, and WebP are allowed.');
     }
 
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    // Validate file size (max 50MB)
+    const maxSize = 50 * 1024 * 1024; // 50MB
     if (file.size > maxSize) {
-      throw new Error('File size too large. Maximum size is 5MB.');
+      throw new Error('File size too large. Maximum size is 50MB.');
     }
 
     // Generate unique filename
@@ -39,7 +39,7 @@ export async function uploadImage(
     const { data, error } = await supabase.storage
       .from('property-images')
       .upload(fileName, file, {
-        cacheControl: '3600',
+        cacheControl: 'no-cache, no-store, must-revalidate',
         upsert: false,
       });
 
@@ -58,13 +58,16 @@ export async function uploadImage(
       throw new Error('Upload succeeded but no path returned');
     }
 
-    // Get public URL
+    // Get public URL with cache-busting parameter
     const { data: { publicUrl } } = supabase.storage
       .from('property-images')
       .getPublicUrl(data.path);
 
-    console.log('Upload successful:', publicUrl);
-    return publicUrl;
+    // Add timestamp to prevent caching issues
+    const urlWithCacheBuster = `${publicUrl}?t=${Date.now()}`;
+    
+    console.log('Upload successful:', urlWithCacheBuster);
+    return urlWithCacheBuster;
   } catch (error) {
     console.error('Error uploading image:', error);
     throw error;

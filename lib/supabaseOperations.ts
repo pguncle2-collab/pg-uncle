@@ -1,4 +1,6 @@
 import { supabase, Property, User } from './supabase';
+import { withCache, serverCache } from './serverCache';
+import { fetchPropertiesDirect } from './supabaseDirect';
 
 // Helper function to convert database row to Property object
 function mapDbToProperty(dbRow: any): Property {
@@ -22,54 +24,95 @@ function mapDbToProperty(dbRow: any): Property {
     isActive: dbRow.is_active ?? true,
     createdAt: dbRow.created_at,
     updatedAt: dbRow.updated_at,
+    contactPhone: dbRow.contact_phone,
   };
 }
 
 // Properties Operations
 export const propertyOperations = {
-  // Get all properties (optimized for list view)
+  // Get all properties (optimized for list view with caching)
   async getAll() {
-    const { data, error } = await supabase
-      .from('properties')
-      .select(`
-        id,
-        name,
-        address,
-        city,
-        rating,
-        reviews,
-        type,
-        availability,
-        image,
-        images,
-        price,
-        amenities,
-        room_types,
-        is_active,
-        created_at
-      `)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(50);
-    
-    if (error) throw error;
-    return (data || []).map(mapDbToProperty);
+    try {
+      // First, try a very simple query to test connection
+      const simpleTestPromise = supabase
+        .from('properties')
+        .select('id')
+        .limit(1);
+      
+      // Add 5 second timeout for simple test
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('TIMEOUT')), 5000);
+      });
+      
+      let simpleTest;
+      try {
+        simpleTest = await Promise.race([simpleTestPromise, timeoutPromise]);
+      } catch (err: any) {
+        if (err.message === 'TIMEOUT') {
+          // Use direct fetch as fallback
+          const directData = await fetchPropertiesDirect();
+          const mapped = directData.map((row: any) => mapDbToProperty(row));
+          return mapped;
+        }
+        throw err;
+      }
+      
+      if ((simpleTest as any).error) {
+        throw (simpleTest as any).error;
+      }
+      
+      // Full query
+      const { data, error } = await supabase
+        .from('properties')
+        .select(`
+          id,
+          name,
+          address,
+          city,
+          rating,
+          reviews,
+          type,
+          availability,
+          image,
+          images,
+          price,
+          amenities,
+          room_types,
+          is_active,
+          created_at
+        `)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      if (error) throw error;
+      if (!data) return [];
+      
+      return data.map(mapDbToProperty);
+      
+    } catch (err: any) {
+      console.error('Error fetching properties:', err);
+      throw err;
+    }
   },
 
-  // Get properties by city
+  // Get properties by city (with caching)
   async getByCity(city: string) {
-    const { data, error } = await supabase
-      .from('properties')
-      .select('*')
-      .eq('city', city)
-      .eq('is_active', true);
-    
-    if (error) throw error;
-    return (data || []).map(mapDbToProperty);
+    return withCache(`properties:city:${city}`, async () => {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('city', city)
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      return (data || []).map(mapDbToProperty);
+    }, 3 * 60 * 1000); // 3 minutes cache
   },
 
-  // Get property by ID
+  // Get property by ID (with caching)
   async getById(id: string) {
+    // Disable caching to always get fresh data with latest images
     const { data, error } = await supabase
       .from('properties')
       .select('*')
@@ -80,7 +123,7 @@ export const propertyOperations = {
     return mapDbToProperty(data);
   },
 
-  // Add new property
+  // Add new property (invalidate cache)
   async create(property: Omit<Property, 'id' | 'createdAt' | 'updatedAt'>) {
     const { data, error } = await supabase
       .from('properties')
@@ -100,16 +143,22 @@ export const propertyOperations = {
         nearby_places: property.nearbyPlaces,
         coordinates: property.coordinates,
         room_types: property.roomTypes,
-        is_active: property.isActive
+        is_active: property.isActive,
+        contact_phone: property.contactPhone
       }])
       .select()
       .single();
     
     if (error) throw error;
+    
+    // Invalidate cache
+    serverCache.delete('properties:all');
+    serverCache.delete(`properties:city:${property.city}`);
+    
     return mapDbToProperty(data);
   },
 
-  // Update property
+  // Update property (invalidate cache)
   async update(id: string, property: Partial<Property>) {
     const updateData: any = {};
     
@@ -129,6 +178,7 @@ export const propertyOperations = {
     if (property.coordinates) updateData.coordinates = property.coordinates;
     if (property.roomTypes) updateData.room_types = property.roomTypes;
     if (property.isActive !== undefined) updateData.is_active = property.isActive;
+    if (property.contactPhone) updateData.contact_phone = property.contactPhone;
 
     const { data, error } = await supabase
       .from('properties')
@@ -138,10 +188,18 @@ export const propertyOperations = {
       .single();
     
     if (error) throw error;
+    
+    // Invalidate cache
+    serverCache.delete('properties:all');
+    serverCache.delete(`property:${id}`);
+    if (property.city) {
+      serverCache.delete(`properties:city:${property.city}`);
+    }
+    
     return mapDbToProperty(data);
   },
 
-  // Delete property
+  // Delete property (invalidate cache)
   async delete(id: string) {
     const { error } = await supabase
       .from('properties')
@@ -149,12 +207,16 @@ export const propertyOperations = {
       .eq('id', id);
     
     if (error) throw error;
+    
+    // Invalidate cache
+    serverCache.delete('properties:all');
+    serverCache.delete(`property:${id}`);
+    
     return true;
   },
 
-  // Toggle active status
+  // Toggle active status (invalidate cache)
   async toggleActive(id: string, isActive: boolean) {
-    console.log('toggleActive called with:', { id, isActive });
     const { data, error } = await supabase
       .from('properties')
       .update({ is_active: isActive })
@@ -163,12 +225,14 @@ export const propertyOperations = {
       .single();
     
     if (error) {
-      console.error('toggleActive error:', error);
       throw error;
     }
-    console.log('toggleActive success, raw data:', data);
+    
+    // Invalidate cache
+    serverCache.delete('properties:all');
+    serverCache.delete(`property:${id}`);
+    
     const mappedData = mapDbToProperty(data);
-    console.log('toggleActive success, mapped data:', mappedData);
     return mappedData;
   },
 

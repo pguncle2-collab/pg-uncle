@@ -46,7 +46,7 @@ async function setupStorage() {
     console.log('📦 Creating bucket "property-images"...');
     const { data: bucket, error: createError } = await supabase.storage.createBucket('property-images', {
       public: true,
-      fileSizeLimit: 5242880, // 5MB
+      fileSizeLimit: 52428800, // 50MB
       allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
     });
 

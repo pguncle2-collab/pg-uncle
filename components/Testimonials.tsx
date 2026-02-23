@@ -57,10 +57,10 @@ export const Testimonials: React.FC = () => {
       
       <div className="container mx-auto px-5 md:px-6 relative z-10">
         <div className="text-center mb-16">
-          <div className="inline-block mb-4 px-4 py-2 bg-blue-200 rounded-full">
-            <span className="text-blue-800 text-sm font-semibold">TESTIMONIALS</span>
-          </div>
-          <h2 className="text-2xl md:text-4xl lg:text-6xl font-bold text-white mb-6">
+          <p className="text-blue-600 text-sm font-semibold mb-4 tracking-wide uppercase">
+            Testimonials
+          </p>
+          <h2 className="text-2xl md:text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
             Voices of Our <span className="text-blue-600">Happy Guests</span>
           </h2>
           <p className="text-base md:text-xl text-gray-600 max-w-2xl mx-auto">

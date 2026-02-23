@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { getDatabaseErrorMessage } from '@/lib/dbHealthCheck';
 import nodemailer from 'nodemailer';
 
 export async function POST(request: NextRequest) {
@@ -76,8 +77,11 @@ export async function POST(request: NextRequest) {
         );
       }
       
+      // Use better error messaging
+      const errorMessage = getDatabaseErrorMessage(error);
+      
       return NextResponse.json(
-        { error: 'Failed to create booking', details: error.message, code: error.code },
+        { error: errorMessage, details: error.message, code: error.code },
         { status: 500 }
       );
     }

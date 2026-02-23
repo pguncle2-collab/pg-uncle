@@ -28,7 +28,34 @@ export default function PropertyDetailPage() {
   const { openAuthModal } = useAuthModal();
   const { isAuthenticated } = useAuth();
 
+  // Image optimization helper
+  const optimizeImageUrl = (url: string, size: 'thumbnail' | 'medium' | 'large' = 'large'): string => {
+    if (url.includes('supabase.co/storage')) {
+      const sizeParams = {
+        thumbnail: 'width=400&quality=75',
+        medium: 'width=800&quality=80',
+        large: 'width=1200&quality=85'
+      };
+      return `${url}?${sizeParams[size]}`;
+    }
+    
+    if (url.includes('unsplash.com')) {
+      const sizeParams = {
+        thumbnail: 'w=400&q=75&fm=webp&fit=crop',
+        medium: 'w=800&q=80&fm=webp&fit=crop',
+        large: 'w=1200&q=85&fm=webp&fit=crop'
+      };
+      const separator = url.includes('?') ? '&' : '?';
+      return `${url}${separator}${sizeParams[size]}`;
+    }
+    
+    return url;
+  };
+
   useEffect(() => {
+    // Scroll to top when page loads
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    
     const fetchProperty = async () => {
       try {
         setLoading(true);
@@ -124,7 +151,7 @@ export default function PropertyDetailPage() {
       oppositeGender: false,
       smoking: false,
       drinking: false,
-      loudMusic: false,
+      independentPG: true,
       party: false,
     },
     nearbyPlaces: [
@@ -136,7 +163,7 @@ export default function PropertyDetailPage() {
     contactPhone: '+91 98765 43210'
   };
 
-  // Ensure room images exist
+  // Ensure room images exist (keep original URLs for state management)
   const roomTypesWithImages = property.roomTypes?.map(room => ({
     ...room,
     images: room.images && room.images.length > 0 
@@ -167,12 +194,17 @@ export default function PropertyDetailPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Image Gallery */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-              <div className="relative h-96">
+              <div className="relative h-96 bg-gray-200">
                 <Image
-                  src={(property.images && property.images[selectedImage]) || property.image}
+                  src={optimizeImageUrl((property.images && property.images[selectedImage]) || property.image, 'large')}
                   alt={property.name}
                   fill
                   className="object-cover"
+                  priority
+                  quality={85}
+                  sizes="(max-width: 1024px) 100vw, 66vw"
+                  placeholder="blur"
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAB//2Q=="
                 />
               </div>
               <div className="grid grid-cols-4 gap-2 p-4">
@@ -180,11 +212,19 @@ export default function PropertyDetailPage() {
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`relative h-24 rounded-lg overflow-hidden border-2 transition-all ${
+                    className={`relative h-24 rounded-lg overflow-hidden border-2 transition-all bg-gray-200 ${
                       selectedImage === index ? 'border-blue-500' : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <Image src={image} alt={`View ${index + 1}`} fill className="object-cover" />
+                    <Image 
+                      src={optimizeImageUrl(image, 'thumbnail')} 
+                      alt={`View ${index + 1}`} 
+                      fill 
+                      className="object-cover"
+                      loading="lazy"
+                      quality={75}
+                      sizes="150px"
+                    />
                   </button>
                 ))}
               </div>
@@ -246,7 +286,7 @@ export default function PropertyDetailPage() {
                       }`}
                     >
                       {!room.available && (
-                        <div className="absolute top-3 right-3">
+                        <div className="absolute top-3 right-3 z-10">
                           <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
                             Fully Booked
                           </span>
@@ -254,7 +294,7 @@ export default function PropertyDetailPage() {
                       )}
                       
                       {room.available && isLowInventory && (
-                        <div className="absolute top-3 right-3">
+                        <div className="absolute top-3 right-3 z-10">
                           <span className={`${isCritical ? 'bg-red-500' : 'bg-orange-500'} text-white text-xs px-2 py-1 rounded-full font-semibold animate-pulse`}>
                             {isCritical ? '🔥 Last Spot!' : '⚡ Filling Fast'}
                           </span>
@@ -264,7 +304,7 @@ export default function PropertyDetailPage() {
                       {/* Room Images */}
                       <div className="mb-4">
                         <div 
-                          className="relative h-48 rounded-lg overflow-hidden mb-2 cursor-pointer group"
+                          className="relative h-48 rounded-lg overflow-hidden mb-2 cursor-pointer group bg-gray-200"
                           onClick={(e) => {
                             e.stopPropagation();
                             setRoomImageModalIndex(selectedRoomImages[index] || 0);
@@ -273,10 +313,15 @@ export default function PropertyDetailPage() {
                           }}
                         >
                           <Image
-                            src={room.images[selectedRoomImages[index] || 0]}
+                            src={optimizeImageUrl(room.images[selectedRoomImages[index] || 0], 'medium')}
                             alt={`${room.type} room`}
                             fill
                             className="object-cover transition-transform group-hover:scale-105"
+                            loading={index < 3 ? 'eager' : 'lazy'}
+                            quality={80}
+                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            placeholder="blur"
+                            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAB//2Q=="
                           />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-full p-3">
@@ -294,11 +339,19 @@ export default function PropertyDetailPage() {
                                 e.stopPropagation();
                                 setSelectedRoomImages(prev => ({ ...prev, [index]: imgIndex }));
                               }}
-                              className={`relative h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                              className={`relative h-16 rounded-lg overflow-hidden border-2 transition-all bg-gray-200 ${
                                 (selectedRoomImages[index] || 0) === imgIndex ? 'border-blue-500' : 'border-gray-200 hover:border-gray-300'
                               }`}
                             >
-                              <Image src={image} alt={`View ${imgIndex + 1}`} fill className="object-cover" />
+                              <Image 
+                                src={optimizeImageUrl(image, 'thumbnail')} 
+                                alt={`View ${imgIndex + 1}`} 
+                                fill 
+                                className="object-cover"
+                                loading="lazy"
+                                quality={75}
+                                sizes="100px"
+                              />
                             </button>
                           ))}
                         </div>
@@ -402,10 +455,7 @@ export default function PropertyDetailPage() {
                     <span className="text-xl md:text-2xl">🍽️</span>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm md:text-base font-semibold text-gray-900 mb-1">Food Available</p>
-                    <p className="text-xs md:text-sm text-gray-600 mb-2">
-                      {mockData.foodAndKitchen[roomTypesWithImages[selectedRoomType]?.type.toLowerCase() as 'single' | 'double' | 'triple']?.mealsProvided.join(', ') || 'Breakfast, Dinner'}
-                    </p>
+                    <p className="text-sm md:text-base font-semibold text-gray-900 mb-3">Food Available</p>
                     <div className="flex flex-wrap gap-2">
                       {(mockData.foodAndKitchen[roomTypesWithImages[selectedRoomType]?.type.toLowerCase() as 'single' | 'double' | 'triple']?.mealsProvided || ['Breakfast', 'Dinner']).map((meal, index) => (
                         <span key={index} className="px-2 md:px-3 py-1 bg-white border border-green-300 rounded-full text-xs font-medium text-gray-700">
@@ -500,13 +550,13 @@ export default function PropertyDetailPage() {
                     </p>
                   </div>
 
-                  <div className={`p-4 rounded-xl border-2 ${mockData.rules.loudMusic ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                  <div className={`p-4 rounded-xl border-2 ${mockData.rules.independentPG ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xl">{mockData.rules.loudMusic ? '✅' : '❌'}</span>
-                      <span className="font-medium text-gray-900 text-sm">Loud Music</span>
+                      <span className="text-xl">{mockData.rules.independentPG ? '✅' : '❌'}</span>
+                      <span className="font-medium text-gray-900 text-sm">Independent PG</span>
                     </div>
                     <p className="text-xs text-gray-600">
-                      {mockData.rules.loudMusic ? 'Allowed' : 'Not Allowed'}
+                      {mockData.rules.independentPG ? 'Yes' : 'No'}
                     </p>
                   </div>
 
@@ -544,41 +594,66 @@ export default function PropertyDetailPage() {
             {/* Google Maps */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Location</h3>
-              <div className="relative w-full h-96 rounded-xl overflow-hidden">
-                <iframe
-                  src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${property.coordinates.lat},${property.coordinates.lng}&zoom=15`}
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  className="rounded-xl"
-                />
-              </div>
-              <div className="mt-4 p-4 bg-gray-50 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <svg className="w-6 h-6 text-blue-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              {property.coordinates && property.coordinates.lat && property.coordinates.lng ? (
+                <>
+                  {/* Show warning if using default coordinates */}
+                  {(property.coordinates.lat === 30.7333 && property.coordinates.lng === 76.7794) && (
+                    <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                      <p className="text-sm text-amber-800">
+                        ⚠️ Showing default location. Admin should update coordinates for exact location.
+                      </p>
+                    </div>
+                  )}
+                  <div className="relative w-full h-96 rounded-xl overflow-hidden">
+                    <iframe
+                      src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${property.coordinates.lat},${property.coordinates.lng}&zoom=15`}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      className="rounded-xl"
+                      title={`Map location of ${property.name}`}
+                    />
+                  </div>
+                  <div className="mt-4 p-4 bg-gray-50 rounded-xl">
+                    <div className="flex items-start gap-3">
+                      <svg className="w-6 h-6 text-blue-500 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <div>
+                        <p className="font-semibold text-gray-900 mb-1">{property.name}</p>
+                        <p className="text-gray-600">{property.address}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Coordinates: {property.coordinates.lat}, {property.coordinates.lng}
+                        </p>
+                        <a
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${property.coordinates.lat},${property.coordinates.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 mt-3 text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                          </svg>
+                          Get Directions
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="p-8 bg-gray-50 rounded-xl text-center">
+                  <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <div>
-                    <p className="font-semibold text-gray-900 mb-1">{property.name}</p>
-                    <p className="text-gray-600">{property.address}</p>
-                    <a
-                      href={`https://www.google.com/maps/dir/?api=1&destination=${property.coordinates.lat},${property.coordinates.lng}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 mt-3 text-blue-600 hover:text-blue-700 font-medium"
-                    >
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                      </svg>
-                      Get Directions
-                    </a>
-                  </div>
+                  <p className="text-gray-600 mb-2">Location coordinates not available</p>
+                  <p className="text-sm text-gray-500">{property.address}</p>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 

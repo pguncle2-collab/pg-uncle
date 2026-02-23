@@ -22,19 +22,56 @@ interface PropertyDisplay {
 
 export const Properties: React.FC = () => {
   const [selectedCity, setSelectedCity] = useState<string>('All');
-  const [selectedType, setSelectedType] = useState<string>('Double');
-  const { properties, loading, error } = useProperties();
+  const [expandedAmenities, setExpandedAmenities] = useState<{ [key: string]: boolean }>({});
+  const { properties, loading, error, fetchProperties } = useProperties();
 
   const cities = ['All', 'Chandigarh', 'Mohali', 'Panchkula', 'Zirakpur'];
-  const types = ['All', 'Single', 'Double', 'Triple', 'Quad'];
+
+  // Force refresh function
+  const handleRefresh = async () => {
+    if (typeof window !== 'undefined') {
+      try {
+        // Clear client-side cache
+        sessionStorage.clear();
+        
+        // Clear server-side cache
+        await fetch('/api/cache/clear', { method: 'POST' }).catch(err => {
+          console.warn('Failed to clear server cache:', err);
+        });
+        
+        // Force fetch without cache
+        fetchProperties(0, false);
+      } catch (error) {
+        console.error('Refresh error:', error);
+        // Still try to fetch even if cache clear fails
+        fetchProperties(0, false);
+      }
+    }
+  };
 
   // Helper function to optimize image URLs
-  const optimizeImageUrl = (url: string): string => {
+  const optimizeImageUrl = (url: string, size: 'thumbnail' | 'medium' | 'large' = 'medium'): string => {
     // If it's a Supabase storage URL, add transformation parameters
     if (url.includes('supabase.co/storage')) {
-      // Add width and quality parameters for faster loading
-      return `${url}?width=600&quality=80`;
+      const sizeParams = {
+        thumbnail: 'width=400&quality=75',
+        medium: 'width=800&quality=80',
+        large: 'width=1200&quality=85'
+      };
+      return `${url}?${sizeParams[size]}`;
     }
+    
+    // If it's Unsplash, use their optimization parameters
+    if (url.includes('unsplash.com')) {
+      const sizeParams = {
+        thumbnail: 'w=400&q=75&fm=webp&fit=crop',
+        medium: 'w=800&q=80&fm=webp&fit=crop',
+        large: 'w=1200&q=85&fm=webp&fit=crop'
+      };
+      const separator = url.includes('?') ? '&' : '?';
+      return `${url}${separator}${sizeParams[size]}`;
+    }
+    
     return url;
   };
 
@@ -47,7 +84,7 @@ export const Properties: React.FC = () => {
     price: prop.price,
     type: prop.roomTypes?.[0]?.type || 'Single',
     gender: 'All', // Default to 'All' since gender field was removed
-    image: optimizeImageUrl(prop.images?.[0] || prop.image || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80'),
+    image: optimizeImageUrl(prop.images?.[0] || prop.image || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267', 'medium'),
     rating: prop.rating || 4.5,
     reviews: prop.reviews || 0,
     amenities: prop.amenities?.filter(a => a.available).map(a => a.name) || [],
@@ -56,8 +93,8 @@ export const Properties: React.FC = () => {
 
   const filteredProperties = transformedProperties.filter((property) => {
     const cityMatch = selectedCity === 'All' || property.city === selectedCity;
-    const typeMatch = selectedType === 'All' || property.type === selectedType;
-    return cityMatch && typeMatch;
+    // Removed type filter - show all types
+    return cityMatch;
   });
 
   // Show loading state with skeleton
@@ -66,9 +103,9 @@ export const Properties: React.FC = () => {
       <section id="properties" className="py-16 lg:py-32 bg-gradient-to-b from-white to-gray-50">
         <div className="container mx-auto px-5 md:px-6">
           <div className="text-center mb-16">
-            <div className="inline-block mb-4 px-4 py-2 bg-blue-100 rounded-full">
-              <span className="text-blue-600 text-sm font-semibold">AVAILABLE PROPERTIES</span>
-            </div>
+            <p className="text-blue-600 text-sm font-semibold mb-4 tracking-wide uppercase">
+              Available Properties
+            </p>
             <h2 className="text-2xl md:text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
               Find Your <span className="text-blue-600">Perfect PG</span>
             </h2>
@@ -120,9 +157,9 @@ export const Properties: React.FC = () => {
     <section id="properties" className="py-16 lg:py-32 bg-gradient-to-b from-white to-gray-50">
       <div className="container mx-auto px-5 md:px-6">
         <div className="text-center mb-16">
-          <div className="inline-block mb-4 px-4 py-2 bg-blue-100 rounded-full">
-            <span className="text-blue-600 text-sm font-semibold">AVAILABLE PROPERTIES</span>
-          </div>
+          <p className="text-blue-600 text-sm font-semibold mb-4 tracking-wide uppercase">
+            Available Properties
+          </p>
           <h2 className="text-2xl md:text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
             Find Your <span className="text-blue-600">Perfect PG</span>
           </h2>
@@ -130,49 +167,64 @@ export const Properties: React.FC = () => {
             Finding the right PG is more than just four walls and a bed.
             It's about feeling safe, comfortable, and stress-free—especially when you're away from home.
           </p>
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-full">
-            <span className="text-green-600 text-sm font-semibold">
-              ✓ {transformedProperties.length} properties available
-            </span>
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-full">
+              <span className="text-green-600 text-sm font-semibold">
+                ✓ {transformedProperties.length} properties available
+              </span>
+            </div>
+            <button
+              onClick={handleRefresh}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-full hover:bg-blue-100 transition-colors"
+              title="Refresh properties"
+            >
+              <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span className="text-blue-600 text-sm font-semibold">Refresh</span>
+            </button>
           </div>
         </div>
 
         {/* Filters */}
         <div className="flex flex-col gap-4 mb-12">
-          {/* City and Type Filters */}
+          {/* City Filter */}
           <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
-            <div className="flex flex-wrap gap-2 justify-center">
-              <span className="text-sm font-medium text-gray-700 flex items-center">City:</span>
-              {cities.map((city) => (
-                <button
-                  key={city}
-                  onClick={() => setSelectedCity(city)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                    selectedCity === city
-                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
-                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                  }`}
+            {/* City Filter - Dropdown on Mobile, Buttons on Desktop */}
+            <div className="w-full md:w-auto">
+              {/* Mobile Dropdown */}
+              <div className="md:hidden">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select City:</label>
+                <select
+                  value={selectedCity}
+                  onChange={(e) => setSelectedCity(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-white text-gray-900 font-medium"
                 >
-                  {city}
-                </button>
-              ))}
-            </div>
+                  {cities.map((city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="flex flex-wrap gap-2 justify-center">
-              <span className="text-sm font-medium text-gray-700 flex items-center">Type:</span>
-              {types.map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setSelectedType(type)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                    selectedType === type
-                      ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
-                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                  }`}
-                >
-                  {type}
-                </button>
-              ))}
+              {/* Desktop Buttons */}
+              <div className="hidden md:flex flex-wrap gap-2 justify-center">
+                <span className="text-sm font-medium text-gray-700 flex items-center">City:</span>
+                {cities.map((city) => (
+                  <button
+                    key={city}
+                    onClick={() => setSelectedCity(city)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                      selectedCity === city
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
+                        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                    }`}
+                  >
+                    {city}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -184,14 +236,18 @@ export const Properties: React.FC = () => {
               key={property.id}
               className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden hover:-translate-y-2"
             >
-              <div className="relative h-64 overflow-hidden">
+              <div className="relative h-64 overflow-hidden bg-gray-200">
                 <Image
                   src={property.image}
                   alt={property.name}
                   fill
                   className="object-cover group-hover:scale-110 transition-transform duration-500"
                   priority={index < 3}
+                  loading={index < 6 ? 'eager' : 'lazy'}
                   sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  quality={80}
+                  placeholder="blur"
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAB//2Q=="
                 />
                 {!property.available && (
                   <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
@@ -231,20 +287,27 @@ export const Properties: React.FC = () => {
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {property.amenities.slice(0, 4).map((amenity, index) => {
+                  {(expandedAmenities[property.id] 
+                    ? property.amenities 
+                    : property.amenities.slice(0, 4)
+                  ).map((amenity, index) => {
                     // Map amenities to icons
                     const amenityIcons: { [key: string]: string } = {
-                      'WiFi': '📶',
+                      'Wifi': '🛜',
+                      'WiFi': '🛜',
                       'AC': '❄️',
                       'Laundry': '🧺',
-                      'Meals': '🍽️',
-                      'Parking': '🅿️',
+                      'Meals': '🍱',
+                      'Parking': '🚗',
                       'Security': '🔒',
                       'Housekeeping': '🧹',
-                      'Geyser`': '♨️',
+                      'Room Cleaning Service': '🧹',
+                      'Geyser': '♨️',
                       'Fridge': '🧊',
+                      'RO': '💧',
                       'RO Water': '💧',
                       'Power Backup': '🔋',
+                      'Fully Furnished': '🛌',
                     };
                     
                     const icon = amenityIcons[amenity] || '✓';
@@ -260,9 +323,18 @@ export const Properties: React.FC = () => {
                     );
                   })}
                   {property.amenities.length > 4 && (
-                    <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-semibold">
-                      +{property.amenities.length - 4} more
-                    </span>
+                    <button
+                      onClick={() => setExpandedAmenities(prev => ({
+                        ...prev,
+                        [property.id]: !prev[property.id]
+                      }))}
+                      className="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-semibold hover:bg-blue-200 transition-colors"
+                    >
+                      {expandedAmenities[property.id] 
+                        ? 'Show Less' 
+                        : `+${property.amenities.length - 4} More`
+                      }
+                    </button>
                   )}
                 </div>
 

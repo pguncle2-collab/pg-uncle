@@ -238,7 +238,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const baseRent = Math.round(price / (1 + GST_RATE));
   const gstOnRent = price - baseRent;
   const totalAmount = totalRentForDuration + depositAmount;
-  const minDate = new Date().toISOString().split('T')[0];
+  
+  // Disable dates before March 1, 2026
+  const marchFirst2026 = '2026-03-01';
+  const today = new Date().toISOString().split('T')[0];
+  const minDate = today > marchFirst2026 ? today : marchFirst2026;
 
   return (
     <div

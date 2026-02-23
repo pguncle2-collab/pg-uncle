@@ -15,13 +15,20 @@ export default function AdminDashboard() {
   const [filterCity, setFilterCity] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   
-  // Use properties hook
-  const { properties, loading, error, addProperty, updateProperty, deleteProperty, togglePropertyActive } = useProperties();
+  // Use properties hook - only fetch when authenticated
+  const { properties, loading, error, addProperty, updateProperty, deleteProperty, togglePropertyActive, fetchProperties } = useProperties(false);
+  
+  // Local error state for admin-specific errors
+  const [adminError, setAdminError] = useState<string | null>(null);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (password === 'admin123') {
       setIsAuthenticated(true);
+      // Fetch properties after successful login
+      setTimeout(() => {
+        fetchProperties();
+      }, 100);
     } else {
       alert('Invalid password');
     }
@@ -124,19 +131,45 @@ export default function AdminDashboard() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-4"></div>
-          <p className="text-xl text-gray-600">Loading properties...</p>
+          <p className="text-xl text-gray-600 mb-4">Loading properties...</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 underline"
+          >
+            Taking too long? Click to refresh
+          </button>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (error || adminError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 max-w-md">
           <div className="text-6xl mb-4 text-center">⚠️</div>
           <h3 className="text-2xl font-bold text-red-900 mb-2 text-center">Database Error</h3>
-          <p className="text-red-600 text-center">{error}</p>
+          <p className="text-red-600 text-center mb-4">{error || adminError}</p>
+          <div className="flex gap-2 justify-center">
+            <button
+              onClick={() => {
+                setAdminError(null);
+                fetchProperties();
+              }}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            >
+              Retry
+            </button>
+            <button
+              onClick={() => {
+                setIsAuthenticated(false);
+                setAdminError(null);
+              }}
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+            >
+              Back to Login
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -474,8 +507,28 @@ export default function AdminDashboard() {
                     description: '',
                     features: [],
                   })) || [],
-                  amenities: selectedProperty.amenities || [],
+                  amenities: selectedProperty.amenities?.map((a: any) => {
+                    // Update icons to match current defaults
+                    const iconMap: { [key: string]: string } = {
+                      'Fully Furnished': '🛌',
+                      'Wifi': '🛜',
+                      'WiFi': '🛜',
+                      'Power Backup': '🔋',
+                      'Room Cleaning Service': '🧹',
+                      'Parking': '🚗',
+                      'Meals': '🍱',
+                      'Fridge': '🧊',
+                      'Geyser': '♨️',
+                      'RO': '💧',
+                      'RO Water': '💧',
+                    };
+                    return {
+                      ...a,
+                      icon: iconMap[a.name] || a.icon
+                    };
+                  }) || [],
                   rules: selectedProperty.houseRules || [],
+                  nearbyPlaces: selectedProperty.nearbyPlaces || [{ name: '', distance: '', type: 'Shopping' }],
                   images: selectedProperty.images || [selectedProperty.image],
                   contactPhone: '+91 98765 43210',
                 } : undefined}
@@ -494,11 +547,14 @@ export default function AdminDashboard() {
                         price: data.roomTypes[0]?.price || 0, // Update main price field
                         amenities: data.amenities,
                         houseRules: data.rules,
+                        nearbyPlaces: data.nearbyPlaces,
                         images: data.images,
                       };
                       console.log('Update data:', updateData);
                       await updateProperty(selectedProperty.id, updateData);
                       alert('Property updated successfully!');
+                      // Force page reload to clear all caches
+                      window.location.reload();
                     } else {
                       // Add new property
                       console.log('Adding new property');
@@ -515,7 +571,7 @@ export default function AdminDashboard() {
                         price: data.roomTypes[0]?.price || 0,
                         amenities: data.amenities,
                         houseRules: data.rules,
-                        nearbyPlaces: [],
+                        nearbyPlaces: data.nearbyPlaces,
                         coordinates: data.coordinates,
                         roomTypes: data.roomTypes,
                         isActive: true,
@@ -523,6 +579,8 @@ export default function AdminDashboard() {
                       console.log('New property data:', newPropertyData);
                       await addProperty(newPropertyData);
                       alert('Property added successfully!');
+                      // Force page reload to clear all caches
+                      window.location.reload();
                     }
                     setShowAddModal(false);
                     setShowEditModal(false);

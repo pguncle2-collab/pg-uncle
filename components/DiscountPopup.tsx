@@ -44,8 +44,12 @@ export const DiscountPopup: React.FC = () => {
       style={{ animation: 'fadeIn 0.3s ease-out' }}
     >
       <div 
-        className="relative w-full max-w-2xl bg-white rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] md:max-h-[85vh] flex flex-col"
-        style={{ animation: 'scaleIn 0.4s ease-out' }}
+        className="relative w-full max-w-2xl bg-white rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden"
+        style={{ 
+          animation: 'scaleIn 0.4s ease-out',
+          maxHeight: 'calc(100vh - 40px)',
+          maxHeight: 'calc(100dvh - 40px)' /* Use dynamic viewport height for mobile */
+        }}
       >
         {/* Close button - Fixed position */}
         <button
@@ -59,7 +63,7 @@ export const DiscountPopup: React.FC = () => {
         </button>
 
         {/* Scrollable Content */}
-        <div className="overflow-y-auto custom-scrollbar">
+        <div className="overflow-y-auto overflow-x-hidden custom-scrollbar" style={{ maxHeight: 'calc(100vh - 40px)', maxHeight: 'calc(100dvh - 40px)' }}>
           {/* Header with gradient */}
           <div className="relative bg-gradient-to-br from-purple-600 via-pink-600 to-red-600 text-white px-4 py-6 md:px-8 md:py-8">
             <div className="absolute inset-0 opacity-20">
@@ -76,7 +80,7 @@ export const DiscountPopup: React.FC = () => {
                 Exclusive Offer Just For You!
               </h2>
               <p className="text-sm md:text-base lg:text-lg text-white/90">
-                Save Big on Your Next Booking
+                Save Big on Your First Booking
               </p>
             </div>
           </div>
@@ -143,7 +147,7 @@ export const DiscountPopup: React.FC = () => {
                 Browse PG's
               </button>
               <p className="text-xs text-gray-500 mt-2 md:mt-3">
-                ⏰ Limited time offer • Valid on all properties
+                ⏰ Limited time offer • Valid on all PG's
               </p>
             </div>
           </div>
@@ -165,22 +169,36 @@ export const DiscountPopup: React.FC = () => {
             transform: scale(1);
           }
         }
+        
+        /* Custom scrollbar styles - hidden by default, visible on hover */
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: transparent transparent;
+        }
+        
+        .custom-scrollbar:hover {
+          scrollbar-color: #d1d5db transparent;
+        }
+        
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
         }
+        
         .custom-scrollbar::-webkit-scrollbar-track {
           background: transparent;
         }
+        
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #d1d5db;
+          background: transparent;
           border-radius: 3px;
         }
+        
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+          background: #d1d5db;
+        }
+        
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #9ca3af;
-        }
-        .custom-scrollbar {
-          scrollbar-width: thin;
-          scrollbar-color: #d1d5db transparent;
         }
       `}</style>
     </div>

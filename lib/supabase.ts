@@ -12,23 +12,38 @@ if (typeof window !== 'undefined' || process.env.NODE_ENV === 'production') {
   }
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    storageKey: 'pguncle-auth',
-  },
-  global: {
-    headers: {
-      'x-client-info': 'pguncle-web',
-    },
-  },
-  db: {
-    schema: 'public',
-  },
-});
+// Create client only once
+let supabaseInstance: any = null;
+
+function getSupabaseClient() {
+  if (!supabaseInstance) {
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+        storageKey: 'pguncle-auth',
+        // Disable lock mechanism by providing a no-op lock function
+        lock: async (_name: string, _acquireTimeout: number, fn: () => Promise<any>) => {
+          // Skip locking, just execute the function directly
+          return await fn();
+        },
+      },
+      global: {
+        headers: {
+          'x-client-info': 'pguncle-web',
+        },
+      },
+      db: {
+        schema: 'public',
+      },
+    });
+  }
+  return supabaseInstance;
+}
+
+export const supabase = getSupabaseClient();
 
 // Database types
 export interface Property {

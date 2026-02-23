@@ -74,7 +74,10 @@ export const BookVisitModal: React.FC<BookVisitModalProps> = ({
   if (!isOpen) return null;
 
   // Get today's date in YYYY-MM-DD format for min date
+  // Disable dates before March 1, 2026
+  const minDate = '2026-03-01';
   const today = new Date().toISOString().split('T')[0];
+  const effectiveMinDate = today > minDate ? today : minDate;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -195,7 +198,7 @@ export const BookVisitModal: React.FC<BookVisitModalProps> = ({
               <input
                 type="date"
                 required
-                min={today}
+                min={effectiveMinDate}
                 value={formData.visitDate}
                 onChange={(e) => setFormData({ ...formData, visitDate: e.target.value })}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors"

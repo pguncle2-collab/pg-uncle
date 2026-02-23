@@ -68,9 +68,9 @@ export const Features: React.FC = () => {
     <section className="py-16 lg:py-32 bg-gradient-to-b from-gray-50 to-white">
       <div className="container mx-auto px-5 md:px-6">
         <div className="text-center mb-16">
-          <div className="inline-block mb-4 px-4 py-2 bg-blue-100 rounded-full">
-            <span className="text-blue-600 text-sm font-semibold">WHY CHOOSE US</span>
-          </div>
+          <p className="text-blue-600 text-sm font-semibold mb-4 tracking-wide uppercase">
+            Why Choose Us
+          </p>
           <h2 className="text-2xl md:text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
             Why Choose <span className="text-blue-600">PGUNCLE?</span>
           </h2>
