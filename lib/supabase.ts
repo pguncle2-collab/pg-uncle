@@ -36,15 +36,10 @@ function getSupabaseClient() {
           'x-client-info': 'pguncle-web',
         },
         fetch: (url, options = {}) => {
-          // Add timeout to all fetch requests
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-          
           return fetch(url, {
             ...options,
             cache: 'no-store',
-            signal: controller.signal,
-          }).finally(() => clearTimeout(timeoutId));
+          });
         },
       },
       db: {

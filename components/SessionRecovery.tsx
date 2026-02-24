@@ -3,6 +3,11 @@
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
+const MAX_RELOAD_ATTEMPTS = 2;
+const RELOAD_COUNTER_KEY = 'session_recovery_reload_count';
+const RELOAD_TIMESTAMP_KEY = 'session_recovery_reload_time';
+const RELOAD_RESET_TIME = 5 * 60 * 1000; // 5 minutes
+
 /**
  * SessionRecovery component handles stale session cleanup
  * This prevents the "project paused" error on returning visits
@@ -10,6 +15,23 @@ import { supabase } from '@/lib/supabase';
 export function SessionRecovery() {
   useEffect(() => {
     const checkAndRecoverSession = async () => {
+      // Check reload attempts
+      const reloadCount = parseInt(sessionStorage.getItem(RELOAD_COUNTER_KEY) || '0');
+      const lastReloadTime = parseInt(sessionStorage.getItem(RELOAD_TIMESTAMP_KEY) || '0');
+      const now = Date.now();
+      
+      // Reset counter if it's been more than 5 minutes
+      if (now - lastReloadTime > RELOAD_RESET_TIME) {
+        sessionStorage.setItem(RELOAD_COUNTER_KEY, '0');
+        sessionStorage.setItem(RELOAD_TIMESTAMP_KEY, now.toString());
+      }
+      
+      // If we've already reloaded too many times, stop trying
+      if (reloadCount >= MAX_RELOAD_ATTEMPTS) {
+        console.warn('Max reload attempts reached. Stopping auto-reload.');
+        return;
+      }
+      
       // Check if this is a fresh page load (not a navigation)
       const navigationEntries = performance.getEntriesByType('navigation');
       const isPageLoad = navigationEntries.length > 0 && 
@@ -35,15 +57,14 @@ export function SessionRecovery() {
         
         // If we got a result, check if there's an error
         if (result?.error) {
-          console.warn('Session error detected, clearing and reloading:', result.error.message);
+          console.warn('Session error detected:', result.error.message);
+          // Don't reload for session errors, just clear the data
           clearAllAuthData();
-          window.location.reload();
         }
       } catch (error: any) {
-        // If session check fails or times out, clear and reload
-        console.warn('Session check failed, clearing and reloading:', error.message);
+        // If session check times out, clear data but DON'T reload
+        console.warn('Session check timed out, clearing auth data');
         clearAllAuthData();
-        window.location.reload();
       }
     };
 

@@ -98,11 +98,11 @@ export function useProperties(autoFetch: boolean = true) {
       setLoading(true);
       setError(null);
       
-      // Add timeout wrapper - 5 seconds
+      // Add timeout wrapper - 8 seconds (increased to give Supabase more time)
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
           reject(new Error('Request timeout'));
-        }, 5000);
+        }, 8000);
       });
       
       const queryPromise = propertyOperations.getAll();
@@ -117,45 +117,18 @@ export function useProperties(autoFetch: boolean = true) {
     } catch (err: any) {
       let errorMessage = err.message || 'Failed to fetch properties';
       
-      // Handle timeout - clear stale session and reload page once
-      if ((errorMessage.includes('timeout') || errorMessage.includes('timed out') || errorMessage.includes('TIMEOUT')) && retryCount === 0) {
-        console.warn('Timeout detected, clearing stale session and reloading...');
-        
-        // Clear all auth data
-        localStorage.removeItem('pguncle-auth');
-        
-        // Clear any Supabase-related items
-        const keysToRemove: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && (key.startsWith('sb-') || key.includes('supabase') || key.includes('auth'))) {
-            keysToRemove.push(key);
-          }
-        }
-        keysToRemove.forEach(key => localStorage.removeItem(key));
-        
-        // Reload page to reinitialize Supabase client
-        window.location.reload();
-        return;
-      }
-      
       // Handle abort errors with retry
       if ((err.name === 'AbortError' || errorMessage.includes('AbortError')) && retryCount < 1) {
         console.log('Retrying after abort error...');
         setTimeout(() => {
           fetchProperties(retryCount + 1, false);
-        }, 500);
+        }, 1000);
         return;
       }
       
-      // After retry or other errors, show user-friendly message
+      // Handle timeout - show error but DON'T reload automatically
       if (errorMessage.includes('timeout') || errorMessage.includes('timed out') || err.name === 'AbortError' || errorMessage.includes('TIMEOUT')) {
-        errorMessage = 'Unable to connect to database. The page will reload automatically.';
-        
-        // Auto-reload after showing error
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
+        errorMessage = 'Unable to connect to database. Your Supabase project may be paused. Please check your Supabase dashboard and restore it if needed, then refresh this page.';
       }
       
       setError(errorMessage);
