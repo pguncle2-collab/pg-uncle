@@ -52,6 +52,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
   const defaultAmenities = [
     { name: 'Fully Furnished', icon: '🛌', available: true },
     { name: 'Wifi', icon: '🛜', available: true },
+    { name: 'AC', icon: '❄️', available: true },
     { name: 'Power Backup', icon: '🔋', available: true },
     { name: 'Room Cleaning Service', icon: '🧹', available: true },
     { name: 'Parking', icon: '🚗', available: true },
