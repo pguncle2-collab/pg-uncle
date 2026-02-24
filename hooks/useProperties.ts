@@ -98,11 +98,11 @@ export function useProperties(autoFetch: boolean = true) {
       setLoading(true);
       setError(null);
       
-      // Add timeout wrapper - 10 seconds
+      // Add timeout wrapper - 5 seconds (reduced from 10)
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
-          reject(new Error('Database query timed out after 10 seconds. Your Supabase project may be paused or experiencing connectivity issues.'));
-        }, 10000);
+          reject(new Error('Request timeout'));
+        }, 5000);
       });
       
       const queryPromise = propertyOperations.getAll();
@@ -118,21 +118,31 @@ export function useProperties(autoFetch: boolean = true) {
       let errorMessage = err.message || 'Failed to fetch properties';
       
       // Handle abort errors with retry
-      if ((err.name === 'AbortError' || errorMessage.includes('AbortError')) && retryCount < 2) {
+      if ((err.name === 'AbortError' || errorMessage.includes('AbortError')) && retryCount < 1) {
+        console.log('Retrying after abort error...');
         setTimeout(() => {
           fetchProperties(retryCount + 1, false);
-        }, 1000);
+        }, 500);
         return;
       }
       
-      // Handle timeout
-      if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
-        errorMessage = '⚠️ Database Connection Timeout\n\nYour Supabase project may be:\n1. Paused (free tier pauses after inactivity)\n2. Experiencing connectivity issues\n\nPlease:\n1. Go to https://supabase.com/dashboard\n2. Check if your project is paused\n3. Click "Restore Project" if needed\n4. Wait 1-2 minutes and try again';
+      // Handle timeout - clear stale session and retry once
+      if ((errorMessage.includes('timeout') || errorMessage.includes('timed out')) && retryCount === 0) {
+        console.warn('Timeout detected, clearing stale session and retrying...');
+        
+        // Clear stale auth data
+        localStorage.removeItem('pguncle-auth');
+        
+        // Retry once after clearing
+        setTimeout(() => {
+          fetchProperties(retryCount + 1, false);
+        }, 500);
+        return;
       }
       
-      // Handle abort errors specifically
-      if (err.name === 'AbortError' || errorMessage.includes('AbortError')) {
-        errorMessage = 'Database connection timed out. Your Supabase project may be paused. Please check your Supabase dashboard and restore the project if needed.';
+      // After retry, show user-friendly error
+      if (errorMessage.includes('timeout') || errorMessage.includes('timed out') || err.name === 'AbortError') {
+        errorMessage = 'Unable to connect to database. Please refresh the page. If the issue persists, your Supabase project may be paused.';
       }
       
       setError(errorMessage);

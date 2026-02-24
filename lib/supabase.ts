@@ -36,10 +36,15 @@ function getSupabaseClient() {
           'x-client-info': 'pguncle-web',
         },
         fetch: (url, options = {}) => {
+          // Add timeout to all fetch requests
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+          
           return fetch(url, {
             ...options,
             cache: 'no-store',
-          });
+            signal: controller.signal,
+          }).finally(() => clearTimeout(timeoutId));
         },
       },
       db: {
@@ -49,12 +54,17 @@ function getSupabaseClient() {
 
     // Handle session recovery on client side
     if (typeof window !== 'undefined') {
-      supabaseInstance.auth.getSession().catch((error: any) => {
-        console.warn('Session recovery failed, clearing stale session:', error);
-        // Clear stale session data
-        localStorage.removeItem('pguncle-auth');
-        window.location.reload();
-      });
+      supabaseInstance.auth.getSession()
+        .then(({ error }: any) => {
+          if (error) {
+            console.warn('Session error on init, clearing:', error.message);
+            localStorage.removeItem('pguncle-auth');
+          }
+        })
+        .catch((error: any) => {
+          console.warn('Session check failed on init, clearing:', error.message);
+          localStorage.removeItem('pguncle-auth');
+        });
     }
   }
   return supabaseInstance;

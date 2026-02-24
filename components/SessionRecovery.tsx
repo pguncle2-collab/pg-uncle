@@ -11,33 +11,48 @@ export function SessionRecovery() {
   useEffect(() => {
     const checkAndRecoverSession = async () => {
       try {
-        // Try to get the current session with a timeout
+        // Try to get the current session with a short timeout
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('timeout')), 3000);
+          setTimeout(() => reject(new Error('timeout')), 2000); // Reduced to 2 seconds
         });
 
         const sessionPromise = supabase.auth.getSession();
 
-        await Promise.race([sessionPromise, timeoutPromise]);
+        const result = await Promise.race([sessionPromise, timeoutPromise]) as any;
+        
+        // If we got a result, check if there's an error
+        if (result?.error) {
+          console.warn('Session error detected, clearing stale data:', result.error);
+          clearAllAuthData();
+        }
       } catch (error: any) {
-        // If session check fails or times out, clear stale data
-        if (error.message === 'timeout' || 
-            error.message?.includes('refresh_token_not_found') ||
-            error.message?.includes('invalid')) {
-          console.warn('Clearing stale session data');
-          localStorage.removeItem('pguncle-auth');
-          
-          // Also clear any other Supabase-related items
-          const keysToRemove = [];
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key?.startsWith('sb-') || key?.includes('supabase')) {
-              keysToRemove.push(key);
-            }
-          }
-          keysToRemove.forEach(key => localStorage.removeItem(key));
+        // If session check fails or times out, clear stale data immediately
+        console.warn('Session check failed, clearing stale data:', error.message);
+        clearAllAuthData();
+      }
+    };
+
+    const clearAllAuthData = () => {
+      // Clear Supabase auth storage
+      localStorage.removeItem('pguncle-auth');
+      
+      // Clear any other Supabase-related items
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('sb-') || key.includes('supabase') || key.includes('auth'))) {
+          keysToRemove.push(key);
         }
       }
+      keysToRemove.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          console.warn('Failed to remove key:', key);
+        }
+      });
+      
+      console.log('Cleared stale auth data');
     };
 
     checkAndRecoverSession();
