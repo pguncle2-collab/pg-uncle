@@ -22,12 +22,15 @@ npm install firebase --legacy-peer-deps
 ### 3. Updated Environment Variables
 Added to `.env.local`:
 ```env
-NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyBLNeuHAh21VUV0xeR1lbh3SnYH-Na5jUU
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=pguncle-e35e6.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=pguncle-e35e6
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=pguncle-e35e6.firebasestorage.app
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=391805990737
-NEXT_PUBLIC_FIREBASE_APP_ID=1:391805990737:web:213af87740e1536f6b4570
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key_here
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+```
+
+**Note:** Get your actual Firebase credentials from Firebase Console → Project Settings → General
 NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-Q109CER9LN
 ```
 
