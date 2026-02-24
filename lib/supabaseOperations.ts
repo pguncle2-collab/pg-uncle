@@ -232,6 +232,18 @@ export const propertyOperations = {
 
   // Delete property (invalidate cache)
   async delete(id: string) {
+    // First, get the property to access its images
+    const { data: property, error: fetchError } = await supabase
+      .from('properties')
+      .select('images, room_types')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching property for deletion:', fetchError);
+    }
+
+    // Delete the property from database
     const { error } = await supabase
       .from('properties')
       .delete()
@@ -243,7 +255,8 @@ export const propertyOperations = {
     serverCache.delete('properties:all');
     serverCache.delete(`property:${id}`);
     
-    return true;
+    // Return property data for image cleanup
+    return property;
   },
 
   // Toggle active status (invalidate cache)

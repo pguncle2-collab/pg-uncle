@@ -185,7 +185,20 @@ export function useProperties(autoFetch: boolean = true) {
 
   const deleteProperty = async (id: string) => {
     try {
-      await propertyOperations.delete(id);
+      // Import image cleanup function
+      const { deletePropertyImages } = await import('@/lib/imageCleanup');
+      
+      // Delete from database and get property data
+      const propertyData = await propertyOperations.delete(id);
+      
+      // Delete associated images in background
+      if (propertyData) {
+        deletePropertyImages(propertyData).then(result => {
+          console.log(`Image cleanup completed: ${result.success} deleted, ${result.failed} failed`);
+        }).catch(err => {
+          console.error('Error during image cleanup:', err);
+        });
+      }
       
       // Update local state
       setProperties(properties.filter(p => p.id !== id));
