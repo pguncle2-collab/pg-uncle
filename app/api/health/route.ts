@@ -1,42 +1,28 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, limit, query } from 'firebase/firestore';
 
 export async function GET() {
   try {
-    const startTime = Date.now();
-    
-    // Simple query to test database connection
-    const { data, error } = await supabase
-      .from('properties')
-      .select('id')
-      .limit(1);
-    
-    const duration = Date.now() - startTime;
-    
-    if (error) {
-      return NextResponse.json(
-        { 
-          status: 'error',
-          message: error.message,
-          duration: `${duration}ms`
-        },
-        { status: 503 }
-      );
-    }
+    // Test Firebase connection
+    const testQuery = query(collection(db, 'properties'), limit(1));
+    await getDocs(testQuery);
     
     return NextResponse.json({
-      status: 'healthy',
-      database: 'connected',
-      duration: `${duration}ms`,
-      timestamp: new Date().toISOString()
+      status: 'ok',
+      database: 'firebase',
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
+    console.error('Health check failed:', error);
     return NextResponse.json(
-      { 
+      {
         status: 'error',
-        message: error.message || 'Database connection failed'
+        database: 'firebase',
+        error: error.message,
+        timestamp: new Date().toISOString(),
       },
-      { status: 503 }
+      { status: 500 }
     );
   }
 }

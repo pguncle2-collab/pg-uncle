@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
+import { SafeImage } from './SafeImage';
 import Link from 'next/link';
 import { useProperties } from '@/hooks/useProperties';
 import { analytics } from '@/lib/analytics';
@@ -52,16 +52,6 @@ export const Properties: React.FC = () => {
 
   // Helper function to optimize image URLs
   const optimizeImageUrl = (url: string, size: 'thumbnail' | 'medium' | 'large' = 'medium'): string => {
-    // If it's a Supabase storage URL, add transformation parameters
-    if (url.includes('supabase.co/storage')) {
-      const sizeParams = {
-        thumbnail: 'width=400&quality=75',
-        medium: 'width=800&quality=80',
-        large: 'width=1200&quality=85'
-      };
-      return `${url}?${sizeParams[size]}`;
-    }
-    
     // If it's Unsplash, use their optimization parameters
     if (url.includes('unsplash.com')) {
       const sizeParams = {
@@ -271,7 +261,7 @@ export const Properties: React.FC = () => {
               className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden hover:-translate-y-2"
             >
               <div className="relative h-64 overflow-hidden bg-gray-200">
-                <Image
+                <SafeImage
                   src={property.image}
                   alt={property.name}
                   fill

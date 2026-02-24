@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
+import { SafeImage } from '@/components/SafeImage';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useAuthModal } from '@/contexts/AuthModalContext';
@@ -11,8 +11,7 @@ import { BookVisitModal } from '@/components/BookVisitModal';
 import { RoomImageModal } from '@/components/RoomImageModal';
 import { BookingModal } from '@/components/BookingModal';
 import { DiscountPopup } from '@/components/DiscountPopup';
-import { propertyOperations } from '@/lib/supabaseOperations';
-import { Property } from '@/lib/supabase';
+import { Property } from '@/types';
 
 export default function PropertyDetailPage() {
   const params = useParams();
@@ -30,15 +29,6 @@ export default function PropertyDetailPage() {
 
   // Image optimization helper
   const optimizeImageUrl = (url: string, size: 'thumbnail' | 'medium' | 'large' = 'large'): string => {
-    if (url.includes('supabase.co/storage')) {
-      const sizeParams = {
-        thumbnail: 'width=400&quality=75',
-        medium: 'width=800&quality=80',
-        large: 'width=1200&quality=85'
-      };
-      return `${url}?${sizeParams[size]}`;
-    }
-    
     if (url.includes('unsplash.com')) {
       const sizeParams = {
         thumbnail: 'w=400&q=75&fm=webp&fit=crop',
@@ -59,7 +49,9 @@ export default function PropertyDetailPage() {
     const fetchProperty = async () => {
       try {
         setLoading(true);
-        const data = await propertyOperations.getById(params.id as string);
+        const response = await fetch(`/api/properties/${params.id}`);
+        if (!response.ok) throw new Error('Property not found');
+        const data = await response.json();
         setProperty(data);
       } catch (error) {
         console.error('Error fetching property:', error);
@@ -194,7 +186,7 @@ export default function PropertyDetailPage() {
             {/* Image Gallery */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
               <div className="relative h-96 bg-gray-200">
-                <Image
+                <SafeImage
                   src={optimizeImageUrl((property.images && property.images[selectedImage]) || property.image, 'large')}
                   alt={property.name}
                   fill
@@ -215,7 +207,7 @@ export default function PropertyDetailPage() {
                       selectedImage === index ? 'border-blue-500' : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <Image 
+                    <SafeImage 
                       src={optimizeImageUrl(image, 'thumbnail')} 
                       alt={`View ${index + 1}`} 
                       fill 
@@ -311,7 +303,7 @@ export default function PropertyDetailPage() {
                             setSelectedRoomType(index);
                           }}
                         >
-                          <Image
+                          <SafeImage
                             src={optimizeImageUrl(room.images[selectedRoomImages[index] || 0], 'medium')}
                             alt={`${room.type} room`}
                             fill
@@ -342,7 +334,7 @@ export default function PropertyDetailPage() {
                                 (selectedRoomImages[index] || 0) === imgIndex ? 'border-blue-500' : 'border-gray-200 hover:border-gray-300'
                               }`}
                             >
-                              <Image 
+                              <SafeImage 
                                 src={optimizeImageUrl(image, 'thumbnail')} 
                                 alt={`View ${imgIndex + 1}`} 
                                 fill 

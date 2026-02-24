@@ -45,8 +45,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
 
   // Get user display name
   const getUserName = () => {
-    if (user?.user_metadata?.full_name) {
-      return user.user_metadata.full_name;
+    if (user?.fullName) {
+      return user.fullName;
     }
     if (user?.email) {
       return user.email.split('@')[0];

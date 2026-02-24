@@ -106,6 +106,53 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
   });
   const [isUploading, setIsUploading] = useState(false);
 
+  // Reset form when initialData changes (switching between add/edit or different properties)
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        ...initialData,
+        amenities: initialData.amenities && initialData.amenities.length > 0 
+          ? initialData.amenities 
+          : defaultAmenities
+      });
+      setImagePreviewUrls(initialData.images || []);
+      
+      // Reset room images
+      const roomImages: {[key: number]: string[]} = {};
+      if (initialData.roomTypes) {
+        initialData.roomTypes.forEach((room, index) => {
+          if (room.images && room.images.length > 0) {
+            roomImages[index] = room.images;
+          }
+        });
+      }
+      setRoomImagePreviewUrls(roomImages);
+    } else {
+      // Reset to empty form
+      setFormData({
+        name: '',
+        city: 'Chandigarh',
+        location: '',
+        address: '',
+        coordinates: { lat: 30.7333, lng: 76.7794 },
+        description: '',
+        roomTypes: [
+          { type: 'Single', price: 0, available: true, description: '', features: [], totalSlots: 0, occupiedSlots: 0, availableSlots: 0, beds: 1, images: [] },
+        ],
+        amenities: defaultAmenities,
+        rules: [''],
+        nearbyPlaces: [{ name: '', distance: '', type: 'Shopping' }],
+        images: [''],
+      });
+      setImagePreviewUrls([]);
+      setRoomImagePreviewUrls({});
+    }
+    
+    // Clear file uploads when switching
+    setImageFiles([]);
+    setRoomImageFiles({});
+  }, [initialData]);
+
   const cities = ['Chandigarh', 'Mohali', 'Panchkula', 'Zirakpur'];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -739,6 +786,12 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
                         src={url}
                         alt={`Room ${index + 1} preview ${imgIndex + 1}`}
                         className="w-full h-24 object-cover rounded-lg border-2 border-gray-200"
+                        onError={(e) => {
+                          // If image fails to load, show placeholder
+                          const target = e.target as HTMLImageElement;
+                          target.src = 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=400&q=80';
+                          target.onerror = null; // Prevent infinite loop
+                        }}
                       />
                       <button
                         type="button"
@@ -749,6 +802,11 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
+                      {!url.startsWith('blob:') && !url.includes('unsplash.com') && (
+                        <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-yellow-500 text-white text-xs rounded">
+                          ⚠️
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -955,6 +1013,12 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
                   src={url}
                   alt={`Preview ${index + 1}`}
                   className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
+                  onError={(e) => {
+                    // If image fails to load, show placeholder
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=400&q=80';
+                    target.onerror = null; // Prevent infinite loop
+                  }}
                 />
                 <button
                   type="button"
@@ -968,6 +1032,11 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
                 {index === 0 && (
                   <div className="absolute bottom-2 left-2 px-2 py-1 bg-blue-500 text-white text-xs rounded">
                     Main Image
+                  </div>
+                )}
+                {!url.startsWith('blob:') && !url.includes('unsplash.com') && (
+                  <div className="absolute top-2 left-2 px-2 py-1 bg-yellow-500 text-white text-xs rounded">
+                    ⚠️ Old Image
                   </div>
                 )}
               </div>

@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Property } from '@/lib/supabase';
-import { propertyOperations } from '@/lib/supabaseOperations';
+import { Property } from '@/types';
 
 // Version key to force cache invalidation on code updates
 const CACHE_VERSION = 'v2'; // Increment this to force cache clear
@@ -98,15 +97,14 @@ export function useProperties(autoFetch: boolean = true) {
       setLoading(true);
       setError(null);
       
-      // Add timeout wrapper - 8 seconds (increased to give Supabase more time)
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          reject(new Error('Request timeout'));
-        }, 8000);
-      });
+      // Fetch from API route (MongoDB)
+      const response = await fetch('/api/properties');
       
-      const queryPromise = propertyOperations.getAll();
-      const data = await Promise.race([queryPromise, timeoutPromise]) as Property[];
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
       
       // Update cache in sessionStorage
       setCachedData(data);
@@ -115,22 +113,19 @@ export function useProperties(autoFetch: boolean = true) {
       setLoading(false);
       
     } catch (err: any) {
-      let errorMessage = err.message || 'Failed to fetch properties';
+      console.error('Error fetching properties:', err);
       
-      // Handle abort errors with retry
-      if ((err.name === 'AbortError' || errorMessage.includes('AbortError')) && retryCount < 1) {
-        console.log('Retrying after abort error...');
+      // Retry once on error
+      if (retryCount < 1) {
+        console.log('Retrying fetch...');
         setTimeout(() => {
           fetchProperties(retryCount + 1, false);
         }, 1000);
         return;
       }
       
-      // Handle timeout - show error but DON'T reload automatically
-      if (errorMessage.includes('timeout') || errorMessage.includes('timed out') || err.name === 'AbortError' || errorMessage.includes('TIMEOUT')) {
-        errorMessage = 'Unable to connect to database. Your Supabase project may be paused. Please check your Supabase dashboard and restore it if needed, then refresh this page.';
-      }
-      
+      // Show user-friendly error
+      const errorMessage = 'Unable to load properties. Please refresh the page.';
       setError(errorMessage);
       setLoading(false);
     }
@@ -144,7 +139,15 @@ export function useProperties(autoFetch: boolean = true) {
 
   const addProperty = async (property: Omit<Property, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
-      const newProperty = await propertyOperations.create(property);
+      const response = await fetch('/api/properties', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(property),
+      });
+      
+      if (!response.ok) throw new Error('Failed to add property');
+      
+      const newProperty = await response.json();
       
       // Update local state
       setProperties([newProperty, ...properties]);
@@ -161,7 +164,15 @@ export function useProperties(autoFetch: boolean = true) {
 
   const updateProperty = async (id: string, property: Partial<Property>) => {
     try {
-      const updatedProperty = await propertyOperations.update(id, property);
+      const response = await fetch(`/api/properties/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(property),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update property');
+      
+      const updatedProperty = await response.json();
       
       // Update local state
       setProperties(properties.map(p => p.id === id ? updatedProperty : p));
@@ -181,20 +192,11 @@ export function useProperties(autoFetch: boolean = true) {
 
   const deleteProperty = async (id: string) => {
     try {
-      // Import image cleanup function
-      const { deletePropertyImages } = await import('@/lib/imageCleanup');
+      const response = await fetch(`/api/properties/${id}`, {
+        method: 'DELETE',
+      });
       
-      // Delete from database and get property data
-      const propertyData = await propertyOperations.delete(id);
-      
-      // Delete associated images in background
-      if (propertyData) {
-        deletePropertyImages(propertyData).then(result => {
-          console.log(`Image cleanup completed: ${result.success} deleted, ${result.failed} failed`);
-        }).catch(err => {
-          console.error('Error during image cleanup:', err);
-        });
-      }
+      if (!response.ok) throw new Error('Failed to delete property');
       
       // Update local state
       setProperties(properties.filter(p => p.id !== id));
@@ -209,7 +211,15 @@ export function useProperties(autoFetch: boolean = true) {
 
   const togglePropertyActive = async (id: string, isActive: boolean) => {
     try {
-      const updatedProperty = await propertyOperations.toggleActive(id, isActive);
+      const response = await fetch(`/api/properties/${id}/toggle`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to toggle property status');
+      
+      const updatedProperty = await response.json();
       
       // Update local state
       const newProperties = properties.map(p => p.id === id ? updatedProperty : p);

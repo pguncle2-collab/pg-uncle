@@ -266,9 +266,9 @@ export default function MaintenancePage() {
           <ul className="space-y-2 text-sm text-blue-800">
             <li>• Run orphaned image scan weekly to keep storage clean</li>
             <li>• Images are automatically deleted when properties are removed</li>
-            <li>• Supabase free tier includes 1GB storage - monitor usage regularly</li>
+            <li>• Monitor cloud storage usage regularly</li>
             <li>• Large images are automatically optimized during upload</li>
-            <li>• Consider upgrading to Pro plan if storage exceeds limits</li>
+            <li>• Consider upgrading storage plan if limits are exceeded</li>
           </ul>
         </div>
       </div>

@@ -39,23 +39,6 @@ export function optimizeImageUrl(
   // Add cache buster first
   const urlWithCacheBuster = addCacheBuster(url);
   
-  // For Supabase images
-  if (urlWithCacheBuster.includes('supabase.co/storage')) {
-    const sizeParams = {
-      thumbnail: 'width=400&quality=75',
-      medium: 'width=800&quality=80',
-      large: 'width=1200&quality=85'
-    };
-    
-    // Check if URL already has parameters
-    const hasParams = urlWithCacheBuster.includes('width=');
-    if (hasParams) {
-      return urlWithCacheBuster;
-    }
-    
-    return `${urlWithCacheBuster}&${sizeParams[size]}`;
-  }
-  
   // For Unsplash images
   if (urlWithCacheBuster.includes('unsplash.com')) {
     const sizeParams = {

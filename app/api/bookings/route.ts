@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
-import { getDatabaseErrorMessage } from '@/lib/dbHealthCheck';
+import { firebaseBookingOperations, firebaseUserOperations, firebasePropertyOperations } from '@/lib/firebaseOperations';
 import nodemailer from 'nodemailer';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,71 +36,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Inserting booking into database...');
+    console.log('Creating booking in Firebase...');
     
     // Determine booking status based on payment
     const bookingStatus = paymentDetails ? 'confirmed' : 'pending';
     const paymentId = paymentDetails?.razorpay_payment_id || `PAY${Date.now()}`;
     
-    // Insert booking into database
-    const { data, error } = await supabase
-      .from('bookings')
-      .insert([
-        {
-          user_id: userId,
-          property_id: propertyId,
-          room_type: roomType,
-          check_in_date: moveInDate,
-          duration: duration,
-          total_amount: totalAmount,
-          special_requests: specialRequests || null,
-          status: bookingStatus,
-          payment_id: paymentId,
-        },
-      ])
-      .select()
-      .single();
+    // Create booking
+    const booking = await firebaseBookingOperations.create({
+      userId,
+      propertyId,
+      roomType,
+      checkInDate: moveInDate,
+      duration,
+      totalAmount,
+      specialRequests: specialRequests || null,
+      status: bookingStatus,
+      paymentId,
+    });
 
-    if (error) {
-      console.error('Supabase error creating booking:', error);
-      console.error('Error code:', error.code);
-      console.error('Error message:', error.message);
-      console.error('Error details:', error.details);
-      
-      // Check if it's a column missing error
-      if (error.message.includes('column') && error.message.includes('does not exist')) {
-        return NextResponse.json(
-          { 
-            error: 'Database setup incomplete. Please run UPDATE_BOOKINGS_TABLE.sql in Supabase SQL Editor.',
-            details: error.message 
-          },
-          { status: 500 }
-        );
-      }
-      
-      // Use better error messaging
-      const errorMessage = getDatabaseErrorMessage(error);
-      
-      return NextResponse.json(
-        { error: errorMessage, details: error.message, code: error.code },
-        { status: 500 }
-      );
-    }
-
-    console.log('Booking created successfully:', data);
+    console.log('Booking created successfully:', booking);
 
     // Get user and property details for email
-    const { data: user } = await supabase
-      .from('users')
-      .select('email, full_name')
-      .eq('id', userId)
-      .single();
-
-    const { data: property } = await supabase
-      .from('properties')
-      .select('name, location, address, city')
-      .eq('id', propertyId)
-      .single();
+    const user = await firebaseUserOperations.getById(userId);
+    const property = await firebasePropertyOperations.getById(propertyId);
 
     // Send email notifications
     try {
@@ -131,30 +91,19 @@ export async function POST(request: NextRequest) {
               </div>
               
               <div style="background: white; padding: 30px; border: 1px solid #E5E7EB; border-top: none;">
-                <p style="font-size: 16px; color: #374151;">Dear ${user?.full_name || 'User'},</p>
+                <p style="font-size: 16px; color: #374151;">Dear ${user?.fullName || 'User'},</p>
                 <p style="font-size: 16px; color: #374151;">
                   ${paymentDetails 
                     ? 'Your payment has been successfully processed and your booking is confirmed!' 
                     : 'Your booking has been confirmed. Here are the details:'}
                 </p>
                 
-                ${paymentDetails ? `
-                <div style="background: #ECFDF5; border-left: 4px solid #10B981; padding: 15px; margin: 20px 0; border-radius: 4px;">
-                  <h3 style="margin: 0 0 10px 0; color: #065F46; font-size: 16px;">Payment Receipt</h3>
-                  <p style="margin: 5px 0; color: #065F46;"><strong>Payment ID:</strong> ${paymentDetails.razorpay_payment_id}</p>
-                  <p style="margin: 5px 0; color: #065F46;"><strong>Order ID:</strong> ${paymentDetails.razorpay_order_id}</p>
-                  <p style="margin: 5px 0; color: #065F46;"><strong>Amount Paid:</strong> ₹${totalAmount.toLocaleString()}</p>
-                  <p style="margin: 5px 0; color: #065F46;"><strong>Payment Date:</strong> ${new Date().toLocaleString()}</p>
-                  <p style="margin: 5px 0; color: #065F46;"><strong>Status:</strong> <span style="color: #10B981; font-weight: bold;">SUCCESS</span></p>
-                </div>
-                ` : ''}
-                
                 <div style="background: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0;">
                   <h3 style="margin-top: 0; color: #1F2937;">Booking Details</h3>
                   <table style="width: 100%; border-collapse: collapse;">
                     <tr>
                       <td style="padding: 8px 0; color: #6B7280;">Booking ID:</td>
-                      <td style="padding: 8px 0; color: #1F2937; font-weight: 600;">${data.id}</td>
+                      <td style="padding: 8px 0; color: #1F2937; font-weight: 600;">${booking.id}</td>
                     </tr>
                     <tr>
                       <td style="padding: 8px 0; color: #6B7280;">Property:</td>
@@ -180,32 +129,10 @@ export async function POST(request: NextRequest) {
                       <td style="padding: 8px 0; color: #6B7280; border-top: 2px solid #D1D5DB; padding-top: 12px;">Total Amount:</td>
                       <td style="padding: 8px 0; color: #1F2937; font-weight: bold; font-size: 18px; border-top: 2px solid #D1D5DB; padding-top: 12px;">₹${totalAmount.toLocaleString()}</td>
                     </tr>
-                    ${specialRequests ? `
-                    <tr>
-                      <td style="padding: 8px 0; color: #6B7280; vertical-align: top;">Special Requests:</td>
-                      <td style="padding: 8px 0; color: #1F2937;">${specialRequests}</td>
-                    </tr>
-                    ` : ''}
                   </table>
                 </div>
-
-                <div style="background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 15px; margin: 20px 0; border-radius: 4px;">
-                  <p style="margin: 0; color: #92400E; font-size: 14px;">
-                    <strong>Next Steps:</strong> Our team will contact you within 24 hours to coordinate your move-in and provide property access details.
-                  </p>
-                </div>
-                
-                <p style="color: #6B7280; font-size: 14px; margin-top: 30px; border-top: 1px solid #E5E7EB; padding-top: 20px;">
-                  If you have any questions, please contact us at <a href="mailto:info@pguncle.com" style="color: #3B82F6;">info@pguncle.com</a>
-                </p>
                 
                 <p style="color: #1F2937; margin-top: 20px;">Best regards,<br><strong>Team PGUNCLE</strong></p>
-              </div>
-              
-              <div style="background: #F9FAFB; padding: 20px; text-align: center; border-radius: 0 0 8px 8px;">
-                <p style="color: #6B7280; font-size: 12px; margin: 0;">
-                  This is an automated email. Please do not reply to this email.
-                </p>
               </div>
             </div>
           `,
@@ -221,7 +148,7 @@ export async function POST(request: NextRequest) {
     }
     
     return NextResponse.json(
-      { success: true, booking: data },
+      { success: true, booking },
       { status: 201 }
     );
   } catch (error: any) {

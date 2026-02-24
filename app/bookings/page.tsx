@@ -37,8 +37,10 @@ export default function BookingsPage() {
     const fetchBookings = async () => {
       if (user) {
         try {
-          const { bookingOperations } = await import('@/lib/supabaseOperations');
-          const data = await bookingOperations.getByUserId(user.id);
+          const response = await fetch(`/api/bookings/user/${user.id}`);
+          if (!response.ok) throw new Error('Failed to fetch bookings');
+          
+          const data = await response.json();
           
           // Transform data to match Booking interface
           const transformedBookings = data.map((booking: any) => ({

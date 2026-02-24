@@ -25,38 +25,33 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user) {
       setFormData({
-        fullName: user.user_metadata?.full_name || '',
+        fullName: (user as any).name || (user as any).full_name || '',
         email: user.email || '',
-        phone: user.user_metadata?.phone || '',
+        phone: (user as any).phone || '',
       });
     }
   }, [user]);
 
   const handleSave = async () => {
     try {
-      const { supabase } = await import('@/lib/supabase');
-      const { userOperations } = await import('@/lib/supabaseOperations');
-      
-      // Update auth metadata
-      const { error: authError } = await supabase.auth.updateUser({
-        data: {
-          full_name: formData.fullName,
-          phone: formData.phone,
-        }
-      });
-      
-      if (authError) throw authError;
-      
-      // Update users table
-      if (user) {
-        await userOperations.update(user.id, {
+      // Update user via API
+      const response = await fetch('/api/user/update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: (user as any).id,
           fullName: formData.fullName,
           phone: formData.phone,
-        } as any);
-      }
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update profile');
       
       setEditing(false);
       alert('Profile updated successfully!');
+      
+      // Refresh the page to get updated user data
+      window.location.reload();
     } catch (error) {
       console.error('Error updating profile:', error);
       alert('Failed to update profile. Please try again.');
@@ -112,7 +107,7 @@ export default function ProfilePage() {
                 <h2 className="text-2xl font-bold text-gray-900 mb-1">{formData.fullName || 'User'}</h2>
                 <p className="text-gray-600">{formData.email}</p>
                 <p className="text-sm text-gray-500 mt-2">
-                  Member since {new Date(user?.created_at || Date.now()).toLocaleDateString()}
+                  Member since {new Date().toLocaleDateString()}
                 </p>
               </div>
             </div>
@@ -182,9 +177,9 @@ export default function ProfilePage() {
                         // Reset form data
                         if (user) {
                           setFormData({
-                            fullName: user.user_metadata?.full_name || '',
+                            fullName: user.fullName || '',
                             email: user.email || '',
-                            phone: user.user_metadata?.phone || '',
+                            phone: user.phone || '',
                           });
                         }
                       }}

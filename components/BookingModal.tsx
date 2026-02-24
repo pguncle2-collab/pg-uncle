@@ -117,9 +117,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         description: `${roomType} Room Booking`,
         order_id: orderData.order.id,
         prefill: {
-          name: user?.user_metadata?.full_name || user?.user_metadata?.name || 'User',
+          name: user?.fullName || 'User',
           email: user?.email || '',
-          contact: user?.user_metadata?.phone || user?.phone || '',
+          contact: user?.phone || '',
         },
         theme: {
           color: '#3B82F6',

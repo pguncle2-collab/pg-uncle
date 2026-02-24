@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
+import { SafeImage } from './SafeImage';
 
 interface RoomImageModalProps {
   isOpen: boolean;
@@ -80,7 +80,7 @@ export const RoomImageModal: React.FC<RoomImageModalProps> = ({
 
         {/* Main Image Container */}
         <div className="flex-1 relative rounded-2xl overflow-hidden bg-black">
-          <Image
+          <SafeImage
             src={images[currentImageIndex]}
             alt={`${roomType} room - Image ${currentImageIndex + 1}`}
             fill
@@ -138,7 +138,7 @@ export const RoomImageModal: React.FC<RoomImageModalProps> = ({
                     : 'opacity-60 hover:opacity-100 hover:scale-105'
                 }`}
               >
-                <Image
+                <SafeImage
                   src={image}
                   alt={`Thumbnail ${index + 1}`}
                   fill

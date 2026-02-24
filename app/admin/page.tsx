@@ -1,12 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PropertyForm } from '@/components/PropertyForm';
 import { useProperties } from '@/hooks/useProperties';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function AdminDashboard() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Check sessionStorage for existing auth
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('adminAuth') === 'true';
+    }
+    return false;
+  });
+  const [firebaseUser, setFirebaseUser] = useState<any>(null);
   const [password, setPassword] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -21,18 +30,58 @@ export default function AdminDashboard() {
   // Local error state for admin-specific errors
   const [adminError, setAdminError] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Monitor Firebase auth state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('🔥 Firebase auth state changed:', user ? `Logged in as ${user.email}` : 'Not logged in');
+      setFirebaseUser(user);
+    });
+    
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch properties when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchProperties();
+    }
+  }, [isAuthenticated]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin123';
+    
     if (password === adminPassword) {
-      setIsAuthenticated(true);
-      // Fetch properties after successful login
-      setTimeout(() => {
-        fetchProperties();
-      }, 100);
+      try {
+        // Sign in to Firebase with admin credentials
+        const adminEmail = 'admin@pguncle.com';
+        console.log('🔐 Attempting Firebase authentication...');
+        const userCredential = await signInWithEmailAndPassword(auth, adminEmail, password);
+        console.log('✅ Firebase authentication successful!', userCredential.user.uid);
+        
+        setIsAuthenticated(true);
+        sessionStorage.setItem('adminAuth', 'true');
+        alert('✅ Logged in successfully with Firebase authentication!');
+      } catch (firebaseError: any) {
+        // If Firebase auth fails, show error and don't allow access
+        console.error('❌ Firebase auth failed:', firebaseError.message);
+        alert(`Firebase authentication failed: ${firebaseError.message}\n\nPlease make sure:\n1. Admin user exists in Firebase Authentication\n2. Email: admin@pguncle.com\n3. Password: admin123`);
+      }
     } else {
       alert('Invalid password');
     }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      console.log('✅ Signed out from Firebase');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('adminAuth');
+    setAdminError(null);
   };
 
   const handleDeleteProperty = async (id: string) => {
@@ -153,15 +202,15 @@ export default function AdminDashboard() {
           <h3 className="text-2xl font-bold text-red-900 mb-2 text-center">Database Error</h3>
           <p className="text-red-600 text-center mb-4">{error || adminError}</p>
           
-          {/* Check if it's a timeout/pause error */}
-          {((error || adminError || '').includes('timeout') || (error || adminError || '').includes('paused')) && (
+          {/* Check if it's a timeout error */}
+          {((error || adminError || '').includes('timeout') || (error || adminError || '').includes('connection')) && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
               <p className="text-sm text-blue-900 font-semibold mb-2">💡 Quick Fix:</p>
               <ol className="text-sm text-blue-800 space-y-1 list-decimal ml-4">
-                <li>Your Supabase project may be paused (free tier)</li>
-                <li>Click the button below to open Supabase Dashboard</li>
-                <li>Click "Restore Project" if you see it</li>
-                <li>Wait 1-2 minutes and click "Retry" here</li>
+                <li>Check your MongoDB connection string in .env.local</li>
+                <li>Verify your MongoDB cluster is active in Atlas Dashboard</li>
+                <li>Check your network connection</li>
+                <li>Wait a moment and click "Retry" below</li>
               </ol>
             </div>
           )}
@@ -177,22 +226,19 @@ export default function AdminDashboard() {
               🔄 Retry Connection
             </button>
             
-            {((error || adminError || '').includes('timeout') || (error || adminError || '').includes('paused')) && (
+            {((error || adminError || '').includes('timeout') || (error || adminError || '').includes('connection')) && (
               <a
-                href="https://supabase.com/dashboard"
+                href="https://cloud.mongodb.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-center font-semibold"
               >
-                🚀 Open Supabase Dashboard
+                🚀 Open MongoDB Atlas Dashboard
               </a>
             )}
             
             <button
-              onClick={() => {
-                setIsAuthenticated(false);
-                setAdminError(null);
-              }}
+              onClick={handleLogout}
               className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 font-semibold"
             >
               ← Back to Login
@@ -219,6 +265,26 @@ export default function AdminDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-4">
+              {firebaseUser && (
+                <div className="px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-600 text-sm">🔥</span>
+                    <span className="text-xs text-green-700 font-medium">
+                      Firebase: {firebaseUser.email}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {!firebaseUser && isAuthenticated && (
+                <div className="px-3 py-1.5 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-600 text-sm">⚠️</span>
+                    <span className="text-xs text-yellow-700 font-medium">
+                      Not authenticated with Firebase
+                    </span>
+                  </div>
+                </div>
+              )}
               <button
                 onClick={async () => {
                   const startTime = Date.now();
@@ -227,7 +293,7 @@ export default function AdminDashboard() {
                     const duration = Date.now() - startTime;
                     alert(`✅ Database Connected!\nResponse time: ${duration}ms`);
                   } catch (err) {
-                    alert('❌ Database connection failed. Please check if your Supabase project is paused.');
+                    alert('❌ Database connection failed. Please check your MongoDB connection.');
                   }
                 }}
                 className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 font-medium border border-blue-200"
@@ -251,7 +317,7 @@ export default function AdminDashboard() {
                 View Site
               </Link>
               <button
-                onClick={() => setIsAuthenticated(false)}
+                onClick={handleLogout}
                 className="px-4 py-2 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition-colors"
               >
                 Logout
@@ -612,9 +678,10 @@ export default function AdminDashboard() {
                       };
                       console.log('Update data:', updateData);
                       await updateProperty(selectedProperty.id, updateData);
+                      setShowEditModal(false);
+                      setSelectedProperty(null);
+                      await fetchProperties(); // Refresh the list
                       alert('Property updated successfully!');
-                      // Force page reload to clear all caches
-                      window.location.reload();
                     } else {
                       // Add new property
                       console.log('Adding new property');
@@ -640,9 +707,10 @@ export default function AdminDashboard() {
                       };
                       console.log('New property data:', newPropertyData);
                       await addProperty(newPropertyData);
+                      setShowAddModal(false);
+                      setSelectedProperty(null);
+                      await fetchProperties(); // Refresh the list
                       alert('Property added successfully!');
-                      // Force page reload to clear all caches
-                      window.location.reload();
                     }
                     setShowAddModal(false);
                     setShowEditModal(false);

@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
 import { analytics } from '@/lib/analytics';
 
 interface AuthModalProps {
@@ -17,7 +16,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultTa
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>(defaultTab);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signInWithGoogle } = useAuth();
   
   const [loginData, setLoginData] = useState({
     email: '',
@@ -55,14 +54,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultTa
     setLoading(true);
 
     try {
-      const { error: signInError } = await signIn(loginData.email, loginData.password);
+      await signIn(loginData.email, loginData.password);
       
-      if (signInError) {
-        setError(signInError.message || 'Failed to sign in');
-        setLoading(false);
-        return;
-      }
-
       // Success
       analytics.login('email');
       setLoading(false);
@@ -94,23 +87,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultTa
     setLoading(true);
 
     try {
-      const { error: signUpError } = await signUp(
+      await signUp(
         signupData.email,
         signupData.password,
         signupData.name,
         signupData.phone
       );
       
-      if (signUpError) {
-        setError(signUpError.message || 'Failed to create account');
-        setLoading(false);
-        return;
-      }
-
       // Success
       analytics.signup('email');
       setLoading(false);
-      alert('Account created successfully! Please check your email to verify your account.');
+      alert('Account created successfully!');
       if (onSuccess) {
         onSuccess();
       }
@@ -127,22 +114,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultTa
     setLoading(true);
 
     try {
+      await signInWithGoogle();
       analytics.login('google');
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) {
-        setError(error.message || 'Failed to sign in with Google');
-        analytics.error('google_signin', error.message);
-        setLoading(false);
-        return;
+      setLoading(false);
+      if (onSuccess) {
+        onSuccess();
       }
-
-      // OAuth will redirect, so we don't need to do anything else here
+      onClose();
     } catch (err: any) {
       setError(err.message || 'An error occurred');
       analytics.error('google_signin', err.message);
