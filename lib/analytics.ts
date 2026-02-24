@@ -12,9 +12,37 @@ declare global {
   }
 }
 
+// Check if gtag is available
+const isGtagAvailable = (): boolean => {
+  return typeof window !== 'undefined' && typeof window.gtag === 'function';
+};
+
+// Wait for gtag to be available
+const waitForGtag = (maxAttempts = 10): Promise<boolean> => {
+  return new Promise((resolve) => {
+    let attempts = 0;
+    const checkGtag = () => {
+      if (isGtagAvailable()) {
+        resolve(true);
+        return;
+      }
+      attempts++;
+      if (attempts >= maxAttempts) {
+        console.warn('Google Analytics (gtag) not available after', maxAttempts, 'attempts');
+        resolve(false);
+        return;
+      }
+      setTimeout(checkGtag, 100);
+    };
+    checkGtag();
+  });
+};
+
 // Track page views
-export const trackPageView = (url: string) => {
-  if (typeof window !== 'undefined' && window.gtag) {
+export const trackPageView = async (url: string) => {
+  const available = await waitForGtag();
+  if (available && window.gtag) {
+    console.log('[Analytics] Page view:', url);
     window.gtag('config', 'G-3TXYLMX47G', {
       page_path: url,
     });
@@ -22,18 +50,22 @@ export const trackPageView = (url: string) => {
 };
 
 // Track custom events
-export const trackEvent = (
+export const trackEvent = async (
   action: string,
   category: string,
   label?: string,
   value?: number
 ) => {
-  if (typeof window !== 'undefined' && window.gtag) {
+  const available = await waitForGtag();
+  if (available && window.gtag) {
+    console.log('[Analytics] Event:', { action, category, label, value });
     window.gtag('event', action, {
       event_category: category,
       event_label: label,
       value: value,
     });
+  } else {
+    console.warn('[Analytics] Event not sent (gtag unavailable):', { action, category, label, value });
   }
 };
 

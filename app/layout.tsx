@@ -82,6 +82,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
+        {/* Google Analytics */}
         <script
           async
           src="https://www.googletagmanager.com/gtag/js?id=G-3TXYLMX47G"
@@ -92,7 +93,11 @@ export default function RootLayout({
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', 'G-3TXYLMX47G');
+              gtag('config', 'G-3TXYLMX47G', {
+                send_page_view: true,
+                debug_mode: ${process.env.NODE_ENV === 'development'}
+              });
+              console.log('[GA] Google Analytics initialized with ID: G-3TXYLMX47G');
             `,
           }}
         />
