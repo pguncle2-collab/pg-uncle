@@ -3,6 +3,7 @@ import './globals.css'
 import { Navbar } from '@/components/Navbar'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { VersionChecker } from '@/components/VersionChecker'
+import { SessionRecovery } from '@/components/SessionRecovery'
 // WhatsApp Button - COMMENTED OUT
 // import { WhatsAppButton } from '@/components/WhatsAppButton'
 
@@ -103,6 +104,7 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <SessionRecovery />
         <VersionChecker />
         <AuthProvider>
           {children}

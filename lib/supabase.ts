@@ -24,6 +24,7 @@ function getSupabaseClient() {
         detectSessionInUrl: true,
         storage: typeof window !== 'undefined' ? window.localStorage : undefined,
         storageKey: 'pguncle-auth',
+        flowType: 'pkce',
         // Disable lock mechanism by providing a no-op lock function
         lock: async (_name: string, _acquireTimeout: number, fn: () => Promise<any>) => {
           // Skip locking, just execute the function directly
@@ -34,11 +35,27 @@ function getSupabaseClient() {
         headers: {
           'x-client-info': 'pguncle-web',
         },
+        fetch: (url, options = {}) => {
+          return fetch(url, {
+            ...options,
+            cache: 'no-store',
+          });
+        },
       },
       db: {
         schema: 'public',
       },
     });
+
+    // Handle session recovery on client side
+    if (typeof window !== 'undefined') {
+      supabaseInstance.auth.getSession().catch((error: any) => {
+        console.warn('Session recovery failed, clearing stale session:', error);
+        // Clear stale session data
+        localStorage.removeItem('pguncle-auth');
+        window.location.reload();
+      });
+    }
   }
   return supabaseInstance;
 }

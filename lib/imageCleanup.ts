@@ -158,7 +158,7 @@ export async function listAllStorageFiles(): Promise<string[]> {
         .list('properties', { limit: 1000 });
 
       if (propertiesData) {
-        propertiesData.forEach(item => {
+        propertiesData.forEach((item: any) => {
           if (item.name) {
             allFiles.push(`properties/${item.name}`);
           }
@@ -171,7 +171,7 @@ export async function listAllStorageFiles(): Promise<string[]> {
         .list('properties/rooms', { limit: 1000 });
 
       if (roomsData) {
-        roomsData.forEach(item => {
+        roomsData.forEach((item: any) => {
           if (item.name) {
             allFiles.push(`properties/rooms/${item.name}`);
           }

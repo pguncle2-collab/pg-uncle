@@ -21,16 +21,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let mounted = true;
+    let sessionCheckTimeout: NodeJS.Timeout;
     
-    // Check active session with retry logic
+    // Check active session with retry logic and timeout
     const checkSession = async (retryCount = 0) => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Set a timeout for the session check
+        const timeoutPromise = new Promise((_, reject) => {
+          sessionCheckTimeout = setTimeout(() => reject(new Error('Session check timeout')), 5000);
+        });
+
+        const sessionPromise = supabase.auth.getSession();
+        
+        const { data: { session }, error } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]) as any;
+        
+        clearTimeout(sessionCheckTimeout);
         
         if (!mounted) return;
         
         if (error) {
           console.error('Session error:', error);
+          
+          // If it's an auth error, clear the stale session
+          if (error.message?.includes('refresh_token_not_found') || 
+              error.message?.includes('invalid') ||
+              error.status === 401) {
+            console.warn('Clearing stale session due to auth error');
+            await supabase.auth.signOut();
+            localStorage.removeItem('pguncle-auth');
+          }
+          
           setUser(null);
           setLoading(false);
           return;
@@ -45,18 +68,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         setLoading(false);
       } catch (error: any) {
+        clearTimeout(sessionCheckTimeout);
+        
         if (!mounted) return;
         
-        // Handle abort errors gracefully with retry
-        if (error.name === 'AbortError' && retryCount < 2) {
-          console.warn(`Session check attempt ${retryCount + 1} timed out. Retrying...`);
+        // Handle timeout or abort errors with retry
+        if ((error.message === 'Session check timeout' || error.name === 'AbortError') && retryCount < 2) {
+          console.warn(`Session check attempt ${retryCount + 1} failed. Retrying...`);
           setTimeout(() => checkSession(retryCount + 1), 1000);
           return;
         }
         
-        if (error.name === 'AbortError') {
-          console.warn('⚠️ Supabase connection timeout. Your project may be paused.');
-          console.warn('📍 Check: https://supabase.com/dashboard');
+        // After retries exhausted, clear stale session
+        if (error.message === 'Session check timeout' || error.name === 'AbortError') {
+          console.warn('⚠️ Session check failed after retries. Clearing stale session.');
+          localStorage.removeItem('pguncle-auth');
         } else {
           console.error('Error checking session:', error);
         }
@@ -69,8 +95,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: any, session: any) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
       if (!mounted) return;
+      
+      console.log('Auth state changed:', event);
+      
+      // Handle token refresh failures
+      if (event === 'TOKEN_REFRESHED') {
+        console.log('Token refreshed successfully');
+      } else if (event === 'SIGNED_OUT') {
+        console.log('User signed out');
+        localStorage.removeItem('pguncle-auth');
+      } else if (event === 'USER_UPDATED') {
+        console.log('User updated');
+      }
       
       setUser(session?.user ?? null);
       
@@ -86,6 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       mounted = false;
+      clearTimeout(sessionCheckTimeout);
       subscription.unsubscribe();
     };
   }, []);
