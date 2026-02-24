@@ -10,10 +10,23 @@ import { supabase } from '@/lib/supabase';
 export function SessionRecovery() {
   useEffect(() => {
     const checkAndRecoverSession = async () => {
+      // Check if this is a fresh page load (not a navigation)
+      const navigationEntries = performance.getEntriesByType('navigation');
+      const isPageLoad = navigationEntries.length > 0 && 
+                         (navigationEntries[0] as PerformanceNavigationTiming).type === 'reload' || 
+                         !sessionStorage.getItem('session_checked');
+      
+      if (!isPageLoad) {
+        sessionStorage.setItem('session_checked', 'true');
+        return;
+      }
+      
+      sessionStorage.setItem('session_checked', 'true');
+      
       try {
-        // Try to get the current session with a short timeout
+        // Try to get the current session with a very short timeout
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('timeout')), 2000); // Reduced to 2 seconds
+          setTimeout(() => reject(new Error('timeout')), 1500); // 1.5 seconds
         });
 
         const sessionPromise = supabase.auth.getSession();
@@ -22,13 +35,15 @@ export function SessionRecovery() {
         
         // If we got a result, check if there's an error
         if (result?.error) {
-          console.warn('Session error detected, clearing stale data:', result.error);
+          console.warn('Session error detected, clearing and reloading:', result.error.message);
           clearAllAuthData();
+          window.location.reload();
         }
       } catch (error: any) {
-        // If session check fails or times out, clear stale data immediately
-        console.warn('Session check failed, clearing stale data:', error.message);
+        // If session check fails or times out, clear and reload
+        console.warn('Session check failed, clearing and reloading:', error.message);
         clearAllAuthData();
+        window.location.reload();
       }
     };
 

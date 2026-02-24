@@ -98,7 +98,7 @@ export function useProperties(autoFetch: boolean = true) {
       setLoading(true);
       setError(null);
       
-      // Add timeout wrapper - 5 seconds (reduced from 10)
+      // Add timeout wrapper - 5 seconds
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
           reject(new Error('Request timeout'));
@@ -117,6 +117,28 @@ export function useProperties(autoFetch: boolean = true) {
     } catch (err: any) {
       let errorMessage = err.message || 'Failed to fetch properties';
       
+      // Handle timeout - clear stale session and reload page once
+      if ((errorMessage.includes('timeout') || errorMessage.includes('timed out') || errorMessage.includes('TIMEOUT')) && retryCount === 0) {
+        console.warn('Timeout detected, clearing stale session and reloading...');
+        
+        // Clear all auth data
+        localStorage.removeItem('pguncle-auth');
+        
+        // Clear any Supabase-related items
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith('sb-') || key.includes('supabase') || key.includes('auth'))) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        
+        // Reload page to reinitialize Supabase client
+        window.location.reload();
+        return;
+      }
+      
       // Handle abort errors with retry
       if ((err.name === 'AbortError' || errorMessage.includes('AbortError')) && retryCount < 1) {
         console.log('Retrying after abort error...');
@@ -126,23 +148,14 @@ export function useProperties(autoFetch: boolean = true) {
         return;
       }
       
-      // Handle timeout - clear stale session and retry once
-      if ((errorMessage.includes('timeout') || errorMessage.includes('timed out')) && retryCount === 0) {
-        console.warn('Timeout detected, clearing stale session and retrying...');
+      // After retry or other errors, show user-friendly message
+      if (errorMessage.includes('timeout') || errorMessage.includes('timed out') || err.name === 'AbortError' || errorMessage.includes('TIMEOUT')) {
+        errorMessage = 'Unable to connect to database. The page will reload automatically.';
         
-        // Clear stale auth data
-        localStorage.removeItem('pguncle-auth');
-        
-        // Retry once after clearing
+        // Auto-reload after showing error
         setTimeout(() => {
-          fetchProperties(retryCount + 1, false);
-        }, 500);
-        return;
-      }
-      
-      // After retry, show user-friendly error
-      if (errorMessage.includes('timeout') || errorMessage.includes('timed out') || err.name === 'AbortError') {
-        errorMessage = 'Unable to connect to database. Please refresh the page. If the issue persists, your Supabase project may be paused.';
+          window.location.reload();
+        }, 2000);
       }
       
       setError(errorMessage);
