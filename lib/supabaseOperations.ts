@@ -34,35 +34,21 @@ export const propertyOperations = {
   // Get all properties (optimized for list view with caching)
   async getAll() {
     try {
-      // First, try a very simple query to test connection
-      const simpleTestPromise = supabase
-        .from('properties')
-        .select('id')
-        .limit(1);
+      console.log('🔍 Fetching properties from Supabase...');
       
-      // Add 5 second timeout for simple test
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('TIMEOUT')), 5000);
-      });
-      
-      let simpleTest;
+      // Try direct REST API first (faster and more reliable)
       try {
-        simpleTest = await Promise.race([simpleTestPromise, timeoutPromise]);
-      } catch (err: any) {
-        if (err.message === 'TIMEOUT') {
-          // Use direct fetch as fallback
-          const directData = await fetchPropertiesDirect();
-          const mapped = directData.map((row: any) => mapDbToProperty(row));
-          return mapped;
-        }
-        throw err;
+        console.log('📡 Attempting direct REST API call...');
+        const directData = await fetchPropertiesDirect();
+        console.log(`✅ Direct fetch successful: ${directData.length} properties`);
+        return directData.map((row: any) => mapDbToProperty(row));
+      } catch (directError: any) {
+        console.warn('⚠️ Direct fetch failed:', directError.message);
+        // Fall through to Supabase client
       }
       
-      if ((simpleTest as any).error) {
-        throw (simpleTest as any).error;
-      }
-      
-      // Full query
+      // Fallback to Supabase client
+      console.log('🔄 Trying Supabase client...');
       const { data, error } = await supabase
         .from('properties')
         .select(`
@@ -92,13 +78,21 @@ export const propertyOperations = {
         .order('created_at', { ascending: false })
         .limit(50);
       
-      if (error) throw error;
-      if (!data) return [];
+      if (error) {
+        console.error('❌ Supabase client error:', error);
+        throw error;
+      }
       
+      if (!data) {
+        console.warn('⚠️ No data returned from Supabase');
+        return [];
+      }
+      
+      console.log(`✅ Supabase client successful: ${data.length} properties`);
       return data.map(mapDbToProperty);
       
     } catch (err: any) {
-      console.error('Error fetching properties:', err);
+      console.error('❌ Error fetching properties:', err);
       throw err;
     }
   },
