@@ -161,28 +161,70 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
     setIsUploading(true);
     
     try {
+      console.log('📤 Starting image upload process...');
+      console.log('Property image files to upload:', imageFiles.length);
+      console.log('Property preview URLs:', imagePreviewUrls);
+      
       // Upload property images if any
       let uploadedImageUrls: string[] = [];
       if (imageFiles.length > 0) {
+        console.log('Uploading property images...');
         uploadedImageUrls = await uploadMultipleImages(imageFiles, 'properties');
+        console.log('Uploaded property image URLs:', uploadedImageUrls);
       }
 
-      // Combine existing images with newly uploaded ones
-      const allImages = [...imagePreviewUrls.filter(url => url && !url.startsWith('blob:')), ...uploadedImageUrls];
+      // Build final image array maintaining order
+      const allImages: string[] = [];
+      let uploadedIndex = 0;
+      
+      for (const previewUrl of imagePreviewUrls) {
+        if (previewUrl.startsWith('blob:')) {
+          // This is a new upload, use the uploaded URL
+          if (uploadedIndex < uploadedImageUrls.length) {
+            allImages.push(uploadedImageUrls[uploadedIndex]);
+            uploadedIndex++;
+          }
+        } else {
+          // This is an existing image, keep it
+          allImages.push(previewUrl);
+        }
+      }
+      
+      console.log('Final property images:', allImages);
       
       // Upload room images for each room type
       const updatedRoomTypes = await Promise.all(
         formData.roomTypes.map(async (room, index) => {
           const roomFiles = roomImageFiles[index] || [];
-          let roomUploadedUrls: string[] = [];
+          const roomPreviews = roomImagePreviewUrls[index] || [];
           
+          console.log(`Room ${index}: ${roomFiles.length} files to upload, ${roomPreviews.length} previews`);
+          
+          let roomUploadedUrls: string[] = [];
           if (roomFiles.length > 0) {
+            console.log(`Uploading room ${index} images...`);
             roomUploadedUrls = await uploadMultipleImages(roomFiles, `properties/rooms`);
+            console.log(`Uploaded room ${index} URLs:`, roomUploadedUrls);
           }
           
-          // Combine existing room images with newly uploaded ones
-          const existingRoomImages = roomImagePreviewUrls[index]?.filter(url => url && !url.startsWith('blob:')) || [];
-          const allRoomImages = [...existingRoomImages, ...roomUploadedUrls];
+          // Build final room image array maintaining order
+          const allRoomImages: string[] = [];
+          let roomUploadedIndex = 0;
+          
+          for (const previewUrl of roomPreviews) {
+            if (previewUrl.startsWith('blob:')) {
+              // This is a new upload, use the uploaded URL
+              if (roomUploadedIndex < roomUploadedUrls.length) {
+                allRoomImages.push(roomUploadedUrls[roomUploadedIndex]);
+                roomUploadedIndex++;
+              }
+            } else {
+              // This is an existing image, keep it
+              allRoomImages.push(previewUrl);
+            }
+          }
+          
+          console.log(`Final room ${index} images:`, allRoomImages);
           
           return {
             ...room,
@@ -198,6 +240,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
         roomTypes: updatedRoomTypes,
       };
       
+      console.log('📦 Final data to submit:', dataToSubmit);
       onSubmit(dataToSubmit);
     } catch (error) {
       console.error('Error uploading images:', error);
