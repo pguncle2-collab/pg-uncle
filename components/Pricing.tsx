@@ -17,7 +17,7 @@ export const Pricing: React.FC = () => {
       name: 'Basic Accommodation',
       price: '₹5,000',
       description: 'Enjoy comfortable lodging with all the essential amenities included.',
-      features: ['Single bed', 'Shared washroom', 'Basic meals', 'Wi-Fi access', '24/7 security'],
+      features: ['Double sharing (single bed)', 'Shared washroom', 'Basic meals', 'Wi-Fi access', '24/7 security'],
       icon: '🏠',
     },
     {

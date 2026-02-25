@@ -29,14 +29,23 @@ export default function PropertyDetailPage() {
 
   // Image optimization helper
   const optimizeImageUrl = (url: string, size: 'thumbnail' | 'medium' | 'large' = 'large'): string => {
+    if (!url) return '';
+    
     if (url.includes('unsplash.com')) {
       const sizeParams = {
-        thumbnail: 'w=400&q=75&fm=webp&fit=crop',
-        medium: 'w=800&q=80&fm=webp&fit=crop',
+        thumbnail: 'w=200&h=200&q=75&fm=webp&fit=crop',
+        medium: 'w=600&h=600&q=80&fm=webp&fit=crop',
         large: 'w=1200&q=85&fm=webp&fit=crop'
       };
       const separator = url.includes('?') ? '&' : '?';
       return `${url}${separator}${sizeParams[size]}`;
+    }
+    
+    // For Firebase Storage URLs, add size parameters if possible
+    if (url.includes('firebasestorage.googleapis.com')) {
+      // Firebase Storage doesn't support URL parameters for resizing
+      // But we can still optimize by using webp format if available
+      return url;
     }
     
     return url;
@@ -53,6 +62,22 @@ export default function PropertyDetailPage() {
         if (!response.ok) throw new Error('Property not found');
         const data = await response.json();
         setProperty(data);
+        
+        // Preload first few images for faster display
+        if (data.images && data.images.length > 0) {
+          data.images.slice(0, 4).forEach((imgUrl: string) => {
+            const img = new window.Image();
+            img.src = optimizeImageUrl(imgUrl, 'large');
+          });
+        }
+        
+        // Preload first room type images
+        if (data.roomTypes && data.roomTypes[0]?.images) {
+          data.roomTypes[0].images.slice(0, 3).forEach((imgUrl: string) => {
+            const img = new window.Image();
+            img.src = optimizeImageUrl(imgUrl, 'medium');
+          });
+        }
       } catch (error) {
         console.error('Error fetching property:', error);
       } finally {
@@ -187,6 +212,7 @@ export default function PropertyDetailPage() {
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
               <div className="relative h-96 bg-gray-200">
                 <SafeImage
+                  key={`property-img-${selectedImage}`}
                   src={optimizeImageUrl((property.images && property.images[selectedImage]) || property.image, 'large')}
                   alt={property.name}
                   fill
@@ -194,8 +220,6 @@ export default function PropertyDetailPage() {
                   priority
                   quality={85}
                   sizes="(max-width: 1024px) 100vw, 66vw"
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAB//2Q=="
                 />
               </div>
               <div className="grid grid-cols-4 gap-2 p-4">
@@ -298,12 +322,13 @@ export default function PropertyDetailPage() {
                           className="relative h-48 rounded-lg overflow-hidden mb-2 cursor-pointer group bg-gray-200"
                           onClick={(e) => {
                             e.stopPropagation();
+                            setSelectedRoomType(index);
                             setRoomImageModalIndex(selectedRoomImages[index] || 0);
                             setShowRoomImageModal(true);
-                            setSelectedRoomType(index);
                           }}
                         >
                           <SafeImage
+                            key={`room-${index}-img-${selectedRoomImages[index] || 0}`}
                             src={optimizeImageUrl(room.images[selectedRoomImages[index] || 0], 'medium')}
                             alt={`${room.type} room`}
                             fill
@@ -311,8 +336,6 @@ export default function PropertyDetailPage() {
                             loading={index < 3 ? 'eager' : 'lazy'}
                             quality={80}
                             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                            placeholder="blur"
-                            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAB//2Q=="
                           />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-full p-3">
@@ -323,12 +346,20 @@ export default function PropertyDetailPage() {
                           </div>
                         </div>
                         <div className="grid grid-cols-3 gap-2">
-                          {room.images.map((image, imgIndex) => (
+                          {room.images.slice(0, 3).map((image, imgIndex) => (
                             <button
                               key={imgIndex}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setSelectedRoomImages(prev => ({ ...prev, [index]: imgIndex }));
+                                // If clicking on the +more overlay, open modal
+                                if (imgIndex === 2 && room.images.length > 3) {
+                                  setSelectedRoomType(index);
+                                  setRoomImageModalIndex(imgIndex);
+                                  setShowRoomImageModal(true);
+                                } else {
+                                  // Otherwise just update the preview
+                                  setSelectedRoomImages(prev => ({ ...prev, [index]: imgIndex }));
+                                }
                               }}
                               className={`relative h-16 rounded-lg overflow-hidden border-2 transition-all bg-gray-200 ${
                                 (selectedRoomImages[index] || 0) === imgIndex ? 'border-blue-500' : 'border-gray-200 hover:border-gray-300'
@@ -343,20 +374,32 @@ export default function PropertyDetailPage() {
                                 quality={75}
                                 sizes="100px"
                               />
+                              {/* Show +more indicator on 3rd image if there are more than 3 images */}
+                              {imgIndex === 2 && room.images.length > 3 && (
+                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer hover:bg-black/70 transition-colors">
+                                  <span className="text-white font-bold text-sm">+{room.images.length - 3}</span>
+                                </div>
+                              )}
                             </button>
                           ))}
                         </div>
                       </div>
 
                       <div className="mb-4">
-                        <h4 className="text-lg md:text-xl font-bold text-gray-900 mb-1">{room.type} Sharing</h4>
-                        <p className="text-xs md:text-sm text-gray-600">{room.description || `${room.type} occupancy room`}</p>
+                        <h4 className="text-lg md:text-xl font-bold text-gray-900 mb-1">
+                          {room.type} Sharing {room.type !== 'Single'}
+                        </h4>
+                        <p className="text-xs md:text-sm text-gray-600">
+                          {room.description || (room.type === 'Single' ? `${room.type} occupancy room` : 'Price per bed')}
+                        </p>
                       </div>
                       
                       <div className="mb-4">
                         <div className="flex items-baseline gap-2">
                           <span className="text-2xl md:text-3xl font-bold text-gray-900">₹{room.price}</span>
-                          <span className="text-sm md:text-base text-gray-600">/month</span>
+                          <span className="text-sm md:text-base text-gray-600">
+                            {room.type === 'Single' ? '/month' : '/month'}
+                          </span>
                         </div>
                       </div>
                       
@@ -386,7 +429,7 @@ export default function PropertyDetailPage() {
                               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                           }`}
                         >
-                          {room.available ? 'Book Now' : 'Fully Booked'}
+                          {room.available ? 'Click on Book Now' : 'Fully Booked'}
                         </button>
                         <button
                           onClick={(e) => {
@@ -499,7 +542,7 @@ export default function PropertyDetailPage() {
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Other Charges</h3>
               
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {/* Deposit Amount */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                   <div className="flex items-center gap-3">
@@ -510,6 +553,17 @@ export default function PropertyDetailPage() {
                     ₹{(roomTypesWithImages[selectedRoomType]?.price || 0).toLocaleString()}
                   </span>
                 </div>
+
+                {/* AC Electricity Charges */}
+                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-200">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl md:text-2xl">❄️</span>
+                    <span className="text-sm md:text-base font-medium text-gray-900">AC Electricity Charges</span>
+                  </div>
+                  <span className="text-base md:text-lg font-semibold text-blue-600">
+                    Extra
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -518,6 +572,17 @@ export default function PropertyDetailPage() {
               <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">House Rules</h3>
               
               <div className="space-y-4">
+                {/* Verification Process */}
+                <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl md:text-2xl">✅</span>
+                    <div>
+                      <p className="text-sm md:text-base font-semibold text-gray-900 mb-1">Smooth Verification Process</p>
+                      <p className="text-xs md:text-sm text-gray-600">Quick verification done upon arrival at move-in.</p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Notice Period */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                   <div className="flex items-center gap-3">
@@ -657,6 +722,7 @@ export default function PropertyDetailPage() {
                   <p className="text-sm text-gray-600 mb-2">Selected Room Type</p>
                   <p className="text-lg font-bold text-gray-900">
                     {property.roomTypes[selectedRoomType].type} Sharing
+                    {property.roomTypes[selectedRoomType].type !== 'Single' && ' (Price per bed)'}
                   </p>
                 </div>
                 
@@ -665,7 +731,9 @@ export default function PropertyDetailPage() {
                     <span className="text-4xl font-bold text-gray-900">
                       ₹{property.roomTypes[selectedRoomType].price}
                     </span>
-                    <span className="text-gray-600">/month</span>
+                    <span className="text-gray-600">
+                      {property.roomTypes[selectedRoomType].type === 'Single' ? '/month' : '/month'}
+                    </span>
                   </div>
                   <p className="text-sm text-gray-500">Inclusive of all charges</p>
                 </div>
@@ -679,7 +747,7 @@ export default function PropertyDetailPage() {
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  {property.roomTypes[selectedRoomType].available ? 'Book Now' : 'Not Available'}
+                  {property.roomTypes[selectedRoomType].available ? 'Click on Book Now' : 'Not Available'}
                 </button>
 
                 <button

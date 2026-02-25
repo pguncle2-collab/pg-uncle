@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
                     </tr>
                     <tr>
                       <td style="padding: 8px 0; color: #6B7280;">Room Type:</td>
-                      <td style="padding: 8px 0; color: #1F2937;">${roomType} Sharing</td>
+                      <td style="padding: 8px 0; color: #1F2937;">${roomType} Sharing${roomType !== 'Single' ? ' (Price per bed)' : ''}</td>
                     </tr>
                     <tr>
                       <td style="padding: 8px 0; color: #6B7280;">Move-in Date:</td>

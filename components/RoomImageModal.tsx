@@ -81,6 +81,7 @@ export const RoomImageModal: React.FC<RoomImageModalProps> = ({
         {/* Main Image Container */}
         <div className="flex-1 relative rounded-2xl overflow-hidden bg-black">
           <SafeImage
+            key={`modal-img-${currentImageIndex}`}
             src={images[currentImageIndex]}
             alt={`${roomType} room - Image ${currentImageIndex + 1}`}
             fill
@@ -116,7 +117,9 @@ export const RoomImageModal: React.FC<RoomImageModalProps> = ({
           <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
             <div className="flex items-end justify-between">
               <div>
-                <h3 className="text-2xl font-bold text-white mb-1">{roomType} Sharing Room</h3>
+                <h3 className="text-2xl font-bold text-white mb-1">
+                  {roomType} Sharing Room {roomType !== 'Single' && '(Price per bed)'}
+                </h3>
                 <p className="text-white/80 text-sm">
                   {currentImageIndex + 1} of {images.length} photos
                 </p>

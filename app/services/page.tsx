@@ -15,7 +15,7 @@ export default function ServicesPage() {
     {
       icon: '💳',
       title: 'Secure Payments',
-      description: 'Book your room with confidence using our secure payment gateway powered by Razorpay.',
+      description: 'Book your bed with confidence using our secure payment gateway powered by Razorpay.',
       features: ['Multiple Payment Options', 'Instant Confirmation', 'Secure Transactions', 'Payment Protection']
     },
     {

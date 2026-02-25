@@ -131,7 +131,7 @@ export default function BookingsPage() {
           </div>
           <div class="row">
             <span class="label">Room Type:</span>
-            <span class="value">${booking.roomType} Sharing</span>
+            <span class="value">${booking.roomType} Sharing${booking.roomType !== 'Single' ? ' (Price per bed)' : ''}</span>
           </div>
         </div>
 
@@ -379,7 +379,10 @@ export default function BookingsPage() {
                   </div>
                   <div className="flex justify-between py-2 border-b border-gray-200">
                     <span className="text-gray-600">Room Type</span>
-                    <span className="font-semibold text-gray-900">{selectedBooking.roomType} Sharing</span>
+                    <span className="font-semibold text-gray-900">
+                      {selectedBooking.roomType} Sharing
+                      {selectedBooking.roomType !== 'Single' && ' (Price per bed)'}
+                    </span>
                   </div>
                 </div>
               </div>

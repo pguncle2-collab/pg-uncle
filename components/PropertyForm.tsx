@@ -608,7 +608,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
           <p className="text-sm text-blue-900 font-semibold mb-2">💡 Example:</p>
           <ul className="text-sm text-blue-800 space-y-1">
             <li>• <strong>Single Occupancy:</strong> 10 rooms, 10 total beds, 7 occupied = 3 available</li>
-            <li>• <strong>Double Occupancy:</strong> 15 rooms, 30 total beds, 20 occupied = 10 available</li>
+            <li>• <strong>Double Sharing (Single Bed):</strong> 15 rooms, 30 total beds, 20 occupied = 10 available</li>
             <li>• <strong>Triple Occupancy:</strong> 8 rooms, 24 total beds, 18 occupied = 6 available</li>
           </ul>
         </div>
@@ -641,7 +641,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
                 >
                   <option value="">Select Type</option>
                   <option value="Single">Single Occupancy</option>
-                  <option value="Double">Double Occupancy</option>
+                  <option value="Double">Double Sharing (Single Bed)</option>
                   <option value="Triple">Triple Occupancy</option>
                   <option value="Quad">Quad Occupancy</option>
                 </select>
@@ -649,7 +649,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Price per Month (₹) *
+                  Price per Bed (₹) *
                 </label>
                 <input
                   type="number"
