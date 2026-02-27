@@ -58,26 +58,30 @@ export default function BookingsPage() {
           
           const data = await response.json();
           
+          console.log('📦 Fetched bookings:', data);
+          
           // Transform data to match Booking interface
           const transformedBookings = data.map((booking: any) => ({
             id: booking.id,
-            propertyId: booking.property_id,
-            propertyName: booking.properties?.name || 'Unknown Property',
-            roomType: booking.room_type,
-            checkInDate: booking.check_in_date,
+            propertyId: booking.propertyId || booking.property_id,
+            propertyName: booking.property?.name || booking.properties?.name || 'Unknown Property',
+            roomType: booking.roomType || booking.room_type,
+            checkInDate: booking.checkInDate || booking.check_in_date,
             duration: booking.duration || 1,
-            totalAmount: booking.total_amount,
+            totalAmount: booking.totalAmount || booking.total_amount,
             status: booking.status,
-            paymentId: booking.payment_id || 'N/A',
-            createdAt: booking.created_at,
-            specialRequests: booking.special_requests,
-            paymentType: booking.payment_type || 'full',
-            monthlyRent: booking.monthly_rent,
-            depositAmount: booking.deposit_amount,
-            paidMonths: booking.paid_months || booking.duration,
-            nextPaymentDue: booking.next_payment_due,
-            monthlyPayments: booking.monthly_payments || [],
+            paymentId: booking.paymentId || booking.payment_id || 'N/A',
+            createdAt: booking.createdAt || booking.created_at,
+            specialRequests: booking.specialRequests || booking.special_requests,
+            paymentType: booking.paymentType || booking.payment_type || 'full',
+            monthlyRent: booking.monthlyRent || booking.monthly_rent,
+            depositAmount: booking.depositAmount || booking.deposit_amount,
+            paidMonths: booking.paidMonths || booking.paid_months || booking.duration,
+            nextPaymentDue: booking.nextPaymentDue || booking.next_payment_due,
+            monthlyPayments: booking.monthlyPayments || booking.monthly_payments || [],
           }));
+          
+          console.log('✅ Transformed bookings:', transformedBookings);
           
           setBookings(transformedBookings);
         } catch (error) {

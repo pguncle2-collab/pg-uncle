@@ -270,21 +270,39 @@ export const firebaseBookingOperations = {
 
   async getByUserId(userId: string): Promise<Booking[]> {
     try {
+      console.log('🔍 Fetching bookings for user:', userId);
       const bookingsRef = collection(db, 'bookings');
       const q = query(
         bookingsRef, 
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc')
+        where('userId', '==', userId)
       );
       const snapshot = await getDocs(q);
       
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.()?.toISOString(),
-      })) as Booking[];
-    } catch (error) {
-      console.error('Error fetching user bookings:', error);
+      console.log('📦 Found bookings:', snapshot.size);
+      
+      const bookings = snapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log('📋 Booking data:', doc.id, data);
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+        };
+      }) as Booking[];
+      
+      // Sort by createdAt in memory (newest first)
+      bookings.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA;
+      });
+      
+      console.log('✅ Returning bookings:', bookings.length);
+      return bookings;
+    } catch (error: any) {
+      console.error('❌ Error fetching user bookings:', error);
+      console.error('❌ Error code:', error.code);
+      console.error('❌ Error message:', error.message);
       throw error;
     }
   },
