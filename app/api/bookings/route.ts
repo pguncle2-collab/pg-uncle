@@ -67,35 +67,68 @@ export async function POST(request: NextRequest) {
         const dueDate = new Date(checkInDate);
         dueDate.setMonth(dueDate.getMonth() + i - 1);
         
-        monthlyPayments.push({
+        const payment: any = {
           month: i,
           amount: monthlyRent || 0,
           status: (i <= paidMonths ? 'paid' : 'pending') as 'paid' | 'pending',
           dueDate: dueDate.toISOString(),
-          paymentId: i === 1 ? paymentId : undefined,
-          paidAt: i === 1 ? new Date().toISOString() : undefined,
-        });
+        };
+        
+        // Only add paymentId and paidAt for paid months
+        if (i === 1) {
+          payment.paymentId = paymentId;
+          payment.paidAt = new Date().toISOString();
+        }
+        
+        monthlyPayments.push(payment);
       }
     }
     
-    // Create booking
-    const booking = await firebaseBookingOperations.create({
+    // Build booking data object, only including defined values
+    const bookingData: any = {
       userId,
       propertyId,
       roomType,
       checkInDate: moveInDate,
       duration,
       totalAmount,
-      specialRequests: specialRequests || null,
       status: bookingStatus,
       paymentId,
-      paymentType: paymentType || 'full',
-      monthlyRent: monthlyRent || undefined,
-      depositAmount: depositAmount || undefined,
-      paidMonths: paidMonths || duration,
-      nextPaymentDue: nextPaymentDue || undefined,
-      monthlyPayments: monthlyPayments.length > 0 ? monthlyPayments : undefined,
-    });
+    };
+    
+    // Only add optional fields if they have values
+    if (specialRequests) {
+      bookingData.specialRequests = specialRequests;
+    }
+    
+    if (paymentType) {
+      bookingData.paymentType = paymentType;
+    }
+    
+    if (monthlyRent) {
+      bookingData.monthlyRent = monthlyRent;
+    }
+    
+    if (depositAmount) {
+      bookingData.depositAmount = depositAmount;
+    }
+    
+    if (paidMonths) {
+      bookingData.paidMonths = paidMonths;
+    } else {
+      bookingData.paidMonths = duration; // Default to full duration
+    }
+    
+    if (nextPaymentDue) {
+      bookingData.nextPaymentDue = nextPaymentDue;
+    }
+    
+    if (monthlyPayments.length > 0) {
+      bookingData.monthlyPayments = monthlyPayments;
+    }
+    
+    // Create booking
+    const booking = await firebaseBookingOperations.create(bookingData);
 
     console.log('✅ Booking created successfully in Firebase');
     console.log('📋 Booking ID:', booking.id);
