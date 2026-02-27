@@ -60,6 +60,8 @@ export async function POST(request: NextRequest) {
 
     // Get Razorpay instance and create order
     const razorpay = getRazorpayInstance();
+    
+    console.log('📡 Calling Razorpay API...');
     const order = await razorpay.orders.create({
       amount: Math.round(amount * 100), // Convert to paise
       currency,
@@ -68,6 +70,12 @@ export async function POST(request: NextRequest) {
     });
 
     console.log('✅ Order created successfully:', order.id);
+    console.log('📋 Order details:', {
+      id: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      status: order.status
+    });
 
     return NextResponse.json({
       success: true,
@@ -75,13 +83,29 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('❌ Error creating Razorpay order:', error);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error code:', error.statusCode);
+    console.error('❌ Error description:', error.error?.description);
+    console.error('❌ Full error:', JSON.stringify(error, null, 2));
+    
+    // Check if it's an authentication error
+    if (error.statusCode === 401 || error.error?.code === 'BAD_REQUEST_ERROR') {
+      return NextResponse.json(
+        { 
+          error: 'Authentication failed',
+          message: 'Invalid Razorpay credentials. Please check your API keys.',
+          details: 'Make sure you have set the correct RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your .env.local file and restarted the server.',
+          hint: 'For test mode, keys should start with rzp_test_'
+        },
+        { status: 401 }
+      );
+    }
+    
     return NextResponse.json(
       { 
         error: 'Failed to create order',
-        message: error.message,
-        details: error.toString()
+        message: error.message || 'Unknown error',
+        details: error.error?.description || error.toString()
       },
       { status: 500 }
     );

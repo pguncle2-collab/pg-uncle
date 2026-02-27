@@ -7,7 +7,11 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('Received booking request:', body);
+    console.log('📥 Received booking request');
+    console.log('📋 User ID:', body.userId);
+    console.log('📋 Property ID:', body.propertyId);
+    console.log('📋 Payment Type:', body.paymentType);
+    console.log('📋 Duration:', body.duration);
     
     const {
       userId,
@@ -26,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!userId || !propertyId || !roomType || !moveInDate || !duration || !totalAmount) {
-      console.error('Missing required fields:', { userId, propertyId, roomType, moveInDate, duration, totalAmount });
+      console.error('❌ Missing required fields:', { userId, propertyId, roomType, moveInDate, duration, totalAmount });
       return NextResponse.json(
         { error: 'Missing required fields', missingFields: {
           userId: !userId,
@@ -40,7 +44,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Creating booking in Firebase...');
+    console.log('✅ All required fields present');
+    console.log('🔥 Creating booking in Firebase...');
     
     // Determine booking status based on payment
     const bookingStatus = paymentDetails ? 'confirmed' : 'pending';
@@ -92,11 +97,18 @@ export async function POST(request: NextRequest) {
       monthlyPayments: monthlyPayments.length > 0 ? monthlyPayments : undefined,
     });
 
-    console.log('Booking created successfully:', booking);
+    console.log('✅ Booking created successfully in Firebase');
+    console.log('📋 Booking ID:', booking.id);
+    console.log('📋 Payment ID:', paymentId);
+    console.log('📋 Status:', bookingStatus);
 
     // Get user and property details for email
     const user = await firebaseUserOperations.getById(userId);
     const property = await firebasePropertyOperations.getById(propertyId);
+
+    console.log('📧 Preparing to send confirmation email...');
+    console.log('User email:', user?.email);
+    console.log('Property:', property?.name);
 
     // Send email notifications
     try {
@@ -189,10 +201,42 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
-    console.error('Error in booking API:', error);
-    console.error('Error stack:', error.stack);
+    console.error('❌ ERROR in booking API:', error);
+    console.error('❌ Error name:', error.name);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error code:', error.code);
+    console.error('❌ Error stack:', error.stack);
+    
+    // Check for specific Firebase errors
+    if (error.code === 'permission-denied') {
+      return NextResponse.json(
+        { 
+          error: 'Permission denied',
+          details: 'Firebase security rules are blocking this operation. Please check Firestore rules.',
+          message: error.message
+        },
+        { status: 403 }
+      );
+    }
+    
+    if (error.code === 'unavailable') {
+      return NextResponse.json(
+        { 
+          error: 'Firebase unavailable',
+          details: 'Cannot connect to Firebase. Please check your internet connection and Firebase configuration.',
+          message: error.message
+        },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { 
+        error: 'Internal server error', 
+        details: error.message,
+        code: error.code,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

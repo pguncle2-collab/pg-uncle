@@ -72,7 +72,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      console.log('Initiating Razorpay payment...');
+      console.log('🚀 Starting payment flow...');
+      console.log('📋 User:', user?.email);
+      console.log('📋 Property:', propertyId);
+      console.log('📋 Room Type:', roomType);
       
       // Determine payment amount based on options
       let paymentAmount = totalAmount;
@@ -82,19 +85,28 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         // For monthly payment, pay first month rent + deposit
         paymentAmount = price + depositAmount;
         paymentType = 'monthly';
+        console.log('💳 Payment Type: Monthly');
+        console.log('💰 First Month + Deposit:', paymentAmount);
+      } else {
+        console.log('💳 Payment Type: Full');
+        console.log('💰 Total Amount:', paymentAmount);
       }
       
       analytics.initiateBooking(propertyId, roomType, paymentAmount);
 
       // Load Razorpay script
+      console.log('📦 Loading Razorpay script...');
       const { loadRazorpayScript, initializeRazorpay, RAZORPAY_KEY_ID } = await import('@/lib/razorpay');
       
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
+        console.error('❌ Failed to load Razorpay script');
         throw new Error('Failed to load Razorpay. Please try again.');
       }
+      console.log('✅ Razorpay script loaded');
 
       // Create Razorpay order
+      console.log('📝 Creating Razorpay order...');
       const orderResponse = await fetch('/api/razorpay/create-order', {
         method: 'POST',
         headers: {
@@ -113,9 +125,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         }),
       });
 
+      console.log('📡 Order response status:', orderResponse.status);
       const orderData = await orderResponse.json();
+      console.log('📡 Order response data:', orderData);
       
       if (!orderResponse.ok) {
+        console.error('❌ Order creation failed:', orderData);
         // Check if it's a configuration error
         if (orderResponse.status === 503 && orderData.error === 'Payment gateway not configured') {
           throw new Error('Payment gateway is not configured. Please contact the administrator to set up Razorpay credentials.');
@@ -123,7 +138,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         throw new Error(orderData.error || 'Failed to create payment order');
       }
 
-      console.log('Razorpay order created:', orderData.order.id);
+      console.log('✅ Razorpay order created:', orderData.order.id);
+      console.log('🎯 Opening Razorpay payment modal...');
 
       // Initialize Razorpay payment
       await initializeRazorpay({
@@ -144,11 +160,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           color: '#3B82F6',
         },
         handler: async (response: any) => {
-          console.log('Payment successful:', response);
+          console.log('🎉 Payment successful:', response);
+          console.log('📝 Payment ID:', response.razorpay_payment_id);
+          console.log('📝 Order ID:', response.razorpay_order_id);
           
           try {
             // Step 1: Verify payment signature
-            console.log('Verifying payment...');
+            console.log('🔐 Step 1: Verifying payment signature...');
             const verifyResponse = await fetch('/api/razorpay/verify-payment', {
               method: 'POST',
               headers: {
@@ -161,15 +179,28 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               }),
             });
 
+            console.log('📡 Verify response status:', verifyResponse.status);
             const verifyData = await verifyResponse.json();
+            console.log('📡 Verify response data:', verifyData);
 
             if (!verifyData.success) {
+              console.error('❌ Payment verification failed:', verifyData);
               throw new Error('Payment verification failed');
             }
 
-            console.log('Payment verified successfully');
+            console.log('✅ Payment verified successfully');
 
             // Step 2: Create booking with payment details
+            console.log('📦 Step 2: Creating booking...');
+            console.log('📦 Booking data:', {
+              userId: user?.id,
+              propertyId,
+              roomType,
+              moveInDate: formData.moveInDate,
+              duration: formData.duration,
+              paymentType,
+            });
+            
             const bookingResponse = await fetch('/api/bookings', {
               method: 'POST',
               headers: {
@@ -195,43 +226,66 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               }),
             });
 
-            const bookingData = await bookingResponse.json();
-
-            if (!bookingResponse.ok) {
-              throw new Error(bookingData.error || 'Failed to create booking');
+            console.log('📡 Booking response status:', bookingResponse.status);
+            
+            let bookingData;
+            try {
+              bookingData = await bookingResponse.json();
+              console.log('📡 Booking response data:', bookingData);
+            } catch (parseError) {
+              console.error('❌ Failed to parse booking response:', parseError);
+              throw new Error('Server returned invalid response. Please contact support.');
             }
 
-            console.log('Booking created successfully:', bookingData);
+            if (!bookingResponse.ok) {
+              console.error('❌ Booking creation failed:', bookingData);
+              console.error('❌ Status:', bookingResponse.status);
+              console.error('❌ Error:', bookingData.error);
+              console.error('❌ Details:', bookingData.details);
+              throw new Error(bookingData.error || bookingData.details || 'Failed to create booking');
+            }
+
+            console.log('✅ Booking created successfully:', bookingData);
+            console.log('✅ Payment ID:', response.razorpay_payment_id);
+            console.log('✅ Booking ID:', bookingData.booking?.id);
+            
             analytics.completeBooking(propertyId, roomType, paymentAmount, response.razorpay_payment_id);
             analytics.paymentSuccess(paymentAmount, response.razorpay_payment_id);
             setIsSubmitting(false);
             setSubmitSuccess(true);
 
+            console.log('⏱️ Waiting 2 seconds before reload...');
             setTimeout(() => {
               setSubmitSuccess(false);
               setFormData({ moveInDate: '', duration: 6, specialRequests: '' });
               onClose();
+              console.log('🔄 Reloading page to show updated bookings...');
               // Refresh the page to show updated bookings
               window.location.reload();
             }, 2000);
           } catch (bookingError: any) {
-            console.error('Error creating booking after payment:', bookingError);
+            console.error('❌ ERROR in booking creation:', bookingError);
+            console.error('❌ Error message:', bookingError.message);
+            console.error('❌ Error stack:', bookingError.stack);
             setIsSubmitting(false);
             alert(`Payment successful but booking failed: ${bookingError.message}\n\nPlease contact support with payment ID: ${response.razorpay_payment_id}`);
           }
         },
         modal: {
           ondismiss: () => {
-            console.log('Payment cancelled by user');
+            console.log('⚠️ Payment modal dismissed by user');
             analytics.cancelBooking(propertyId, roomType);
             setIsSubmitting(false);
           },
         },
       });
 
+      console.log('✅ Razorpay initialized successfully');
+
     } catch (error: any) {
-      console.error('Error in payment flow:', error);
-      console.error('Error details:', error.message);
+      console.error('❌ ERROR in payment flow:', error);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Error stack:', error.stack);
       analytics.paymentFailed(totalAmount, error.message);
       analytics.error('payment_flow', error.message);
       setIsSubmitting(false);
