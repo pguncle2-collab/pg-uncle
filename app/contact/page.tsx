@@ -140,7 +140,7 @@ export default function ContactPage() {
                 </p>
                 {/* <p className="flex items-start gap-3">
                   <span className="text-xl">📞</span>
-                  <span>+91 98765 43210</span>
+                  <span>+91 9350573166</span>
                 </p> */}
               </div>
             </div>

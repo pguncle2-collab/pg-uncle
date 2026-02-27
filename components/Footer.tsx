@@ -6,6 +6,7 @@ export const Footer: React.FC = () => {
     { title: 'About', href: '/about' },
     { title: 'Services', href: '/services' },
     { title: 'Contact', href: '/contact' },
+    { title: 'Cancellation Policy', href: '/cancellation-policy' },
   ];
 
   const socialLinks = [

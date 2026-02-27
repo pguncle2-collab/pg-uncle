@@ -158,7 +158,7 @@ export default function ProfilePage() {
                       ? 'border-gray-200 focus:border-blue-500'
                       : 'border-gray-100 bg-gray-50 text-gray-600'
                   }`}
-                  placeholder="+91 98765 43210"
+                  placeholder="+91 9350573166"
                 />
               </div>
 

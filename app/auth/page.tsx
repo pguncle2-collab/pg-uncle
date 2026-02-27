@@ -174,7 +174,7 @@ export default function AuthPage() {
                   value={signupData.phone}
                   onChange={(e) => setSignupData({ ...signupData, phone: e.target.value })}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors"
-                  placeholder="+91 98765 43210"
+                  placeholder="+91 9350573166"
                   required
                 />
               </div>

@@ -78,6 +78,21 @@ export interface Booking {
   status: 'pending' | 'confirmed' | 'cancelled';
   paymentId?: string;
   createdAt?: string;
+  paymentType?: 'full' | 'monthly';
+  monthlyRent?: number;
+  depositAmount?: number;
+  paidMonths?: number;
+  nextPaymentDue?: string;
+  monthlyPayments?: MonthlyPayment[];
+}
+
+export interface MonthlyPayment {
+  month: number;
+  amount: number;
+  paymentId?: string;
+  paidAt?: string;
+  status: 'pending' | 'paid';
+  dueDate: string;
 }
 
 // Payment Types

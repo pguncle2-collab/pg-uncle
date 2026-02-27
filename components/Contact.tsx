@@ -62,7 +62,7 @@ export const Contact: React.FC = () => {
 
   const contactInfo = [
     { icon: '📧', label: 'Email', value: 'info@pguncle.com' },
-    // { icon: '📞', label: 'Phone', value: '+91 98765 43210' },
+    // { icon: '📞', label: 'Phone', value: '+91 9350573166' },
     { icon: '📍', label: 'Location', value: 'IT City, Mohali, India' },
   ];
 

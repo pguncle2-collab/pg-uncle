@@ -18,6 +18,10 @@ export async function POST(request: NextRequest) {
       totalAmount,
       specialRequests,
       paymentDetails,
+      paymentType,
+      monthlyRent,
+      depositAmount,
+      paidMonths,
     } = body;
 
     // Validate required fields
@@ -42,6 +46,33 @@ export async function POST(request: NextRequest) {
     const bookingStatus = paymentDetails ? 'confirmed' : 'pending';
     const paymentId = paymentDetails?.razorpay_payment_id || `PAY${Date.now()}`;
     
+    // Calculate next payment due date for monthly payments
+    let nextPaymentDue = null;
+    const monthlyPayments = [];
+    
+    if (paymentType === 'monthly' && paidMonths && duration) {
+      const checkInDate = new Date(moveInDate);
+      // Next payment due is one month after check-in
+      const nextDue = new Date(checkInDate);
+      nextDue.setMonth(nextDue.getMonth() + 1);
+      nextPaymentDue = nextDue.toISOString();
+      
+      // Create monthly payment schedule
+      for (let i = 1; i <= duration; i++) {
+        const dueDate = new Date(checkInDate);
+        dueDate.setMonth(dueDate.getMonth() + i - 1);
+        
+        monthlyPayments.push({
+          month: i,
+          amount: monthlyRent || 0,
+          status: (i <= paidMonths ? 'paid' : 'pending') as 'paid' | 'pending',
+          dueDate: dueDate.toISOString(),
+          paymentId: i === 1 ? paymentId : undefined,
+          paidAt: i === 1 ? new Date().toISOString() : undefined,
+        });
+      }
+    }
+    
     // Create booking
     const booking = await firebaseBookingOperations.create({
       userId,
@@ -53,6 +84,12 @@ export async function POST(request: NextRequest) {
       specialRequests: specialRequests || null,
       status: bookingStatus,
       paymentId,
+      paymentType: paymentType || 'full',
+      monthlyRent: monthlyRent || undefined,
+      depositAmount: depositAmount || undefined,
+      paidMonths: paidMonths || duration,
+      nextPaymentDue: nextPaymentDue || undefined,
+      monthlyPayments: monthlyPayments.length > 0 ? monthlyPayments : undefined,
     });
 
     console.log('Booking created successfully:', booking);

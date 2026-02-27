@@ -18,6 +18,21 @@ interface Booking {
   paymentId: string;
   createdAt: string;
   specialRequests?: string;
+  paymentType?: 'full' | 'monthly';
+  monthlyRent?: number;
+  depositAmount?: number;
+  paidMonths?: number;
+  nextPaymentDue?: string;
+  monthlyPayments?: MonthlyPayment[];
+}
+
+interface MonthlyPayment {
+  month: number;
+  amount: number;
+  paymentId?: string;
+  paidAt?: string;
+  status: 'pending' | 'paid';
+  dueDate: string;
 }
 
 export default function BookingsPage() {
@@ -26,6 +41,7 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [payingMonth, setPayingMonth] = useState<{ bookingId: string; month: number } | null>(null);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -55,6 +71,12 @@ export default function BookingsPage() {
             paymentId: booking.payment_id || 'N/A',
             createdAt: booking.created_at,
             specialRequests: booking.special_requests,
+            paymentType: booking.payment_type || 'full',
+            monthlyRent: booking.monthly_rent,
+            depositAmount: booking.deposit_amount,
+            paidMonths: booking.paid_months || booking.duration,
+            nextPaymentDue: booking.next_payment_due,
+            monthlyPayments: booking.monthly_payments || [],
           }));
           
           setBookings(transformedBookings);
@@ -70,6 +92,249 @@ export default function BookingsPage() {
 
   const handleViewDetails = (booking: Booking) => {
     setSelectedBooking(booking);
+  };
+
+  const handlePayMonth = async (booking: Booking, month: number) => {
+    try {
+      setPayingMonth({ bookingId: booking.id, month });
+      
+      const monthlyPayment = booking.monthlyPayments?.find(p => p.month === month);
+      if (!monthlyPayment || !booking.monthlyRent) {
+        throw new Error('Payment information not found');
+      }
+
+      // Load Razorpay
+      const { loadRazorpayScript, initializeRazorpay, RAZORPAY_KEY_ID } = await import('@/lib/razorpay');
+      
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        throw new Error('Failed to load payment gateway');
+      }
+
+      // Create order
+      const orderResponse = await fetch('/api/razorpay/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: booking.monthlyRent,
+          currency: 'INR',
+          receipt: `month_${booking.id}_${month}`,
+          notes: {
+            bookingId: booking.id,
+            month: month.toString(),
+            type: 'monthly_rent',
+          },
+        }),
+      });
+
+      const orderData = await orderResponse.json();
+      if (!orderResponse.ok) {
+        throw new Error(orderData.error || 'Failed to create payment order');
+      }
+
+      // Initialize payment
+      await initializeRazorpay({
+        key: RAZORPAY_KEY_ID,
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: 'PGUNCLE',
+        description: `Month ${month} Rent - ${booking.propertyName}`,
+        order_id: orderData.order.id,
+        prefill: {
+          name: user?.fullName || 'User',
+          email: user?.email || '',
+          contact: user?.phone || '',
+        },
+        theme: { color: '#3B82F6' },
+        handler: async (response: any) => {
+          try {
+            // Verify payment
+            const verifyResponse = await fetch('/api/razorpay/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await verifyResponse.json();
+            if (!verifyData.success) {
+              throw new Error('Payment verification failed');
+            }
+
+            // Record payment
+            const paymentResponse = await fetch('/api/bookings/pay-month', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                bookingId: booking.id,
+                month,
+                paymentDetails: {
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                },
+              }),
+            });
+
+            if (!paymentResponse.ok) {
+              throw new Error('Failed to record payment');
+            }
+
+            alert('Payment successful! Your booking has been updated.');
+            window.location.reload();
+          } catch (error: any) {
+            console.error('Error processing payment:', error);
+            alert(`Payment successful but failed to update booking: ${error.message}\n\nPlease contact support with payment ID: ${response.razorpay_payment_id}`);
+          } finally {
+            setPayingMonth(null);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setPayingMonth(null);
+          },
+        },
+      });
+    } catch (error: any) {
+      console.error('Error initiating payment:', error);
+      alert(`Failed to initiate payment: ${error.message}`);
+      setPayingMonth(null);
+    }
+  };
+
+  const handlePayCompleteRent = async (booking: Booking) => {
+    try {
+      setPayingMonth({ bookingId: booking.id, month: -1 }); // -1 indicates complete payment
+      
+      if (!booking.monthlyRent || !booking.paidMonths) {
+        throw new Error('Payment information not found');
+      }
+
+      // Calculate remaining amount
+      const remainingMonths = booking.duration - booking.paidMonths;
+      const remainingAmount = booking.monthlyRent * remainingMonths;
+
+      if (remainingMonths <= 0) {
+        alert('All months have been paid!');
+        setPayingMonth(null);
+        return;
+      }
+
+      // Confirm with user
+      const confirmed = window.confirm(
+        `Pay complete remaining rent?\n\n` +
+        `Remaining Months: ${remainingMonths}\n` +
+        `Amount: ₹${remainingAmount.toLocaleString()}\n\n` +
+        `This will pay for all remaining months at once.`
+      );
+
+      if (!confirmed) {
+        setPayingMonth(null);
+        return;
+      }
+
+      // Load Razorpay
+      const { loadRazorpayScript, initializeRazorpay, RAZORPAY_KEY_ID } = await import('@/lib/razorpay');
+      
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        throw new Error('Failed to load payment gateway');
+      }
+
+      // Create order
+      const orderResponse = await fetch('/api/razorpay/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: remainingAmount,
+          currency: 'INR',
+          receipt: `complete_${booking.id}_${Date.now()}`,
+          notes: {
+            bookingId: booking.id,
+            type: 'complete_rent',
+            remainingMonths: remainingMonths.toString(),
+          },
+        }),
+      });
+
+      const orderData = await orderResponse.json();
+      if (!orderResponse.ok) {
+        throw new Error(orderData.error || 'Failed to create payment order');
+      }
+
+      // Initialize payment
+      await initializeRazorpay({
+        key: RAZORPAY_KEY_ID,
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: 'PGUNCLE',
+        description: `Complete Rent Payment (${remainingMonths} months) - ${booking.propertyName}`,
+        order_id: orderData.order.id,
+        prefill: {
+          name: user?.fullName || 'User',
+          email: user?.email || '',
+          contact: user?.phone || '',
+        },
+        theme: { color: '#3B82F6' },
+        handler: async (response: any) => {
+          try {
+            // Verify payment
+            const verifyResponse = await fetch('/api/razorpay/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await verifyResponse.json();
+            if (!verifyData.success) {
+              throw new Error('Payment verification failed');
+            }
+
+            // Record complete payment
+            const paymentResponse = await fetch('/api/bookings/pay-complete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                bookingId: booking.id,
+                paymentDetails: {
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                },
+              }),
+            });
+
+            if (!paymentResponse.ok) {
+              throw new Error('Failed to record payment');
+            }
+
+            alert('Payment successful! All remaining months have been paid.');
+            window.location.reload();
+          } catch (error: any) {
+            console.error('Error processing payment:', error);
+            alert(`Payment successful but failed to update booking: ${error.message}\n\nPlease contact support with payment ID: ${response.razorpay_payment_id}`);
+          } finally {
+            setPayingMonth(null);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setPayingMonth(null);
+          },
+        },
+      });
+    } catch (error: any) {
+      console.error('Error initiating complete payment:', error);
+      alert(`Failed to initiate payment: ${error.message}`);
+      setPayingMonth(null);
+    }
   };
 
   const handleDownloadReceipt = (booking: Booking) => {
@@ -208,6 +473,14 @@ export default function BookingsPage() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">My Bookings</h1>
               <p className="text-gray-600">View and manage your property bookings</p>
+              <p className="text-sm text-gray-500 mt-2">
+                Need to cancel? <Link 
+                  href="/cancellation-policy"
+                  className="text-blue-600 hover:text-blue-700 underline font-medium"
+                >
+                  View Cancellation Policy
+                </Link>
+              </p>
             </div>
             <Link
               href="/"
@@ -301,6 +574,98 @@ export default function BookingsPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Monthly Payment Info */}
+                {booking.paymentType === 'monthly' && booking.monthlyPayments && booking.monthlyPayments.length > 0 && (
+                  <div className="mb-4 p-4 bg-purple-50 rounded-xl border border-purple-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-semibold text-gray-900">Monthly Payment Plan</h4>
+                      <span className="text-sm text-purple-600 font-medium">
+                        {booking.paidMonths} of {booking.duration} months paid
+                      </span>
+                    </div>
+                    
+                    {/* Next Payment Due */}
+                    {booking.nextPaymentDue && (
+                      <div className="mb-3 p-3 bg-white rounded-lg border border-purple-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <p className="text-sm text-gray-600">Next Payment Due</p>
+                            <p className="font-semibold text-gray-900">
+                              {new Date(booking.nextPaymentDue).toLocaleDateString('en-IN', { 
+                                day: 'numeric', 
+                                month: 'long', 
+                                year: 'numeric' 
+                              })}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const nextPending = booking.monthlyPayments?.find(p => p.status === 'pending');
+                              if (nextPending) handlePayMonth(booking, nextPending.month);
+                            }}
+                            disabled={payingMonth?.bookingId === booking.id}
+                            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+                          >
+                            {payingMonth?.bookingId === booking.id && payingMonth?.month !== -1 ? 'Processing...' : `Pay ₹${booking.monthlyRent?.toLocaleString()}`}
+                          </button>
+                        </div>
+                        
+                        {/* Pay Complete Rent Option */}
+                        {booking.paidMonths && booking.paidMonths < booking.duration && (
+                          <div className="pt-3 border-t border-purple-200">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-gray-600">Pay All Remaining Months</p>
+                                <p className="text-xs text-gray-500">
+                                  {booking.duration - booking.paidMonths} months × ₹{booking.monthlyRent?.toLocaleString()} = ₹{((booking.duration - booking.paidMonths) * (booking.monthlyRent || 0)).toLocaleString()}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => handlePayCompleteRent(booking)}
+                                disabled={payingMonth?.bookingId === booking.id}
+                                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg font-medium hover:from-blue-600 hover:to-cyan-600 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+                              >
+                                {payingMonth?.bookingId === booking.id && payingMonth?.month === -1 ? 'Processing...' : 'Pay Complete'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Payment Schedule */}
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-600 font-medium mb-2">Payment Schedule:</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                        {booking.monthlyPayments.map((payment) => (
+                          <div
+                            key={payment.month}
+                            className={`p-2 rounded-lg text-center text-xs ${
+                              payment.status === 'paid'
+                                ? 'bg-green-100 text-green-700 border border-green-300'
+                                : 'bg-gray-100 text-gray-600 border border-gray-300'
+                            }`}
+                          >
+                            <div className="font-semibold">Month {payment.month}</div>
+                            <div className="text-xs mt-1">
+                              {payment.status === 'paid' ? (
+                                <span className="flex items-center justify-center gap-1">
+                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                  Paid
+                                </span>
+                              ) : (
+                                'Pending'
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                   <div className="text-sm text-gray-600">
@@ -416,6 +781,38 @@ export default function BookingsPage() {
               <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-3">Payment Details</h3>
                 <div className="space-y-3">
+                  {selectedBooking.paymentType === 'monthly' && (
+                    <>
+                      <div className="flex justify-between py-2 border-b border-gray-200">
+                        <span className="text-gray-600">Payment Type</span>
+                        <span className="font-semibold text-purple-600">Monthly Installments</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b border-gray-200">
+                        <span className="text-gray-600">Monthly Rent</span>
+                        <span className="font-semibold text-gray-900">₹{selectedBooking.monthlyRent?.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b border-gray-200">
+                        <span className="text-gray-600">Months Paid</span>
+                        <span className="font-semibold text-gray-900">{selectedBooking.paidMonths} of {selectedBooking.duration}</span>
+                      </div>
+                      {selectedBooking.nextPaymentDue && (
+                        <div className="flex justify-between py-2 border-b border-gray-200">
+                          <span className="text-gray-600">Next Payment Due</span>
+                          <span className="font-semibold text-gray-900">
+                            {new Date(selectedBooking.nextPaymentDue).toLocaleDateString('en-IN', { 
+                              day: 'numeric', 
+                              month: 'long', 
+                              year: 'numeric' 
+                            })}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between py-2 border-b border-gray-200">
+                        <span className="text-gray-600">Security Deposit</span>
+                        <span className="font-semibold text-gray-900">₹{selectedBooking.depositAmount?.toLocaleString()}</span>
+                      </div>
+                    </>
+                  )}
                   <div className="flex justify-between py-2 border-b border-gray-200">
                     <span className="text-gray-600">Payment ID</span>
                     <span className="font-mono text-sm text-gray-900">{selectedBooking.paymentId}</span>
