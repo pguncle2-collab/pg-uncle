@@ -616,7 +616,7 @@ export default function BookingsPage() {
                         </div>
                         
                         {/* Pay Complete Rent Option */}
-                        {booking.paidMonths && booking.paidMonths < booking.duration && (
+                        {/* {booking.paidMonths && booking.paidMonths < booking.duration && (
                           <div className="pt-3 border-t border-purple-200">
                             <div className="flex items-center justify-between">
                               <div>
@@ -634,7 +634,7 @@ export default function BookingsPage() {
                               </button>
                             </div>
                           </div>
-                        )}
+                        )} */}
                       </div>
                     )}
                     
