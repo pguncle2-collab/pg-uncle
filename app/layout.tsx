@@ -39,6 +39,9 @@ export const metadata: Metadata = {
   },
   // Icons are automatically handled by app/icon.png and app/apple-icon.png
   metadataBase: new URL('https://www.pguncle.com'),
+alternates: {
+    canonical: 'https://www.pguncle.com',
+  },
 }
 
 export default function RootLayout({
@@ -69,6 +72,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Favicon links for better crawler support */}
+        <link rel="icon" type="image/png" sizes="32x32" href="/icon.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/icon.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        
         {/* Preconnect to external domains for faster loading */}
         <link rel="preconnect" href="https://firebasestorage.googleapis.com" />
         <link rel="preconnect" href="https://images.unsplash.com" />
