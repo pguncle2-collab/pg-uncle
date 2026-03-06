@@ -34,8 +34,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [reserveNow, setReserveNow] = useState(false);
   const [payMonthly, setPayMonthly] = useState(false);
 
-  // Token amount for reservation (e.g., ₹2000)
-  const TOKEN_AMOUNT = 2000;
+  // Token amount for reservation (e.g., ₹5000)
+  const TOKEN_AMOUNT = 5000;
 
   // Track modal open
   useEffect(() => {
