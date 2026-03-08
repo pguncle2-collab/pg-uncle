@@ -306,9 +306,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     if (formData.duration >= 12) {
       return { amount: 0, freeMonths: 1, label: '1 Month Free' };
     } else if (formData.duration >= 6) {
-      return { amount: 3000, freeMonths: 0, label: '₹3,000 Off' };
+      return { amount: 3499, freeMonths: 0, label: '₹3,499 Off' };
     } else if (formData.duration >= 3) {
-      return { amount: 1000, freeMonths: 0, label: '₹1,000 Off' };
+      return { amount: 1499, freeMonths: 0, label: '₹1,499 Off' };
     }
     return { amount: 0, freeMonths: 0, label: null };
   };
