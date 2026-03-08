@@ -98,7 +98,7 @@ export const DiscountPopup: React.FC = () => {
                     <div className="text-lg md:text-xl lg:text-2xl font-bold text-blue-600 mb-0.5 md:mb-1">3 Months</div>
                     <div className="text-xs text-gray-600 mb-1.5 md:mb-2">Short Stays</div>
                     <div className="py-1.5 md:py-2 px-2 md:px-3 bg-blue-500 text-white rounded-lg font-bold text-sm md:text-base lg:text-lg shadow-md">
-                      ₹1,000 OFF
+                      ₹1,499 OFF
                     </div>
                   </div>
                 </div>
@@ -114,7 +114,7 @@ export const DiscountPopup: React.FC = () => {
                     <div className="text-lg md:text-xl lg:text-2xl font-bold text-green-600 mb-0.5 md:mb-1">6 Months</div>
                     <div className="text-xs text-gray-600 mb-1.5 md:mb-2">Best Value</div>
                     <div className="py-1.5 md:py-2 px-2 md:px-3 bg-green-500 text-white rounded-lg font-bold text-sm md:text-base lg:text-lg shadow-md">
-                      ₹3,000 OFF
+                      ₹3,499 OFF
                     </div>
                   </div>
                 </div>
