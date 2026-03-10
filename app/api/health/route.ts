@@ -1,16 +1,14 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, limit, query } from 'firebase/firestore';
+import { supabasePropertyOperations } from '@/lib/supabaseOperations';
 
 export async function GET() {
   try {
-    // Test Firebase connection
-    const testQuery = query(collection(db, 'properties'), limit(1));
-    await getDocs(testQuery);
+    // Test supabase connection
+    await supabasePropertyOperations.getAll();
     
     return NextResponse.json({
       status: 'ok',
-      database: 'firebase',
+      database: 'supabase',
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
@@ -18,7 +16,7 @@ export async function GET() {
     return NextResponse.json(
       {
         status: 'error',
-        database: 'firebase',
+        database: 'supabase',
         error: error.message,
         timestamp: new Date().toISOString(),
       },

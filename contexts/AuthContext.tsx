@@ -1,18 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { 
-  User as FirebaseUser,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-  sendPasswordResetEmail
-} from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { firebaseUserOperations } from '@/lib/firebaseOperations';
+import { createClient } from '@/lib/supabase-client';
 
 interface User {
   id: string;
@@ -37,47 +26,80 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        // Get user data from Firestore
-        const userData = await firebaseUserOperations.getByEmail(firebaseUser.email!);
-        
-        if (userData) {
-          setUser({
-            id: userData.id,
-            email: userData.email,
-            fullName: userData.fullName,
-            phone: userData.phone,
-          });
-        } else {
-          // Create user in Firestore if doesn't exist
-          const newUser = await firebaseUserOperations.create({
-            email: firebaseUser.email!,
-            fullName: firebaseUser.displayName || '',
-            phone: firebaseUser.phoneNumber || '',
-            role: 'user',
-          });
-          setUser({
-            id: newUser.id,
-            email: newUser.email,
-            fullName: newUser.fullName,
-            phone: newUser.phone,
-          });
-        }
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await handleUserAuth(session.user);
       } else {
         setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    };
 
-    return () => unsubscribe();
+    fetchSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          await handleUserAuth(session.user);
+        } else {
+          setUser(null);
+          setLoading(false);
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
+
+  const handleUserAuth = async (supabaseUser: any) => {
+    try {
+      // Try to get user data from Postgres
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
+      
+      if (userData) {
+        setUser({
+          id: userData.id,
+          email: userData.email,
+          fullName: userData.full_name,
+          phone: userData.phone,
+        });
+      } else {
+        // Fallback to auth user data if DB record isn't available yet
+        setUser({
+          id: supabaseUser.id,
+          email: supabaseUser.email,
+          fullName: supabaseUser.user_metadata?.full_name || '',
+          phone: supabaseUser.phone || '',
+        });
+      }
+    } catch (e) {
+      console.error('Error fetching user data', e);
+      // Fallback
+      setUser({
+        id: supabaseUser.id,
+        email: supabaseUser.email,
+        fullName: supabaseUser.user_metadata?.full_name || '',
+        phone: supabaseUser.phone || '',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
     } catch (error: any) {
       console.error('Sign in error:', error);
       throw new Error(error.message || 'Failed to sign in');
@@ -86,15 +108,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Create user in Firestore
-      await firebaseUserOperations.create({
-        email,
-        fullName,
-        phone: phone || '',
-        role: 'user',
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          }
+        }
       });
+      if (error) throw error;
+      
+      // We manually create in our user table too (though there's a trigger)
+      // Actually we'll let handleUserAuth or the trigger do it
     } catch (error: any) {
       console.error('Sign up error:', error);
       throw new Error(error.message || 'Failed to sign up');
@@ -103,8 +129,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+      if (error) throw error;
     } catch (error: any) {
       console.error('Google sign in error:', error);
       throw new Error(error.message || 'Failed to sign in with Google');
@@ -113,7 +139,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      await firebaseSignOut(auth);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       setUser(null);
     } catch (error: any) {
       console.error('Sign out error:', error);
@@ -123,7 +150,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const resetPassword = async (email: string) => {
     try {
-      await sendPasswordResetEmail(auth, email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) throw error;
     } catch (error: any) {
       console.error('Password reset error:', error);
       throw new Error(error.message || 'Failed to send password reset email');

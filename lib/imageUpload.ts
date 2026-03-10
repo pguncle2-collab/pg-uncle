@@ -1,9 +1,7 @@
-// Firebase Storage image upload utilities
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { storage } from './firebase';
+import { createClient } from './supabase-client';
 
 /**
- * Upload a single image to Firebase Storage
+ * Upload a single image to Supabase Storage
  */
 export async function uploadImage(
   file: File,
@@ -17,17 +15,24 @@ export async function uploadImage(
     const filename = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
     const storagePath = `${folder}/${filename}`;
     
-    // Create storage reference
-    const storageRef = ref(storage, storagePath);
-    
+    const supabase = createClient();
+
     // Upload file
-    await uploadBytes(storageRef, file);
+    const { data, error } = await supabase.storage
+      .from('properties') // Assume bucket name is 'properties'
+      .upload(storagePath, file, { upsert: false });
+      
+    if (error) {
+      throw error;
+    }
     
     // Get download URL
-    const downloadURL = await getDownloadURL(storageRef);
+    const { data: { publicUrl } } = supabase.storage
+      .from('properties')
+      .getPublicUrl(storagePath);
     
-    console.log(`✅ Image uploaded successfully: ${downloadURL}`);
-    return downloadURL;
+    console.log(`✅ Image uploaded successfully: ${publicUrl}`);
+    return publicUrl;
   } catch (error) {
     console.error('Error uploading image:', error);
     // Return placeholder on error
@@ -36,7 +41,7 @@ export async function uploadImage(
 }
 
 /**
- * Upload multiple images to Firebase Storage
+ * Upload multiple images to Supabase Storage
  */
 export async function uploadMultipleImages(
   files: File[],
@@ -59,30 +64,35 @@ export async function uploadMultipleImages(
 }
 
 /**
- * Delete an image from Firebase Storage
+ * Delete an image from Supabase Storage
  */
 export async function deleteImage(imageUrl: string): Promise<void> {
   try {
-    // Only delete if it's a Firebase Storage URL
-    if (!imageUrl.includes('firebasestorage.googleapis.com')) {
-      console.log('Not a Firebase Storage URL, skipping deletion');
+    // Only delete if it's a Supabase Storage URL
+    if (!imageUrl.includes('supabase.co/storage')) {
+      console.log('Not a Supabase Storage URL, skipping deletion');
       return;
     }
     
     // Extract path from URL
     const url = new URL(imageUrl);
-    const pathMatch = url.pathname.match(/\/o\/(.+)\?/);
+    // Format: /storage/v1/object/public/bucketName/path/to/file
+    const parts = url.pathname.split('/');
+    const publicIndex = parts.indexOf('public');
     
-    if (!pathMatch) {
+    if (publicIndex === -1 || parts.length <= publicIndex + 2) {
       console.warn('Could not extract path from URL');
       return;
     }
     
-    const path = decodeURIComponent(pathMatch[1]);
-    const storageRef = ref(storage, path);
+    // parts[publicIndex + 1] is bucketName
+    const storagePath = parts.slice(publicIndex + 2).join('/');
     
-    await deleteObject(storageRef);
-    console.log(`✅ Image deleted: ${path}`);
+    const supabase = createClient();
+    const { error } = await supabase.storage.from('properties').remove([storagePath]);
+    if (error) throw error;
+    
+    console.log(`✅ Image deleted: ${storagePath}`);
   } catch (error) {
     console.error('Error deleting image:', error);
     // Don't throw - deletion failure shouldn't break the app
@@ -90,7 +100,7 @@ export async function deleteImage(imageUrl: string): Promise<void> {
 }
 
 /**
- * Delete multiple images from Firebase Storage
+ * Delete multiple images from Supabase Storage
  */
 export async function deleteMultipleImages(imageUrls: string[]): Promise<void> {
   try {

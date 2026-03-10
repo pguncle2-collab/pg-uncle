@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { firebaseBookingOperations, firebaseUserOperations, firebasePropertyOperations } from '@/lib/firebaseOperations';
+import { supabaseBookingOperations, supabaseUserOperations, supabasePropertyOperations } from '@/lib/supabaseOperations';
 import nodemailer from 'nodemailer';
 
 export const dynamic = 'force-dynamic';
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('✅ All required fields present');
-    console.log('🔥 Creating booking in Firebase...');
+    console.log('🔥 Creating booking in supabase...');
     
     // Determine booking status based on payment
     const bookingStatus = paymentDetails ? 'confirmed' : 'pending';
@@ -128,16 +128,16 @@ export async function POST(request: NextRequest) {
     }
     
     // Create booking
-    const booking = await firebaseBookingOperations.create(bookingData);
+    const booking = await supabaseBookingOperations.create(bookingData);
 
-    console.log('✅ Booking created successfully in Firebase');
+    console.log('✅ Booking created successfully in supabase');
     console.log('📋 Booking ID:', booking.id);
     console.log('📋 Payment ID:', paymentId);
     console.log('📋 Status:', bookingStatus);
 
     // Get user and property details for email
-    const user = await firebaseUserOperations.getById(userId);
-    const property = await firebasePropertyOperations.getById(propertyId);
+    const user = await supabaseUserOperations.getById(userId);
+    const property = await supabasePropertyOperations.getById(propertyId);
 
     console.log('📧 Preparing to send confirmation email...');
     console.log('User email:', user?.email);
@@ -240,12 +240,12 @@ export async function POST(request: NextRequest) {
     console.error('❌ Error code:', error.code);
     console.error('❌ Error stack:', error.stack);
     
-    // Check for specific Firebase errors
+    // Check for specific supabase errors
     if (error.code === 'permission-denied') {
       return NextResponse.json(
         { 
           error: 'Permission denied',
-          details: 'Firebase security rules are blocking this operation. Please check Firestore rules.',
+          details: 'supabase security rules are blocking this operation. Please check Firestore rules.',
           message: error.message
         },
         { status: 403 }
@@ -255,8 +255,8 @@ export async function POST(request: NextRequest) {
     if (error.code === 'unavailable') {
       return NextResponse.json(
         { 
-          error: 'Firebase unavailable',
-          details: 'Cannot connect to Firebase. Please check your internet connection and Firebase configuration.',
+          error: 'supabase unavailable',
+          details: 'Cannot connect to supabase. Please check your internet connection and supabase configuration.',
           message: error.message
         },
         { status: 503 }

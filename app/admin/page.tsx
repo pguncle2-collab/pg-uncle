@@ -4,8 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PropertyForm } from '@/components/PropertyForm';
 import { useProperties } from '@/hooks/useProperties';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { createClient } from '@/lib/supabase-client';
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -15,7 +14,7 @@ export default function AdminDashboard() {
     }
     return false;
   });
-  const [firebaseUser, setFirebaseUser] = useState<any>(null);
+  const [supabaseUser, setsupabaseUser] = useState<any>(null);
   const [password, setPassword] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -30,14 +29,19 @@ export default function AdminDashboard() {
   // Local error state for admin-specific errors
   const [adminError, setAdminError] = useState<string | null>(null);
 
-  // Monitor Firebase auth state
+  // Monitor Supabase auth state
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log('🔥 Firebase auth state changed:', user ? `Logged in as ${user.email}` : 'Not logged in');
-      setFirebaseUser(user);
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setsupabaseUser(session?.user || null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('supabase auth state changed:', session?.user ? `Logged in as ${session.user.email}` : 'Not logged in');
+      setsupabaseUser(session?.user || null);
     });
     
-    return () => unsubscribe();
+    return () => subscription.unsubscribe();
   }, []);
 
   // Fetch properties when authenticated
@@ -56,16 +60,17 @@ export default function AdminDashboard() {
       setIsAuthenticated(true);
       sessionStorage.setItem('adminAuth', 'true');
       
-      // Try to authenticate with Firebase in the background (optional)
+      // Try to authenticate with Supabase in the background (optional)
       try {
         const adminEmail = 'admin@pguncle.com';
-        console.log('🔐 Attempting Firebase authentication...');
-        await signInWithEmailAndPassword(auth, adminEmail, password);
-        console.log('✅ Firebase authentication successful!');
-      } catch (firebaseError: any) {
-        // Firebase auth failed, but local auth succeeded, so continue
-        console.warn('⚠️ Firebase auth failed (this is okay):', firebaseError.message);
-        console.log('💡 You can still use the admin panel. Firebase auth is optional.');
+        console.log('🔐 Attempting Supabase authentication...');
+        const supabase = createClient();
+        await supabase.auth.signInWithPassword({ email: adminEmail, password });
+        console.log('✅ Supabase authentication successful!');
+      } catch (authError: any) {
+        // Supabase auth failed, but local auth succeeded, so continue
+        console.warn('⚠️ Supabase auth failed (this is okay):', authError.message);
+        console.log('💡 You can still use the admin panel. Supabase auth is optional.');
       }
     } else {
       alert('Invalid password');
@@ -74,8 +79,9 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
-      console.log('✅ Signed out from Firebase');
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      console.log('✅ Signed out from Supabase');
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -265,22 +271,22 @@ export default function AdminDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              {firebaseUser && (
+              {supabaseUser && (
                 <div className="px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-center gap-2">
                     <span className="text-green-600 text-sm">🔥</span>
                     <span className="text-xs text-green-700 font-medium">
-                      Firebase: {firebaseUser.email}
+                      Supabase: {supabaseUser.email}
                     </span>
                   </div>
                 </div>
               )}
-              {!firebaseUser && isAuthenticated && (
+              {!supabaseUser && isAuthenticated && (
                 <div className="px-3 py-1.5 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <div className="flex items-center gap-2">
                     <span className="text-yellow-600 text-sm">⚠️</span>
                     <span className="text-xs text-yellow-700 font-medium">
-                      Not authenticated with Firebase
+                      Not authenticated with Supabase
                     </span>
                   </div>
                 </div>

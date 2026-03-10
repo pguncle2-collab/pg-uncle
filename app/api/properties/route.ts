@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { firebasePropertyOperations } from '@/lib/firebaseOperations';
+import { supabasePropertyOperations } from '@/lib/supabaseOperations';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const properties = await firebasePropertyOperations.getAll();
+    const properties = await supabasePropertyOperations.getAll();
     return NextResponse.json(properties);
   } catch (error: any) {
     console.error('Error fetching properties:', error);
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     console.log('📝 Creating property with data:', JSON.stringify(body, null, 2));
     
-    const property = await firebasePropertyOperations.create(body);
+    const property = await supabasePropertyOperations.create(body);
     console.log('✅ Property created successfully:', property.id);
     
     return NextResponse.json(property, { status: 201 });

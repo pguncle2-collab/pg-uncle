@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { firebasePropertyOperations } from '@/lib/firebaseOperations';
+import { supabasePropertyOperations } from '@/lib/supabaseOperations';
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const property = await firebasePropertyOperations.getById(params.id);
+    const property = await supabasePropertyOperations.getById(params.id);
 
     if (!property) {
       return NextResponse.json(
@@ -31,7 +31,7 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json();
-    const updated = await firebasePropertyOperations.update(params.id, body);
+    const updated = await supabasePropertyOperations.update(params.id, body);
     return NextResponse.json(updated);
   } catch (error: any) {
     console.error('Error updating property:', error);
@@ -47,7 +47,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await firebasePropertyOperations.delete(params.id);
+    await supabasePropertyOperations.delete(params.id);
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Error deleting property:', error);

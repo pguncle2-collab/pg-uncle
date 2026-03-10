@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { firebaseUserOperations } from '@/lib/firebaseOperations';
+import { supabaseUserOperations } from '@/lib/supabaseOperations';
 
 export async function PATCH(request: Request) {
   try {
@@ -13,7 +13,7 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const updated = await firebaseUserOperations.update(userId, updates);
+    const updated = await supabaseUserOperations.update(userId, updates);
     return NextResponse.json(updated);
   } catch (error: any) {
     console.error('Error updating user:', error);

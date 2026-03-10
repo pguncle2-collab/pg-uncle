@@ -14,6 +14,9 @@ export const metadata: Metadata = {
   authors: [{ name: 'PGUNCLE' }],
   creator: 'PGUNCLE',
   publisher: 'PGUNCLE',
+  verification: {
+    google: 'your-google-verification-code', // Add your Google Search Console verification code
+  },
   openGraph: {
     type: 'website',
     locale: 'en_IN',
@@ -39,7 +42,7 @@ export const metadata: Metadata = {
   },
   // Icons are automatically handled by app/icon.png and app/apple-icon.png
   metadataBase: new URL('https://www.pguncle.com'),
-alternates: {
+  alternates: {
     canonical: 'https://www.pguncle.com',
   },
 }
@@ -79,9 +82,9 @@ export default function RootLayout({
         <link rel="shortcut icon" href="/favicon.ico" />
         
         {/* Preconnect to external domains for faster loading */}
-        <link rel="preconnect" href="https://firebasestorage.googleapis.com" />
+        <link rel="preconnect" href="https://supabasestorage.googleapis.com" />
         <link rel="preconnect" href="https://images.unsplash.com" />
-        <link rel="dns-prefetch" href="https://firebasestorage.googleapis.com" />
+        <link rel="dns-prefetch" href="https://supabasestorage.googleapis.com" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
         
         <script

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { firebaseBookingOperations, firebasePropertyOperations } from '@/lib/firebaseOperations';
+import { supabaseBookingOperations, supabasePropertyOperations } from '@/lib/supabaseOperations';
 
 export async function GET(
   request: Request,
@@ -8,14 +8,14 @@ export async function GET(
   try {
     console.log('📥 Fetching bookings for user:', params.userId);
     
-    const bookings = await firebaseBookingOperations.getByUserId(params.userId);
+    const bookings = await supabaseBookingOperations.getByUserId(params.userId);
     console.log('✅ Fetched bookings:', bookings.length);
 
     // Fetch property details for each booking
     const bookingsWithProperties = await Promise.all(
       bookings.map(async (booking) => {
         try {
-          const property = await firebasePropertyOperations.getById(booking.propertyId);
+          const property = await supabasePropertyOperations.getById(booking.propertyId);
           return {
             ...booking,
             property: property ? {

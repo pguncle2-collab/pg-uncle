@@ -41,9 +41,9 @@ export default function PropertyDetailPage() {
       return `${url}${separator}${sizeParams[size]}`;
     }
     
-    // For Firebase Storage URLs, add size parameters if possible
-    if (url.includes('firebasestorage.googleapis.com')) {
-      // Firebase Storage doesn't support URL parameters for resizing
+    // For supabase Storage URLs, add size parameters if possible
+    if (url.includes('supabasestorage.googleapis.com')) {
+      // supabase Storage doesn't support URL parameters for resizing
       // But we can still optimize by using webp format if available
       return url;
     }
