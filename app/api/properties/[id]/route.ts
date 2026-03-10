@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabasePropertyOperations } from '@/lib/supabaseOperations';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }

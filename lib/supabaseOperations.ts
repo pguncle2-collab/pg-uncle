@@ -2,9 +2,9 @@ import { createClient } from '@supabase/supabase-js';
 import type { Property, User, Booking, Payment } from '@/types';
 
 // Admin client to bypass RLS for server-side operations, similar to how supabase was acting with open rules
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+const getSupabaseAdmin = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 );
 
 // Helper to handle casing formats between camelCase (app) and snake_case (db)
@@ -85,20 +85,20 @@ const mapPaymentFields = (data: any): Payment => ({
 
 export const supabasePropertyOperations = {
   async getAll(): Promise<Property[]> {
-    const { data, error } = await supabaseAdmin.from('properties').select('*');
+    const { data, error } = await getSupabaseAdmin().from('properties').select('*');
     if (error) throw error;
     return (data || []).map(mapPropertyFields);
   },
 
   async getById(id: string): Promise<Property | null> {
-    const { data, error } = await supabaseAdmin.from('properties').select('*').eq('id', id).single();
+    const { data, error } = await getSupabaseAdmin().from('properties').select('*').eq('id', id).single();
     if (error && error.code !== 'PGRST116') throw error; // PGRST116 is no rows
     if (!data) return null;
     return mapPropertyFields(data);
   },
 
   async getByCity(city: string): Promise<Property[]> {
-    const { data, error } = await supabaseAdmin.from('properties').select('*').eq('city', city);
+    const { data, error } = await getSupabaseAdmin().from('properties').select('*').eq('city', city);
     if (error) throw error;
     return (data || []).map(mapPropertyFields);
   },
@@ -125,7 +125,7 @@ export const supabasePropertyOperations = {
       room_types: propertyData.roomTypes,
       is_active: propertyData.isActive !== false,
     };
-    const { data, error } = await supabaseAdmin.from('properties').insert(dbData).select().single();
+    const { data, error } = await getSupabaseAdmin().from('properties').insert(dbData).select().single();
     if (error) throw error;
     return mapPropertyFields(data);
   },
@@ -153,13 +153,13 @@ export const supabasePropertyOperations = {
     if (updates.isActive !== undefined) dbData.is_active = updates.isActive;
     dbData.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabaseAdmin.from('properties').update(dbData).eq('id', id).select().single();
+    const { data, error } = await getSupabaseAdmin().from('properties').update(dbData).eq('id', id).select().single();
     if (error) throw error;
     return mapPropertyFields(data);
   },
 
   async delete(id: string): Promise<void> {
-    const { error } = await supabaseAdmin.from('properties').delete().eq('id', id);
+    const { error } = await getSupabaseAdmin().from('properties').delete().eq('id', id);
     if (error) throw error;
   },
 
@@ -174,20 +174,20 @@ export const supabasePropertyOperations = {
 
 export const supabaseUserOperations = {
   async getAll(): Promise<User[]> {
-    const { data, error } = await supabaseAdmin.from('users').select('*');
+    const { data, error } = await getSupabaseAdmin().from('users').select('*');
     if (error) throw error;
     return (data || []).map(mapUserFields);
   },
 
   async getByEmail(email: string): Promise<User | null> {
-    const { data, error } = await supabaseAdmin.from('users').select('*').eq('email', email).limit(1);
+    const { data, error } = await getSupabaseAdmin().from('users').select('*').eq('email', email).limit(1);
     if (error) throw error;
     if (!data || data.length === 0) return null;
     return mapUserFields(data[0]);
   },
 
   async getById(id: string): Promise<User | null> {
-    const { data, error } = await supabaseAdmin.from('users').select('*').eq('id', id).single();
+    const { data, error } = await getSupabaseAdmin().from('users').select('*').eq('id', id).single();
     if (error && error.code !== 'PGRST116') throw error;
     if (!data) return null;
     return mapUserFields(data);
@@ -201,7 +201,7 @@ export const supabaseUserOperations = {
       role: userData.role || 'user',
       image: userData.image,
     };
-    const { data, error } = await supabaseAdmin.from('users').insert(dbData).select().single();
+    const { data, error } = await getSupabaseAdmin().from('users').insert(dbData).select().single();
     if (error) throw error;
     return mapUserFields(data);
   },
@@ -216,7 +216,7 @@ export const supabaseUserOperations = {
     if (updates.image !== undefined) dbData.image = updates.image;
     dbData.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabaseAdmin.from('users').update(dbData).eq('id', id).select().single();
+    const { data, error } = await getSupabaseAdmin().from('users').update(dbData).eq('id', id).select().single();
     if (error) throw error;
     return mapUserFields(data);
   },
@@ -245,25 +245,25 @@ export const supabaseBookingOperations = {
       next_payment_due: bookingData.nextPaymentDue,
       monthly_payments: bookingData.monthlyPayments,
     };
-    const { data, error } = await supabaseAdmin.from('bookings').insert(dbData).select().single();
+    const { data, error } = await getSupabaseAdmin().from('bookings').insert(dbData).select().single();
     if (error) throw error;
     return mapBookingFields(data);
   },
 
   async getByUserId(userId: string): Promise<Booking[]> {
-    const { data, error } = await supabaseAdmin.from('bookings').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+    const { data, error } = await getSupabaseAdmin().from('bookings').select('*').eq('user_id', userId).order('created_at', { ascending: false });
     if (error) throw error;
     return (data || []).map(mapBookingFields);
   },
 
   async getAll(): Promise<Booking[]> {
-    const { data, error } = await supabaseAdmin.from('bookings').select('*').order('created_at', { ascending: false });
+    const { data, error } = await getSupabaseAdmin().from('bookings').select('*').order('created_at', { ascending: false });
     if (error) throw error;
     return (data || []).map(mapBookingFields);
   },
 
   async updateStatus(id: string, status: string): Promise<Booking> {
-    const { data, error } = await supabaseAdmin.from('bookings').update({ status, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+    const { data, error } = await getSupabaseAdmin().from('bookings').update({ status, updated_at: new Date().toISOString() }).eq('id', id).select().single();
     if (error) throw error;
     return mapBookingFields(data);
   },
@@ -286,13 +286,13 @@ export const supabasePaymentOperations = {
       status: paymentData.status || 'pending',
       failure_reason: paymentData.failureReason,
     };
-    const { data, error } = await supabaseAdmin.from('payments').insert(dbData).select().single();
+    const { data, error } = await getSupabaseAdmin().from('payments').insert(dbData).select().single();
     if (error) throw error;
     return mapPaymentFields(data);
   },
 
   async updateSuccess(orderId: string, paymentId: string, signature: string): Promise<Payment> {
-    const { data, error } = await supabaseAdmin.from('payments')
+    const { data, error } = await getSupabaseAdmin().from('payments')
       .update({ payment_id: paymentId, signature: signature, status: 'success', updated_at: new Date().toISOString() })
       .eq('order_id', orderId)
       .select().single();
@@ -301,7 +301,7 @@ export const supabasePaymentOperations = {
   },
 
   async updateFailed(orderId: string, reason: string): Promise<Payment> {
-    const { data, error } = await supabaseAdmin.from('payments')
+    const { data, error } = await getSupabaseAdmin().from('payments')
       .update({ status: 'failed', failure_reason: reason, updated_at: new Date().toISOString() })
       .eq('order_id', orderId)
       .select().single();
@@ -310,20 +310,20 @@ export const supabasePaymentOperations = {
   },
 
   async getByOrderId(orderId: string): Promise<Payment | null> {
-    const { data, error } = await supabaseAdmin.from('payments').select('*').eq('order_id', orderId).limit(1);
+    const { data, error } = await getSupabaseAdmin().from('payments').select('*').eq('order_id', orderId).limit(1);
     if (error) throw error;
     if (!data || data.length === 0) return null;
     return mapPaymentFields(data[0]);
   },
 
   async getByUserId(userId: string): Promise<Payment[]> {
-    const { data, error } = await supabaseAdmin.from('payments').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+    const { data, error } = await getSupabaseAdmin().from('payments').select('*').eq('user_id', userId).order('created_at', { ascending: false });
     if (error) throw error;
     return (data || []).map(mapPaymentFields);
   },
 
   async getAll(): Promise<Payment[]> {
-    const { data, error } = await supabaseAdmin.from('payments').select('*').order('created_at', { ascending: false });
+    const { data, error } = await getSupabaseAdmin().from('payments').select('*').order('created_at', { ascending: false });
     if (error) throw error;
     return (data || []).map(mapPaymentFields);
   },
