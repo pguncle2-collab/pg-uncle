@@ -29,22 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
 
   useEffect(() => {
-    const handleAuthFlow = async () => {
-      // Check if there's an auth code in the URL (from OAuth redirect)
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get('code');
-      
-      if (code) {
-        // Exchange the code for a session (browser client has the PKCE verifier)
-        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-        if (error) {
-          console.error('Code exchange error:', error);
-        }
-        // Clean up the URL
-        window.history.replaceState({}, '', window.location.pathname);
-      }
-
-      // Now fetch the session
+    const fetchSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         await handleUserAuth(session.user);
@@ -54,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    handleAuthFlow();
+    fetchSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {

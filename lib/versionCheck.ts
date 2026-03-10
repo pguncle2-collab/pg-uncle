@@ -8,15 +8,30 @@ export const clearAllStorage = () => {
   if (typeof window === 'undefined') return;
 
   try {
-    // Clear localStorage
-    localStorage.clear();
+    // Clear localStorage (except Supabase auth keys)
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && !key.startsWith('sb-')) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
     
-    // Clear sessionStorage
-    sessionStorage.clear();
+    // Clear sessionStorage (except Supabase auth keys)
+    const sessionKeysToRemove: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key && !key.startsWith('sb-')) {
+        sessionKeysToRemove.push(key);
+      }
+    }
+    sessionKeysToRemove.forEach((key) => sessionStorage.removeItem(key));
     
-    // Clear all cookies
+    // Clear cookies EXCEPT Supabase auth cookies (sb-*)
     document.cookie.split(';').forEach((cookie) => {
       const name = cookie.split('=')[0].trim();
+      if (name.startsWith('sb-')) return; // Preserve Supabase auth cookies
       // Clear for current domain
       document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
       // Clear for root domain
@@ -26,7 +41,7 @@ export const clearAllStorage = () => {
       document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${domain}`;
     });
 
-    console.log('✅ All storage cleared successfully');
+    console.log('✅ Storage cleared (Supabase auth preserved)');
   } catch (error) {
     console.error('❌ Error clearing storage:', error);
   }
