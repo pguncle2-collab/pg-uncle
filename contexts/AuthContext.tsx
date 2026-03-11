@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .from('users')
         .select('*')
         .eq('id', supabaseUser.id)
-        .single();
+        .single() as { data: any; error: any };
       
       if (userData) {
         setUser({
