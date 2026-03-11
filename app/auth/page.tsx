@@ -1,9 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
-export default function AuthPage() {
+function AuthContent() {
+  const searchParams = useSearchParams();
+  const errorMessage = searchParams.get('error');
+
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [loginData, setLoginData] = useState({
     email: '',
@@ -38,6 +42,18 @@ export default function AuthPage() {
       {/* Left Side - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-md">
+          {errorMessage && (
+            <div className="mb-6 p-4 bg-red-50 border-2 border-red-500 rounded-xl relative overflow-hidden">
+              <div className="flex items-start gap-3 relative z-10">
+                <div className="mt-0.5 text-2xl text-red-500">❌</div>
+                <div>
+                  <h3 className="text-red-800 font-bold mb-1">Authentication Failed</h3>
+                  <p className="text-red-600 text-sm font-medium">{decodeURIComponent(errorMessage)}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="mb-8">
             <Link href="/" className="flex items-center gap-3 mb-8">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-2xl">
@@ -331,5 +347,13 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>}>
+      <AuthContent />
+    </Suspense>
   );
 }
