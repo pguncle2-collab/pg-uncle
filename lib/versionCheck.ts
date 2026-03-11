@@ -48,6 +48,7 @@ export const clearAllStorage = () => {
 };
 
 export const checkVersionAndClearStorage = () => {
+  return; // Disabled temporarily for debugging Auth
   if (typeof window === 'undefined') return;
 
   try {

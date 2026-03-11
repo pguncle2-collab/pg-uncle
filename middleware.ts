@@ -1,47 +1,38 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
+  let supabaseResponse = NextResponse.next({
+    request,
   })
 
   // Add cache control headers to prevent stale auth state
-  response.headers.set('Cache-Control', 'no-store, must-revalidate')
-  response.headers.set('Pragma', 'no-cache')
-  response.headers.set('Expires', '0')
+  supabaseResponse.headers.set('Cache-Control', 'no-store, must-revalidate')
+  supabaseResponse.headers.set('Pragma', 'no-cache')
+  supabaseResponse.headers.set('Expires', '0')
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
+        getAll() {
+          return request.cookies.getAll()
         },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({ name, value, ...options })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({
+            request,
           })
-          response.cookies.set({ name, value, ...options })
+          
           // Re-apply cache control headers after creating new response
-          response.headers.set('Cache-Control', 'no-store, must-revalidate')
-          response.headers.set('Pragma', 'no-cache')
-          response.headers.set('Expires', '0')
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({ name, value: '', ...options })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({ name, value: '', ...options })
+          supabaseResponse.headers.set('Cache-Control', 'no-store, must-revalidate')
+          supabaseResponse.headers.set('Pragma', 'no-cache')
+          supabaseResponse.headers.set('Expires', '0')
+
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
         },
       },
     }
@@ -50,7 +41,7 @@ export async function middleware(request: NextRequest) {
   // Refresh the session so it doesn't expire
   await supabase.auth.getUser()
 
-  return response
+  return supabaseResponse
 }
 
 // Apply middleware to all routes except static files

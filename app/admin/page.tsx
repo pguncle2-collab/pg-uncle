@@ -32,11 +32,11 @@ export default function AdminDashboard() {
   // Monitor Supabase auth state
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: any) => {
       setsupabaseUser(session?.user || null);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       console.log('supabase auth state changed:', session?.user ? `Logged in as ${session.user.email}` : 'Not logged in');
       setsupabaseUser(session?.user || null);
     });
