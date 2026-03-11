@@ -1,8 +1,21 @@
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient as supabaseCreateClient } from '@supabase/supabase-js'
+
+let supabaseInstance: ReturnType<typeof supabaseCreateClient> | null = null
 
 export const createClient = () => {
-  return createBrowserClient(
+  if (supabaseInstance) return supabaseInstance
+
+  supabaseInstance = supabaseCreateClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        flowType: 'implicit',
+        persistSession: true,
+        detectSessionInUrl: true,
+      },
+    }
   )
+
+  return supabaseInstance
 }
