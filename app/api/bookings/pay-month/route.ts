@@ -106,10 +106,18 @@ export async function POST(request: NextRequest) {
       nextPaymentDue: nextPaymentDue ? 'Set' : 'None'
     });
 
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error('❌ Monthly Payment: Missing Supabase environment variables');
+      return NextResponse.json(
+        { error: 'Configuration error: Missing Supabase credentials' },
+        { status: 500 }
+      );
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
     
     // Update the booking - only include defined values
     const updateData: any = {

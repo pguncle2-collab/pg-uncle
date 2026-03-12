@@ -29,13 +29,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await handleUserAuth(session.user);
-      } else {
-        setUser(null);
-        setLoading(false);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (mounted) {
+          if (session?.user) {
+            await handleUserAuth(session.user);
+          } else {
+            setUser(null);
+            setLoading(false);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching session:', error);
+        if (mounted) {
+          setUser(null);
+          setLoading(false);
+        }
       }
     };
 
@@ -43,23 +55,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: any, session: any) => {
-        if (session?.user) {
-          await handleUserAuth(session.user);
-        } else {
-          setUser(null);
-          setLoading(false);
+        if (mounted) {
+          if (session?.user) {
+            await handleUserAuth(session.user);
+          } else {
+            setUser(null);
+            setLoading(false);
+          }
         }
       }
     );
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
   const handleUserAuth = async (supabaseUser: any) => {
     try {
-      // Try to get user data from Postgres
+      // Set user immediately from auth data to show logged-in state faster
+      const authUser = {
+        id: supabaseUser.id,
+        email: supabaseUser.email,
+        fullName: supabaseUser.user_metadata?.full_name || '',
+        phone: supabaseUser.phone || '',
+      };
+      
+      setUser(authUser);
+      setLoading(false);
+
+      // Then try to get additional user data from Postgres in the background
       const { data: userData, error } = await supabase
         .from('users')
         .select('*')
@@ -67,32 +93,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle() as { data: any; error: any };
       
       if (userData) {
+        // Update with database data if available
         setUser({
           id: userData.id,
           email: userData.email,
           fullName: userData.full_name,
           phone: userData.phone,
         });
-      } else {
-        // Fallback to auth user data if DB record isn't available yet
-        setUser({
-          id: supabaseUser.id,
-          email: supabaseUser.email,
-          fullName: supabaseUser.user_metadata?.full_name || '',
-          phone: supabaseUser.phone || '',
-        });
       }
     } catch (e) {
       console.error('Error fetching user data', e);
-      // Fallback
-      setUser({
-        id: supabaseUser.id,
-        email: supabaseUser.email,
-        fullName: supabaseUser.user_metadata?.full_name || '',
-        phone: supabaseUser.phone || '',
-      });
-    } finally {
-      setLoading(false);
+      // Keep the auth user data we already set
     }
   };
 
@@ -129,13 +140,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
+      // Verify redirect URL is properly configured
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: redirectUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
-      if (error) throw error;
+      
+      if (error) {
+        // Handle specific OAuth initialization errors
+        if (error.message.includes('Invalid API key') || error.message.includes('not configured')) {
+          throw new Error('Invalid API key or Supabase URL not configured');
+        }
+        throw error;
+      }
     } catch (error: any) {
       console.error('Google sign in error:', error);
       throw new Error(error.message || 'Failed to sign in with Google');

@@ -92,10 +92,18 @@ export async function POST(request: NextRequest) {
 
     // Update the booking - using our created supabaseBookingOperations method or updating directly
     // Since supabaseBookingOperations doesn't have an update method natively, I'll update using admin client
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error('❌ Complete Payment: Missing Supabase environment variables');
+      return NextResponse.json(
+        { error: 'Configuration error: Missing Supabase credentials' },
+        { status: 500 }
+      );
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
     
     // All months are now paid
     const paidMonths = bookingData.duration;

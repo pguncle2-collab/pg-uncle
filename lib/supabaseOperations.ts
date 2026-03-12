@@ -2,10 +2,26 @@ import { createClient } from '@supabase/supabase-js';
 import type { Property, User, Booking, Payment } from '@/types';
 
 // Admin client to bypass RLS for server-side operations, similar to how supabase was acting with open rules
-const getSupabaseAdmin = () => createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+const getSupabaseAdmin = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl) {
+    throw new Error(
+      'Supabase configuration error: NEXT_PUBLIC_SUPABASE_URL is not set. ' +
+      'Please add it to your .env.local file.'
+    )
+  }
+
+  if (!serviceRoleKey) {
+    throw new Error(
+      'Supabase configuration error: SUPABASE_SERVICE_ROLE_KEY is not set. ' +
+      'Please add it to your .env.local file. This is required for admin operations.'
+    )
+  }
+
+  return createClient(supabaseUrl, serviceRoleKey)
+}
 
 // Helper to handle casing formats between camelCase (app) and snake_case (db)
 // Only needed for mapping the db rows to the Types

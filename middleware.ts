@@ -11,9 +11,21 @@ export async function middleware(request: NextRequest) {
   supabaseResponse.headers.set('Pragma', 'no-cache')
   supabaseResponse.headers.set('Expires', '0')
 
+  // Validate environment variables
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error(
+      'Supabase configuration error: Missing required environment variables. ' +
+      'Please ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in .env.local'
+    )
+    return supabaseResponse
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -38,8 +50,9 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh the session so it doesn't expire
-  await supabase.auth.getUser()
+  // IMPORTANT: Don't call getUser() here to avoid lock conflicts
+  // The session refresh will happen in the client-side AuthContext
+  // Middleware only needs to ensure cookies are properly set
 
   return supabaseResponse
 }

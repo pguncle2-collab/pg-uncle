@@ -16,7 +16,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultTa
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>(defaultTab);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { signIn, signUp, signInWithGoogle, user, isAuthenticated } = useAuth();
+  const [wasAuthenticated, setWasAuthenticated] = useState(false);
   
   const [loginData, setLoginData] = useState({
     email: '',
@@ -42,11 +43,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultTa
 
     if (isOpen) {
       analytics.openAuthModal(activeTab);
+      // Reset authentication tracking when modal opens
+      setWasAuthenticated(isAuthenticated);
     }
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose, activeTab]);
+  }, [isOpen, onClose, activeTab, isAuthenticated]);
+
+  // Handle authentication state changes after OAuth redirect
+  // When user becomes authenticated (e.g., after OAuth callback), close modal and trigger success
+  useEffect(() => {
+    // Only trigger when transitioning from unauthenticated to authenticated while modal is open
+    if (isOpen && isAuthenticated && user && !wasAuthenticated && !loading) {
+      // User just became authenticated, likely from OAuth callback
+      // Close the modal and trigger success callback
+      if (onSuccess) {
+        onSuccess();
+      }
+      onClose();
+    }
+    
+    // Update tracking state
+    if (isAuthenticated !== wasAuthenticated) {
+      setWasAuthenticated(isAuthenticated);
+    }
+  }, [isAuthenticated, user, isOpen, onClose, onSuccess, wasAuthenticated, loading]);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,11 +138,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultTa
     try {
       await signInWithGoogle();
       analytics.login('google');
-      setLoading(false);
-      if (onSuccess) {
-        onSuccess();
-      }
-      onClose();
+      // Don't close modal or call onSuccess here - OAuth is a redirect flow
+      // The user will be redirected away and come back via /auth/callback
+      // The modal will naturally close when the page redirects
     } catch (err: any) {
       setError(err.message || 'An error occurred');
       analytics.error('google_signin', err.message);
