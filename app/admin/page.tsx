@@ -60,22 +60,34 @@ export default function AdminDashboard() {
       setIsAuthenticated(true);
       sessionStorage.setItem('adminAuth', 'true');
       
-      // DON'T try to authenticate with Supabase - keep existing user session
-      // This allows users to upload images while using the admin panel
-      console.log('✅ Admin authentication successful!');
-      console.log('💡 Keeping existing Supabase session for uploads');
+      // Try to authenticate with Supabase in the background (optional)
+      try {
+        const adminEmail = 'admin@pguncle.com';
+        console.log('🔐 Attempting Supabase authentication...');
+        const supabase = createClient();
+        await supabase.auth.signInWithPassword({ email: adminEmail, password });
+        console.log('✅ Supabase authentication successful!');
+      } catch (authError: any) {
+        // Supabase auth failed, but local auth succeeded, so continue
+        console.warn('⚠️ Supabase auth failed (this is okay):', authError.message);
+        console.log('💡 You can still use the admin panel. Supabase auth is optional.');
+      }
     } else {
       alert('Invalid password');
     }
   };
 
   const handleLogout = async () => {
-    // Only clear admin session, DON'T sign out from Supabase
-    // This allows users to remain logged in after leaving admin panel
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      console.log('✅ Signed out from Supabase');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
     setIsAuthenticated(false);
     sessionStorage.removeItem('adminAuth');
     setAdminError(null);
-    console.log('✅ Logged out from admin panel (Supabase session preserved)');
   };
 
   const handleDeleteProperty = async (id: string) => {

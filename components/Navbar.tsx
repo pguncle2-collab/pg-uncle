@@ -38,15 +38,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
   };
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      analytics.logout();
-      setShowUserMenu(false);
-    } catch (error) {
-      console.error('Failed to sign out:', error);
-      // Still close the menu and clear local state even if API call fails
-      setShowUserMenu(false);
-    }
+    await signOut();
+    analytics.logout();
+    setShowUserMenu(false);
   };
 
   // Get user display name
