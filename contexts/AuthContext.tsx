@@ -53,8 +53,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     fetchSession();
 
+    // Listen for auth state changes (login, logout, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: any, session: any) => {
+        console.log('[Auth] State change event:', event);
+        
         if (mounted) {
           if (session?.user) {
             await handleUserAuth(session.user);
@@ -66,9 +69,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
+    // Listen for storage events to sync auth state across tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'supabase.auth.token' && mounted) {
+        console.log('[Auth] Storage change detected, refreshing session');
+        fetchSession();
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorageChange);
+    }
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', handleStorageChange);
+      }
     };
   }, []);
 
@@ -169,12 +187,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      // Clear user state immediately for better UX
       setUser(null);
+      
+      // Then call Supabase signOut
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Sign out error:', error);
+        // Don't throw - user state is already cleared
+        // This prevents sign out button from appearing broken
+      }
     } catch (error: any) {
       console.error('Sign out error:', error);
-      throw new Error(error.message || 'Failed to sign out');
+      // Don't throw - user state is already cleared
     }
   };
 
