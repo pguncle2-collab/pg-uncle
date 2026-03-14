@@ -1,5 +1,81 @@
 import { createClient } from './supabase-client';
-import imageCompression from 'browser-image-compression';
+
+/**
+ * Compress an image file using native HTML Canvas
+ * This has zero external dependencies and runs completely locally.
+ */
+async function compressImage(file: File): Promise<File> {
+  // Only compress if we're in the browser environment
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return file;
+  }
+  
+  // Only compress images
+  if (!file.type.startsWith('image/')) {
+    return file;
+  }
+
+  return new Promise((resolve) => {
+    const URL = window.URL || window.webkitURL;
+    const imgUrl = URL.createObjectURL(file);
+    const img = new Image();
+    
+    img.onload = () => {
+      URL.revokeObjectURL(imgUrl);
+      
+      let width = img.width;
+      let height = img.height;
+      const maxSize = 1920;
+
+      // Calculate new dimensions while maintaining aspect ratio
+      if (width > height) {
+        if (width > maxSize) {
+          height = Math.round((height * maxSize) / width);
+          width = maxSize;
+        }
+      } else {
+        if (height > maxSize) {
+          width = Math.round((width * maxSize) / height);
+          height = maxSize;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        return resolve(file); // Fallback to original
+      }
+      
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Convert to blob and then to File
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(new File([blob], file.name, {
+              type: file.type === 'image/png' ? 'image/png' : 'image/jpeg',
+              lastModified: Date.now(),
+            }));
+          } else {
+            resolve(file); // Fallback
+          }
+        },
+        file.type === 'image/png' ? 'image/png' : 'image/jpeg',
+        0.8 // 80% quality
+      );
+    };
+    
+    img.onerror = () => {
+      URL.revokeObjectURL(imgUrl);
+      resolve(file); // Fallback on load failure
+    };
+    
+    img.src = imgUrl;
+  });
+}
 
 /**
  * Validate that a URL is accessible and returns a valid image
@@ -47,26 +123,13 @@ export async function uploadImage(
   try {
     console.log(`Original image: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
     
-    // Compress image
-    const options = {
-      maxSizeMB: 1,
-      maxWidthOrHeight: 1920,
-      useWebWorker: true,
-    };
-    
+    // Compress image natively
     let fileToUpload = file;
     try {
-      const compressedBlob = await imageCompression(file, options);
-      // Convert Blob back to File to preserve name and lastModified
-      fileToUpload = new File([compressedBlob], file.name, {
-        type: compressedBlob.type,
-        lastModified: Date.now(),
-      });
+      fileToUpload = await compressImage(file);
       console.log(`Compressed image: ${fileToUpload.name} (${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB)`);
     } catch (compressionError) {
       console.error('Error compressing image, falling back to original:', compressionError);
-      // Fallback to original file if compression fails
-      fileToUpload = file;
     }
     
     // Create unique filename
