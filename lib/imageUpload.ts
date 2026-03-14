@@ -1,4 +1,5 @@
 import { createClient } from './supabase-client';
+import imageCompression from 'browser-image-compression';
 
 /**
  * Validate that a URL is accessible and returns a valid image
@@ -44,11 +45,33 @@ export async function uploadImage(
   folder: string = 'properties'
 ): Promise<string> {
   try {
-    console.log(`Uploading image: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+    console.log(`Original image: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+    
+    // Compress image
+    const options = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    };
+    
+    let fileToUpload = file;
+    try {
+      const compressedBlob = await imageCompression(file, options);
+      // Convert Blob back to File to preserve name and lastModified
+      fileToUpload = new File([compressedBlob], file.name, {
+        type: compressedBlob.type,
+        lastModified: Date.now(),
+      });
+      console.log(`Compressed image: ${fileToUpload.name} (${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB)`);
+    } catch (compressionError) {
+      console.error('Error compressing image, falling back to original:', compressionError);
+      // Fallback to original file if compression fails
+      fileToUpload = file;
+    }
     
     // Create unique filename
     const timestamp = Date.now();
-    const filename = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const filename = `${timestamp}_${fileToUpload.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
     const storagePath = `${folder}/${filename}`;
     
     const supabase = createClient();
@@ -56,7 +79,7 @@ export async function uploadImage(
     // Upload file
     const { data, error } = await supabase.storage
       .from('properties') // Assume bucket name is 'properties'
-      .upload(storagePath, file, { upsert: false });
+      .upload(storagePath, fileToUpload, { upsert: false });
       
     if (error) {
       throw error;
@@ -67,9 +90,8 @@ export async function uploadImage(
       .from('properties')
       .getPublicUrl(storagePath);
     
-    // Validate that the URL is accessible
-    await validateImageUrl(publicUrl);
-    
+    // Skip URL validation for performance - Supabase URLs are reliable
+    // The validateImageUrl function was causing significant delays
     console.log(`✅ Image uploaded successfully: ${publicUrl}`);
     return publicUrl;
   } catch (error) {
@@ -80,23 +102,31 @@ export async function uploadImage(
 }
 
 /**
- * Upload multiple images to Supabase Storage
+ * Upload multiple images to Supabase Storage with progress tracking
  */
 export async function uploadMultipleImages(
   files: File[],
   folder: string = 'properties'
 ): Promise<string[]> {
   try {
-    console.log(`Uploading ${files.length} images...`);
+    console.log(`📤 Starting upload of ${files.length} images...`);
+    const startTime = Date.now();
     
-    // Upload all images in parallel
-    const uploadPromises = files.map(file => uploadImage(file, folder));
+    // Upload all images in parallel for better performance
+    const uploadPromises = files.map((file, index) => {
+      return uploadImage(file, folder).then(url => {
+        console.log(`✅ Image ${index + 1}/${files.length} uploaded: ${file.name}`);
+        return url;
+      });
+    });
+    
     const results = await Promise.all(uploadPromises);
     
-    console.log(`✅ Successfully uploaded ${results.length} images`);
+    const duration = Date.now() - startTime;
+    console.log(`🎉 Successfully uploaded ${results.length} images in ${duration}ms`);
     return results;
   } catch (error) {
-    console.error('Error uploading multiple images:', error);
+    console.error('❌ Error uploading multiple images:', error);
     // Let error propagate to caller
     throw error;
   }
