@@ -684,6 +684,15 @@ export default function AdminDashboard() {
                       };
                       console.log('Update data:', updateData);
                       await updateProperty(selectedProperty.id, updateData);
+                      
+                      // Invalidate cache after successful update
+                      try {
+                        await fetch('/api/cache/clear', { method: 'POST' });
+                        console.log('✅ Cache invalidated after update');
+                      } catch (cacheError) {
+                        console.error('⚠️ Failed to invalidate cache (non-blocking):', cacheError);
+                      }
+                      
                       setShowEditModal(false);
                       setSelectedProperty(null);
                       await fetchProperties(); // Refresh the list
@@ -701,7 +710,7 @@ export default function AdminDashboard() {
                         reviews: 12,
                         type: data.roomTypes.map(rt => rt.type).join(', '),
                         availability: 'Available',
-                        image: data.images[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80',
+                        image: data.images[0] || '',
                         images: data.images,
                         price: data.roomTypes[0]?.price || 0,
                         amenities: data.amenities,
@@ -713,6 +722,15 @@ export default function AdminDashboard() {
                       };
                       console.log('New property data:', newPropertyData);
                       await addProperty(newPropertyData);
+                      
+                      // Invalidate cache after successful add
+                      try {
+                        await fetch('/api/cache/clear', { method: 'POST' });
+                        console.log('✅ Cache invalidated after add');
+                      } catch (cacheError) {
+                        console.error('⚠️ Failed to invalidate cache (non-blocking):', cacheError);
+                      }
+                      
                       setShowAddModal(false);
                       setSelectedProperty(null);
                       await fetchProperties(); // Refresh the list

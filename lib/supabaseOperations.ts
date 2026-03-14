@@ -1,6 +1,27 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Property, User, Booking, Payment } from '@/types';
 
+/**
+ * Validate that URLs are not blob URLs and are properly formatted
+ */
+function validateImageUrls(urls: string[] | undefined): void {
+  if (!urls || urls.length === 0) return;
+  
+  for (const url of urls) {
+    // Check for blob URLs
+    if (url.startsWith('blob:')) {
+      throw new Error('Cannot store blob URLs in database');
+    }
+    
+    // Validate URL format
+    try {
+      new URL(url);
+    } catch (error) {
+      throw new Error(`Invalid URL format: ${url}`);
+    }
+  }
+}
+
 // Admin client to bypass RLS for server-side operations, similar to how supabase was acting with open rules
 const getSupabaseAdmin = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -120,6 +141,9 @@ export const supabasePropertyOperations = {
   },
 
   async create(propertyData: Omit<Property, 'id'>): Promise<Property> {
+    // Validate image URLs before storing
+    validateImageUrls(propertyData.images);
+    
     const dbData = {
       name: propertyData.name,
       location: propertyData.location,
@@ -147,6 +171,9 @@ export const supabasePropertyOperations = {
   },
 
   async update(id: string, updates: Partial<Property>): Promise<Property> {
+    // Validate image URLs before storing
+    validateImageUrls(updates.images);
+    
     const dbData: any = {};
     if (updates.name !== undefined) dbData.name = updates.name;
     if (updates.location !== undefined) dbData.location = updates.location;

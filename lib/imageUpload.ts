@@ -1,6 +1,42 @@
 import { createClient } from './supabase-client';
 
 /**
+ * Validate that a URL is accessible and returns a valid image
+ */
+async function validateImageUrl(url: string): Promise<void> {
+  // First, validate URL format
+  try {
+    new URL(url);
+  } catch (error) {
+    throw new Error(`Invalid URL format: ${url}`);
+  }
+  
+  // Check if it's a valid URL pattern (not just "not-a-valid-url")
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    throw new Error(`Invalid URL protocol: ${url}`);
+  }
+  
+  // Skip network validation in test environment
+  if (process.env.NODE_ENV === 'test' || typeof fetch === 'undefined') {
+    console.warn('Skipping network URL validation in test environment');
+    return;
+  }
+  
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    if (!response.ok) {
+      throw new Error(`Image URL validation failed: ${response.status} ${response.statusText}`);
+    }
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.startsWith('image/')) {
+      throw new Error(`URL does not return a valid image (content-type: ${contentType})`);
+    }
+  } catch (error) {
+    throw new Error(`Failed to validate image URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
  * Upload a single image to Supabase Storage
  */
 export async function uploadImage(
@@ -31,12 +67,15 @@ export async function uploadImage(
       .from('properties')
       .getPublicUrl(storagePath);
     
+    // Validate that the URL is accessible
+    await validateImageUrl(publicUrl);
+    
     console.log(`✅ Image uploaded successfully: ${publicUrl}`);
     return publicUrl;
   } catch (error) {
     console.error('Error uploading image:', error);
-    // Return placeholder on error
-    return 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&q=80';
+    // Let error propagate to caller
+    throw error;
   }
 }
 
@@ -58,8 +97,8 @@ export async function uploadMultipleImages(
     return results;
   } catch (error) {
     console.error('Error uploading multiple images:', error);
-    // Return placeholders on error
-    return files.map(() => 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&q=80');
+    // Let error propagate to caller
+    throw error;
   }
 }
 

@@ -171,6 +171,11 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
         console.log('Uploading property images...');
         uploadedImageUrls = await uploadMultipleImages(imageFiles, 'properties');
         console.log('Uploaded property image URLs:', uploadedImageUrls);
+        
+        // Validate that upload returned URLs when files were provided
+        if (uploadedImageUrls.length === 0) {
+          throw new Error('Image upload failed: no URLs returned');
+        }
       }
 
       // Build final image array maintaining order
@@ -191,6 +196,11 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
       }
       
       console.log('Final property images:', allImages);
+      
+      // Validate no blob URLs in final images
+      if (allImages.some(url => url.startsWith('blob:'))) {
+        throw new Error('Blob URLs detected in final submission - this is a bug');
+      }
       
       // Upload room images for each room type
       const updatedRoomTypes = await Promise.all(
@@ -226,6 +236,11 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
           
           console.log(`Final room ${index} images:`, allRoomImages);
           
+          // Validate no blob URLs in final room images
+          if (allRoomImages.some(url => url.startsWith('blob:'))) {
+            throw new Error(`Blob URLs detected in room ${index} final submission - this is a bug`);
+          }
+          
           return {
             ...room,
             images: allRoomImages.length > 0 ? allRoomImages : undefined
@@ -241,7 +256,18 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
       };
       
       console.log('📦 Final data to submit:', dataToSubmit);
-      onSubmit(dataToSubmit);
+      
+      // Submit the data
+      await onSubmit(dataToSubmit);
+      
+      // Invalidate cache after successful submission
+      try {
+        await fetch('/api/cache/clear', { method: 'POST' });
+        console.log('✅ Cache invalidated successfully');
+      } catch (cacheError) {
+        console.error('⚠️ Failed to invalidate cache (non-blocking):', cacheError);
+        // Don't throw - cache invalidation failure shouldn't block the form submission
+      }
     } catch (error) {
       console.error('Error uploading images:', error);
       alert('Failed to upload images. Please try again.');
