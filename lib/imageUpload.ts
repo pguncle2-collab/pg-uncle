@@ -1,3 +1,4 @@
+// Image upload utilities - uses /api/upload server route for Supabase storage uploads
 import { createClient } from './supabase-client';
 
 /**
@@ -114,16 +115,15 @@ async function validateImageUrl(url: string): Promise<void> {
 }
 
 /**
- * Upload a single image to Supabase Storage
+ * Upload a single image to Supabase Storage via the server API
+ * Uses the server-side route to bypass RLS restrictions with the service role key
  */
 export async function uploadImage(
   file: File,
   folder: string = 'properties'
 ): Promise<string> {
   try {
-    console.log(`Original image: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
-    
-    // Compress image natively
+    // Compress image natively first
     let fileToUpload = file;
     try {
       fileToUpload = await compressImage(file);
@@ -131,38 +131,31 @@ export async function uploadImage(
     } catch (compressionError) {
       console.error('Error compressing image, falling back to original:', compressionError);
     }
-    
-    // Create unique filename
-    const timestamp = Date.now();
-    const filename = `${timestamp}_${fileToUpload.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const storagePath = `${folder}/${filename}`;
-    
-    const supabase = createClient();
 
-    // Upload file
-    const { data, error } = await supabase.storage
-      .from('properties') // Assume bucket name is 'properties'
-      .upload(storagePath, fileToUpload, { upsert: false });
-      
-    if (error) {
-      throw error;
+    // Upload via server API route that uses service role key
+    const formData = new FormData();
+    formData.append('file', fileToUpload);
+    formData.append('folder', folder);
+
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({ error: response.statusText }));
+      throw new Error(errBody.error || `Upload failed with status ${response.status}`);
     }
-    
-    // Get download URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('properties')
-      .getPublicUrl(storagePath);
-    
-    // Skip URL validation for performance - Supabase URLs are reliable
-    // The validateImageUrl function was causing significant delays
-    console.log(`✅ Image uploaded successfully: ${publicUrl}`);
-    return publicUrl;
+
+    const { url } = await response.json();
+    console.log(`✅ Image uploaded successfully: ${url}`);
+    return url;
   } catch (error) {
     console.error('Error uploading image:', error);
-    // Let error propagate to caller
     throw error;
   }
 }
+
 
 /**
  * Upload multiple images to Supabase Storage with progress tracking

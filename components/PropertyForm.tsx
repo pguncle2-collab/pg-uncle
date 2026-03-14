@@ -191,7 +191,10 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
           }
         } else {
           // This is an existing image, keep it
-          allImages.push(previewUrl);
+          // Double check it's a valid remote URL and not a stray blob
+          if (previewUrl.startsWith('http')) {
+            allImages.push(previewUrl);
+          }
         }
       }
       
@@ -230,7 +233,10 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
               }
             } else {
               // This is an existing image, keep it
-              allRoomImages.push(previewUrl);
+              // Strict protocol check to strip corrupted blobs that bypassed earlier checks
+              if (previewUrl.startsWith('http')) {
+                allRoomImages.push(previewUrl);
+              }
             }
           }
           
@@ -258,7 +264,12 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
       console.log('📦 Final data to submit:', dataToSubmit);
       
       // Submit the data
-      await onSubmit(dataToSubmit);
+      try {
+        await onSubmit(dataToSubmit);
+      } catch (submitError) {
+        console.error('Submit error:', submitError);
+        throw new Error('Form submission failed: ' + (submitError instanceof Error ? submitError.message : String(submitError)));
+      }
       
       // Invalidate cache after successful submission
       try {
@@ -269,8 +280,8 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
         // Don't throw - cache invalidation failure shouldn't block the form submission
       }
     } catch (error) {
-      console.error('Error uploading images:', error);
-      alert('Failed to upload images. Please try again.');
+      console.error('Error in property form submission:', error);
+      alert(`Failed to save property: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsUploading(false);
     }
