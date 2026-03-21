@@ -53,18 +53,24 @@ async function compressImage(file: File): Promise<File> {
       ctx.drawImage(img, 0, 0, width, height);
       
       // Convert to blob and then to File
+      // Use WebP for PNGs to keep transparency but compress well; otherwise JPEG.
+      const isPng = file.type === 'image/png';
+      const outType = isPng ? 'image/webp' : 'image/jpeg';
+      const extension = isPng ? '.webp' : '';
+      const outName = isPng ? file.name.replace(/\.[^/.]+$/, "") + extension : file.name;
+
       canvas.toBlob(
         (blob) => {
           if (blob) {
-            resolve(new File([blob], file.name, {
-              type: file.type === 'image/png' ? 'image/png' : 'image/jpeg',
+            resolve(new File([blob], outName, {
+              type: blob.type || outType,
               lastModified: Date.now(),
             }));
           } else {
             resolve(file); // Fallback
           }
         },
-        file.type === 'image/png' ? 'image/png' : 'image/jpeg',
+        outType,
         0.8 // 80% quality
       );
     };
@@ -133,6 +139,11 @@ export async function uploadImage(
     }
 
     // Upload via server API route that uses service role key
+    const MAX_SIZE_MB = 4.5;
+    if (fileToUpload.size > MAX_SIZE_MB * 1024 * 1024) {
+      throw new Error(`Image ${file.name} is too large (${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB) even after compression. Maximum allowed size is ${MAX_SIZE_MB}MB due to server limits.`);
+    }
+
     const formData = new FormData();
     formData.append('file', fileToUpload);
     formData.append('folder', folder);
