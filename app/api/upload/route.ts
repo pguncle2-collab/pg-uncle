@@ -32,13 +32,12 @@ export async function POST(request: NextRequest) {
     const filename = `${timestamp}_${safeName}`;
     const storagePath = `${folder}/${filename}`;
 
-    // Convert file to ArrayBuffer for upload
+    // Convert file to ArrayBuffer for upload (safest for serverless/Edge environments)
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
 
     const { error } = await supabase.storage
       .from('properties')
-      .upload(storagePath, buffer, {
+      .upload(storagePath, arrayBuffer, {
         contentType: file.type,
         upsert: false,
       });

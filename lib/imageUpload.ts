@@ -143,8 +143,21 @@ export async function uploadImage(
     });
 
     if (!response.ok) {
-      const errBody = await response.json().catch(() => ({ error: response.statusText }));
-      throw new Error(errBody.error || `Upload failed with status ${response.status}`);
+      const errorText = await response.text().catch(() => response.statusText);
+      let errorMessage = '';
+      try {
+        const errJson = JSON.parse(errorText);
+        errorMessage = errJson.error || errJson.message;
+      } catch (e) {
+        errorMessage = errorText;
+      }
+      
+      // If error message is empty or generic, include status
+      const finalError = errorMessage && errorMessage !== 'Internal Server Error' 
+        ? errorMessage 
+        : `Upload failed with status ${response.status}: ${errorText.substring(0, 500)}`;
+        
+      throw new Error(finalError);
     }
 
     const { url } = await response.json();
