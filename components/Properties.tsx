@@ -68,21 +68,42 @@ export const Properties: React.FC = () => {
     return url;
   };
 
+  // Helper function to get unique genders from all room types in a property
+  const getPropertyGenders = (prop: any): string[] => {
+    if (!prop.roomTypes || prop.roomTypes.length === 0) return ['Both'];
+    const genders: string[] = prop.roomTypes.map((room: any) => room.gender || 'Both');
+    return [...new Set(genders)];
+  };
+
+  // Helper function to determine display gender for a property
+  const getDisplayGender = (genders: string[]): string => {
+    if (genders.includes('Both')) return 'Both';
+    if (genders.includes('Boys') && genders.includes('Girls')) return 'Both';
+    if (genders.includes('Boys')) return 'Boys';
+    if (genders.includes('Girls')) return 'Girls';
+    return 'Both';
+  };
+
   // Transform data to match component interface
-  const transformedProperties: PropertyDisplay[] = properties.map((prop) => ({
-    id: prop.id,
-    name: prop.name,
-    city: prop.city,
-    location: prop.location || prop.address,
-    price: prop.price,
-    type: prop.roomTypes?.[0]?.type || 'Single',
-    gender: prop.gender || 'Both',
-    image: optimizeImageUrl(prop.images?.[0] || prop.image || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267', 'medium'),
-    rating: prop.rating || 4.5,
-    reviews: prop.reviews || 12,
-    amenities: prop.amenities?.filter(a => a.available).map(a => a.name) || [],
-    available: prop.isActive,
-  }));
+  const transformedProperties: PropertyDisplay[] = properties.map((prop) => {
+    const propertyGenders = getPropertyGenders(prop);
+    const displayGender = getDisplayGender(propertyGenders);
+    
+    return {
+      id: prop.id,
+      name: prop.name,
+      city: prop.city,
+      location: prop.location || prop.address,
+      price: prop.price,
+      type: prop.roomTypes?.[0]?.type || 'Single',
+      gender: displayGender,
+      image: optimizeImageUrl(prop.images?.[0] || prop.image || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267', 'medium'),
+      rating: prop.rating || 4.5,
+      reviews: prop.reviews || 12,
+      amenities: prop.amenities?.filter(a => a.available).map(a => a.name) || [],
+      available: prop.isActive,
+    };
+  });
 
   const filteredProperties = transformedProperties.filter((property) => {
     const cityMatch = selectedCity === 'All' || property.city === selectedCity;

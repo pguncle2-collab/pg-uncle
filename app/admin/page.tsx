@@ -623,7 +623,6 @@ export default function AdminDashboard() {
                   city: selectedProperty.city,
                   location: selectedProperty.location || '',
                   address: selectedProperty.address,
-                  gender: selectedProperty.gender || 'Both',
                   coordinates: selectedProperty.coordinates || { lat: 30.7333, lng: 76.7794 },
                   description: selectedProperty.description || '',
                   roomTypes: selectedProperty.roomTypes?.map((rt: any) => ({
@@ -637,6 +636,7 @@ export default function AdminDashboard() {
                     availableSlots: rt.availableSlots || 0,
                     beds: rt.beds || 1,
                     images: rt.images || [],
+                    gender: rt.gender || 'Both',
                   })) || [],
                   amenities: selectedProperty.amenities?.map((a: any) => {
                     // Update icons to match current defaults
@@ -682,7 +682,6 @@ export default function AdminDashboard() {
                         houseRules: data.rules,
                         nearbyPlaces: data.nearbyPlaces,
                         images: data.images,
-                        gender: data.gender,
                       };
                       console.log('Update data:', updateData);
                       await updateProperty(selectedProperty.id, updateData);
@@ -721,7 +720,6 @@ export default function AdminDashboard() {
                         coordinates: data.coordinates,
                         roomTypes: data.roomTypes,
                         isActive: true,
-                        gender: data.gender,
                       };
                       console.log('New property data:', newPropertyData);
                       await addProperty(newPropertyData);

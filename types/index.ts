@@ -12,7 +12,6 @@ export interface Property {
   image: string;
   images?: string[];
   price: number;
-  gender?: string;
   description?: string;
   amenities: Amenity[];
   houseRules: string[];
@@ -38,6 +37,7 @@ export interface RoomType {
   features?: string[];
   images?: string[];
   beds?: number;
+  gender?: string; // Boys, Girls, or Both
 }
 
 export interface Amenity {

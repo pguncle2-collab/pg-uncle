@@ -15,6 +15,7 @@ interface RoomType {
   availableSlots: number;
   beds: number;
   images?: string[];
+  gender?: string; // Boys, Girls, or Both
 }
 
 interface PropertyFormData {
@@ -33,7 +34,6 @@ interface PropertyFormData {
     icon: string;
     available: boolean;
   }[];
-  gender: string;
   rules: string[];
   nearbyPlaces: {
     name: string;
@@ -81,10 +81,9 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
       coordinates: { lat: 30.7333, lng: 76.7794 },
       description: '',
       roomTypes: [
-        { type: 'Single', price: 0, available: true, description: '', features: [], totalSlots: 0, occupiedSlots: 0, availableSlots: 0, beds: 1, images: [] },
+        { type: 'Single', price: 0, available: true, description: '', features: [], totalSlots: 0, occupiedSlots: 0, availableSlots: 0, beds: 1, images: [], gender: 'Both' },
       ],
       amenities: defaultAmenities,
-      gender: 'Both',
       rules: [''],
       nearbyPlaces: [{ name: '', distance: '', type: 'Shopping' }],
       images: [''],
@@ -140,10 +139,9 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
         coordinates: { lat: 30.7333, lng: 76.7794 },
         description: '',
         roomTypes: [
-          { type: 'Single', price: 0, available: true, description: '', features: [], totalSlots: 0, occupiedSlots: 0, availableSlots: 0, beds: 1, images: [] },
+          { type: 'Single', price: 0, available: true, description: '', features: [], totalSlots: 0, occupiedSlots: 0, availableSlots: 0, beds: 1, images: [], gender: 'Both' },
         ],
         amenities: defaultAmenities,
-        gender: 'Both',
         rules: [''],
         nearbyPlaces: [{ name: '', distance: '', type: 'Shopping' }],
         images: [''],
@@ -296,7 +294,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
       ...formData,
       roomTypes: [
         ...formData.roomTypes,
-        { type: '', price: 0, available: true, description: '', features: [], totalSlots: 0, occupiedSlots: 0, availableSlots: 0, beds: 1, images: [] },
+        { type: '', price: 0, available: true, description: '', features: [], totalSlots: 0, occupiedSlots: 0, availableSlots: 0, beds: 1, images: [], gender: 'Both' },
       ],
     });
   };
@@ -520,32 +518,6 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
               required
             />
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Gender / PG For *
-            </label>
-            <div className="flex gap-3">
-              {['Boys', 'Girls', 'Both'].map((g) => (
-                <button
-                  key={g}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, gender: g })}
-                  className={`flex-1 py-2 rounded-xl font-semibold text-sm border-2 transition-all duration-200 ${
-                    formData.gender === g
-                      ? g === 'Boys'
-                        ? 'bg-blue-500 text-white border-blue-500'
-                        : g === 'Girls'
-                        ? 'bg-pink-500 text-white border-pink-500'
-                        : 'bg-purple-500 text-white border-purple-500'
-                      : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400'
-                  }`}
-                >
-                  {g === 'Boys' ? '👦 Boys' : g === 'Girls' ? '👧 Girls' : '👥 Both'}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div>
@@ -695,7 +667,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Room Type *
@@ -730,6 +702,22 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, onSubmi
                   min="0"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Room For *
+                </label>
+                <select
+                  value={room.gender || 'Both'}
+                  onChange={(e) => updateRoomType(index, 'gender', e.target.value)}
+                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-base"
+                  required
+                >
+                  <option value="Boys">👦 Boys</option>
+                  <option value="Girls">👧 Girls</option>
+                  <option value="Both">👥 Both</option>
+                </select>
               </div>
             </div>
 

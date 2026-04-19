@@ -59,7 +59,6 @@ const mapPropertyFields = (data: any): Property => ({
   image: data.image,
   images: data.images,
   price: data.price,
-  gender: data.gender,
   description: data.description,
   amenities: data.amenities,
   houseRules: data.house_rules,
@@ -156,7 +155,6 @@ export const supabasePropertyOperations = {
       image: propertyData.image,
       images: propertyData.images,
       price: propertyData.price,
-      gender: propertyData.gender,
       description: propertyData.description,
       amenities: propertyData.amenities,
       house_rules: propertyData.houseRules,
@@ -186,7 +184,6 @@ export const supabasePropertyOperations = {
     if (updates.image !== undefined) dbData.image = updates.image;
     if (updates.images !== undefined) dbData.images = updates.images;
     if (updates.price !== undefined) dbData.price = updates.price;
-    if (updates.gender !== undefined) dbData.gender = updates.gender;
     if (updates.description !== undefined) dbData.description = updates.description;
     if (updates.amenities !== undefined) dbData.amenities = updates.amenities;
     if (updates.houseRules !== undefined) dbData.house_rules = updates.houseRules;

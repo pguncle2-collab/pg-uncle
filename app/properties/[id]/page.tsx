@@ -386,9 +386,20 @@ export default function PropertyDetailPage() {
                       </div>
 
                       <div className="mb-4">
-                        <h4 className="text-lg md:text-xl font-bold text-gray-900 mb-1">
-                          {room.type} Sharing {room.type !== 'Single'}
-                        </h4>
+                        <div className="flex items-center justify-between mb-1">
+                          <h4 className="text-lg md:text-xl font-bold text-gray-900">
+                            {room.type} Sharing {room.type !== 'Single'}
+                          </h4>
+                          {room.gender && (
+                            <span className={`px-2 py-1 rounded-full text-xs font-bold text-white ${
+                              room.gender === 'Boys' ? 'bg-blue-500' :
+                              room.gender === 'Girls' ? 'bg-pink-500' :
+                              'bg-purple-500'
+                            }`}>
+                              {room.gender === 'Boys' ? '👦' : room.gender === 'Girls' ? '👧' : '👥'}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs md:text-sm text-gray-600">
                           {room.description || (room.type === 'Single' ? `${room.type} occupancy room` : 'Price per bed')}
                         </p>
