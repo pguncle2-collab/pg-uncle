@@ -386,32 +386,32 @@ export default function PropertyDetailPage() {
                       </div>
 
                       <div className="mb-4">
-                        <div className="flex items-center justify-between mb-1">
-                          <h4 className="text-lg md:text-xl font-bold text-gray-900">
-                            {room.type} Sharing {room.type !== 'Single'}
-                          </h4>
-                          {room.gender && (
-                            <span className={`px-2 py-1 rounded-full text-xs font-bold text-white ${
-                              room.gender === 'Boys' ? 'bg-blue-500' :
-                              room.gender === 'Girls' ? 'bg-pink-500' :
-                              'bg-purple-500'
-                            }`}>
-                              {room.gender === 'Boys' ? '👦' : room.gender === 'Girls' ? '👧' : '👥'}
-                            </span>
-                          )}
-                        </div>
+                        <h4 className="text-lg md:text-xl font-bold text-gray-900 mb-1">
+                          {room.type} Sharing {room.type !== 'Single'}
+                        </h4>
                         <p className="text-xs md:text-sm text-gray-600">
                           {room.description || (room.type === 'Single' ? `${room.type} occupancy room` : 'Price per bed')}
                         </p>
                       </div>
                       
                       <div className="mb-4">
-                        <div className="flex items-baseline gap-2">
+                        <div className="flex items-baseline gap-2 mb-3">
                           <span className="text-2xl md:text-3xl font-bold text-gray-900">₹{room.price}</span>
                           <span className="text-sm md:text-base text-gray-600">
                             {room.type === 'Single' ? '/month' : '/month'}
                           </span>
                         </div>
+                        {room.gender && (
+                          <div className="inline-flex items-center gap-2">
+                            <span className={`px-4 py-2 rounded-lg text-sm font-bold text-white shadow-md ${
+                              room.gender === 'Boys' ? 'bg-blue-500' :
+                              room.gender === 'Girls' ? 'bg-pink-500' :
+                              'bg-purple-500'
+                            }`}>
+                              {room.gender === 'Boys' ? '👦 Boys Only' : room.gender === 'Girls' ? '👧 Girls Only' : '👥 Boys & Girls'}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       
                       <div className="space-y-2 mb-4">
