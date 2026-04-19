@@ -25,8 +25,26 @@ export const createClient = () => {
 
   supabaseInstance = createBrowserClient(
     supabaseUrl,
-    supabaseAnonKey
+    supabaseAnonKey,
+    {
+      auth: {
+        // Disable the Web Locks API used for cross-tab token-refresh
+        // coordination. It causes "AbortError: Lock broken by another request
+        // with the 'steal' option" on dev hot-reloads and multiple tabs.
+        // Cookie-based SSR auth (handled server-side) makes this lock
+        // unnecessary.
+        lock: undefined,
+        detectSessionInUrl: true,
+        persistSession: true,
+      },
+    }
   )
 
   return supabaseInstance
+}
+
+// Allow resetting the singleton (e.g. on sign-out) so a fresh
+// client is created on the next call, avoiding stale lock state.
+export const resetClient = () => {
+  supabaseInstance = null
 }

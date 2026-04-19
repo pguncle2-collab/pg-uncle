@@ -36,7 +36,7 @@ export const Footer: React.FC = () => {
               />
             </div>
             <p className="text-gray-400 leading-relaxed">
-              Your trusted partner in finding the perfect PG accommodation in Tricity, Chandigarh. 
+              Your trusted partner in finding the perfect PG accommodation in Chandigarh Tricity. 
               Comfortable living, verified properties, and hassle-free booking.
             </p>
             <div className="flex gap-3">

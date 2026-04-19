@@ -429,7 +429,7 @@ export default function PropertyDetailPage() {
                               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                           }`}
                         >
-                          {room.available ? 'Click on Book Now' : 'Fully Booked'}
+                          {room.available ? 'Book your bed' : 'Fully Booked'}
                         </button>
                         <button
                           onClick={(e) => {
@@ -747,7 +747,7 @@ export default function PropertyDetailPage() {
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  {property.roomTypes[selectedRoomType].available ? 'Click on Book Now' : 'Not Available'}
+                  {property.roomTypes[selectedRoomType].available ? 'Book your bed' : 'Not Available'}
                 </button>
 
                 <button

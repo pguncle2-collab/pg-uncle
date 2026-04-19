@@ -16,7 +16,7 @@ export default function AboutPage() {
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold text-gray-900 mb-4">About PGUNCLE</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Your trusted partner in finding the perfect PG accommodation in Tricity, Chandigarh
+            Your trusted partner in finding the perfect PG accommodation in Chandigarh Tricity
           </p>
         </div>
 
@@ -31,7 +31,7 @@ export default function AboutPage() {
                 safe, and affordable place to stay.
               </p>
               <p>
-                Based in Tricity, Chandigarh, PGUNCLE is our own trusted platform featuring carefully managed PG accommodations.
+                Based in Chandigarh Tricity, PGUNCLE is our own trusted platform featuring carefully managed PG accommodations.
                 Every resident undergoes background verification, and each place is carefully maintained — ensuring you get exactly what you see on our website.
               </p>
               <p>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase-client';
+import { createClient, resetClient } from '@/lib/supabase-client';
 
 interface User {
   id: string;
@@ -70,6 +70,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
+  }, []);
+
+  // Suppress AbortError from Web Locks — harmless noise during hot-reload / tab switches
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      if (
+        event.reason?.name === 'AbortError' ||
+        event.reason?.message?.includes('Lock broken')
+      ) {
+        event.preventDefault();
+      }
+    };
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    return () => window.removeEventListener('unhandledrejection', handleUnhandledRejection);
   }, []);
 
   const handleUserAuth = async (supabaseUser: any) => {
@@ -172,6 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);
+      resetClient(); // Clear singleton so fresh client (and lock) is created next time
     } catch (error: any) {
       console.error('Sign out error:', error);
       throw new Error(error.message || 'Failed to sign out');

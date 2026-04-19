@@ -23,10 +23,12 @@ interface PropertyDisplay {
 
 export const Properties: React.FC = () => {
   const [selectedCity, setSelectedCity] = useState<string>('All');
+  const [selectedGender, setSelectedGender] = useState<string>('All');
   const [expandedAmenities, setExpandedAmenities] = useState<{ [key: string]: boolean }>({});
   const { properties, loading, error, fetchProperties } = useProperties();
 
   const cities = ['All', 'Chandigarh', 'Mohali', 'Panchkula', 'Zirakpur'];
+  const genders = ['All', 'Boys', 'Girls'];
 
   // Force refresh function
   const handleRefresh = async () => {
@@ -74,7 +76,7 @@ export const Properties: React.FC = () => {
     location: prop.location || prop.address,
     price: prop.price,
     type: prop.roomTypes?.[0]?.type || 'Single',
-    gender: 'All', // Default to 'All' since gender field was removed
+    gender: prop.gender || 'Both',
     image: optimizeImageUrl(prop.images?.[0] || prop.image || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267', 'medium'),
     rating: prop.rating || 4.5,
     reviews: prop.reviews || 12,
@@ -84,8 +86,11 @@ export const Properties: React.FC = () => {
 
   const filteredProperties = transformedProperties.filter((property) => {
     const cityMatch = selectedCity === 'All' || property.city === selectedCity;
-    // Removed type filter - show all types
-    return cityMatch;
+    const genderMatch =
+      selectedGender === 'All' ||
+      property.gender === selectedGender ||
+      property.gender === 'Both';
+    return cityMatch && genderMatch;
   });
 
   // Track filter changes
@@ -214,7 +219,6 @@ export const Properties: React.FC = () => {
         <div className="flex flex-col gap-4 mb-12">
           {/* City Filter */}
           <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
-            {/* City Filter - Dropdown on Mobile, Buttons on Desktop */}
             <div className="w-full md:w-auto">
               {/* Mobile Dropdown */}
               <div className="md:hidden">
@@ -225,13 +229,10 @@ export const Properties: React.FC = () => {
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-white text-gray-900 font-medium"
                 >
                   {cities.map((city) => (
-                    <option key={city} value={city}>
-                      {city}
-                    </option>
+                    <option key={city} value={city}>{city}</option>
                   ))}
                 </select>
               </div>
-
               {/* Desktop Buttons */}
               <div className="hidden md:flex flex-wrap gap-2 justify-center">
                 <span className="text-sm font-medium text-gray-700 flex items-center">City:</span>
@@ -246,6 +247,46 @@ export const Properties: React.FC = () => {
                     }`}
                   >
                     {city}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Gender Filter */}
+          <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
+            <div className="w-full md:w-auto">
+              {/* Mobile Dropdown */}
+              <div className="md:hidden">
+                <label className="block text-sm font-medium text-gray-700 mb-2">For:</label>
+                <select
+                  value={selectedGender}
+                  onChange={(e) => setSelectedGender(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-white text-gray-900 font-medium"
+                >
+                  {genders.map((g) => (
+                    <option key={g} value={g}>{g === 'All' ? 'All (Boys & Girls)' : g + ' Only'}</option>
+                  ))}
+                </select>
+              </div>
+              {/* Desktop Buttons */}
+              <div className="hidden md:flex flex-wrap gap-2 justify-center">
+                <span className="text-sm font-medium text-gray-700 flex items-center">For:</span>
+                {genders.map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setSelectedGender(g)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                      selectedGender === g
+                        ? g === 'Boys'
+                          ? 'bg-blue-500 text-white shadow-lg'
+                          : g === 'Girls'
+                          ? 'bg-pink-500 text-white shadow-lg'
+                          : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
+                        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                    }`}
+                  >
+                    {g === 'All' ? '👥 All' : g === 'Boys' ? '👦 Boys' : '👧 Girls'}
                   </button>
                 ))}
               </div>
@@ -280,9 +321,14 @@ export const Properties: React.FC = () => {
                     </span>
                   </div>
                 )}
-                  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
-                    <span className="text-sm font-semibold text-gray-900">{property.type} Sharing</span>
-                  </div>
+                {/* Gender badge */}
+                <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold text-white shadow ${
+                  property.gender === 'Boys' ? 'bg-blue-500' :
+                  property.gender === 'Girls' ? 'bg-pink-500' :
+                  'bg-purple-500'
+                }`}>
+                  {property.gender === 'Boys' ? '👦 Boys' : property.gender === 'Girls' ? '👧 Girls' : '👥 Boys & Girls'}
+                </div>
                 </div>
 
                 <div className="p-6">
@@ -332,6 +378,7 @@ export const Properties: React.FC = () => {
                       'RO Water': '💧',
                       'Power Backup': '🔋',
                       'Fully Furnished': '🛌',
+                      'Washing Machine': '👕🧼',
                     };
                     
                     const icon = amenityIcons[amenity] || '✓';
@@ -364,7 +411,7 @@ export const Properties: React.FC = () => {
 
                 <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                   <div>
-                    <span className="text-xl md:text-2xl font-bold text-gray-900">₹{property.price}</span>
+                    <span className="text-xl md:text-2xl font-bold text-gray-900">₹{String(property.price).slice(0, 2)}xxxx</span>
                     <span className="text-sm text-gray-600">/month</span>
                   </div>
                   <Link
