@@ -682,6 +682,7 @@ export default function AdminDashboard() {
                         houseRules: data.rules,
                         nearbyPlaces: data.nearbyPlaces,
                         images: data.images,
+                        gender: data.gender,
                       };
                       console.log('Update data:', updateData);
                       await updateProperty(selectedProperty.id, updateData);
@@ -720,6 +721,7 @@ export default function AdminDashboard() {
                         coordinates: data.coordinates,
                         roomTypes: data.roomTypes,
                         isActive: true,
+                        gender: data.gender,
                       };
                       console.log('New property data:', newPropertyData);
                       await addProperty(newPropertyData);
