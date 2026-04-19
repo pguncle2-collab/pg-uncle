@@ -623,6 +623,7 @@ export default function AdminDashboard() {
                   city: selectedProperty.city,
                   location: selectedProperty.location || '',
                   address: selectedProperty.address,
+                  gender: selectedProperty.gender || 'Both',
                   coordinates: selectedProperty.coordinates || { lat: 30.7333, lng: 76.7794 },
                   description: selectedProperty.description || '',
                   roomTypes: selectedProperty.roomTypes?.map((rt: any) => ({
